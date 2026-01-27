@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles for ColorManager */
+body {
+  @apply bg-cm-bg text-cm-text;
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+.font-mono-numbers {
+  font-family: "JetBrains Mono", "Roboto Mono", monospace;
+}
+
+.semaforo {
+  @apply rounded transition-colors duration-200;
+}
+
+.semaforo.red {
+  @apply bg-cm-danger text-white;
+}
+
+.semaforo.yellow {
+  @apply bg-cm-warning text-white;
+}
+
+.semaforo.green {
+  @apply bg-cm-success text-white;
+}
+
+.button-primary {
+  @apply bg-cm-primary text-white px-4 py-2 rounded font-medium hover:opacity-90 transition-opacity;
+}
+
+.button-secondary {
+  @apply bg-cm-border text-cm-text px-4 py-2 rounded font-medium hover:bg-gray-200 transition-colors;
+}
+
+.weight-display {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 4rem;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.1em;
+}

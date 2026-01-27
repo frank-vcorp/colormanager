@@ -1,0 +1,89 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ma/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ID Compuesto: Unicidad global en sincronización multi-nodo
+// Ej: MZL-PC01-20260127-0042
+model Mezcla {
+  id        String   @id // UUID global: "550e8400-e29b-41d4-a716-446655440000"
+  nodeId    String   // Identificador de nodo (ej: "TALLER-PC01")
+  // localSeq eliminada temporalmente por incompatibilidad SQLite/UUID
+  // localSeq  Int      @default(autoincrement()) 
+  
+  // Receta y Datos
+  recetaId  String
+  recetaNombre String
+  fechaCreacion DateTime @default(now())
+  
+  // Estado
+  estado    String   @default("pendiente") // "pendiente", "en_progreso", "completada", "error"
+  
+  // Pesos y Validación
+  pesoTotal Float
+  pesoActual Float @default(0)
+  
+  // Auditoría
+  operadorId String?
+  notas      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  @@index([nodeId])
+  @@index([estado])
+  @@index([fechaCreacion])
+}
+
+// Inventario de Ingredientes/SKUs
+model Ingrediente {
+  id            String   @id // UUID
+  codigo        String   @unique // SKU de Sicar
+  nombre        String
+  descripcion   String?
+  densidad      Float    // g/ml
+  costo         Float    // Precio unitario
+  stockActual   Float    // Cantidad en almacén
+  stockMinimo   Float    @default(100)
+  
+  // Auditoría
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([codigo])
+}
+
+// Lotes/Partidas de ingredientes (FIFO)
+model Lote {
+  id           String   @id // UUID
+  ingredienteId String
+  numeroLote   String   @unique
+  cantidad     Float    // Gramos disponibles
+  fechaVencimiento DateTime?
+  estado       String   @default("activo") // "activo", "parcial", "agotado"
+  
+  createdAt    DateTime @default(now())
+  @@index([ingredienteId])
+  @@index([estado])
+}
+
+// Historial de Cambios (para auditoría y sincronización)
+model SyncLog {
+  id        String   @id // UUID
+  tabla     String   // "Mezcla", "Ingrediente", etc.
+  accion    String   // "CREATE", "UPDATE", "DELETE"
+  registroId String
+  cambios   String   // JSON serializado de deltas
+  nodeId    String
+  syncedAt  DateTime? // NULL = no sincronizado aún
+  
+  createdAt DateTime @default(now())
+  @@index([syncedAt])
+  @@index([tabla])
+}

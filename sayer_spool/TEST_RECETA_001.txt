@@ -1,0 +1,28 @@
+FORMULACIÓN
+
+Número      : 001
+HISTORIA    : F
+
+Primera capa
+
+   01 : KT-1400                323.0 (g)
+   02 : KT-1100                249.0 (g)
+   03 : KT-1930                186.0 (g)
+   04 : KT-1420                125.0 (g)
+   05 : KT-1550                102.0 (g)
+   06 : KT-1220                 15.0 (g)
+
+            Total              1000.0 (g)
+            Peso actual        1000.0 (g)
+
+Segunda capa
+
+            Total                 0.0 (g)
+            Peso actual        1000.0 (g)
+
+Car Maker:     VW
+Color Code:    L041
+Sayer Code:    CH-123
+Coating Type:  Biclapa
+Primer:        Gris
+COMMENT:
