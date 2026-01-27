@@ -43,12 +43,34 @@
 ### ✅ Tareas Técnicas
 - [x] **(1) Watcher Sayer:** Configurar un watcher de archivos para detectar creación/actualización de recetas en la carpeta de salida de Sayer.
 - [x] **(2) Ingesta de Receta Cruda:** Persistir el texto plano de la receta en una estructura de datos o almacenamiento local para procesamiento posterior.
-- [ ] **(3) Exposición en UI:** Mostrar en la UI (o log visible) la última receta detectada con metadatos básicos (timestamp, nombre de archivo).
+- [x] **(3) Exposición en UI:** Mostrar en la UI (o log visible) la última receta detectada con metadatos básicos (timestamp, nombre de archivo).
 
 ### 🧪 Cómo Demostrar
 1. Ejecutar `pnpm dev`.
-2. Generar desde Sayer (o simulador) un archivo de receta en la carpeta observada.
-3. Ver en la aplicación un mensaje o panel indicando que se detectó la receta y mostrando su contenido bruto.
+2. Usar el botón flotante "🧪 Simular Receta" en la esquina inferior derecha.
+3. Verificar que aparece la tabla de ingredientes con datos de prueba.
+
+---
+
+## 📋 MICRO-SPRINT 3: Báscula y UX de Mezcla
+**Fecha estimada:** Próxima Sesión
+**Duración estimada:** 2 horas
+**Objetivo:** Conectar el flujo, de pesaje en tiempo real y guiar al usuario visualmente durante la mezcla.
+
+### 🎯 Entregable Demostrable
+> "El usuario selecciona un ingrediente de la receta y ve una barra de progreso que se llena en tiempo real al subir peso en la báscula (simulada), cambiando de color cuando llega a la meta."
+
+### ✅ Tareas Técnicas
+- [ ] **(1) Pipeline de Pesaje:** Conectar `MockScaleService` -> IPC `peso:actualizado` -> Renderer.
+- [ ] **(2) Hook useBascula:** Crear hook de React para suscripción limpia a eventos de pesaje.
+- [ ] **(3) Componente SmartScale:** Indicador visual de peso grande + Barra de progreso con zonas de tolerancia.
+- [ ] **(4) Lógica de Estado:** Gestionar estado de sesión (Ingrediente Actual, Peso Inicial, Peso Target).
+
+### 🧪 Cómo Demostrar
+1. Cargar receta simulada.
+2. Click en "Iniciar Mezcla" (Primer ingrediente).
+3. Usar controles de simulación de báscula (slider o botón "+1g") para subir peso.
+4. Ver cómo la barra de progreso avanza y se pone verde al llegar al target.
 
 ---
 
