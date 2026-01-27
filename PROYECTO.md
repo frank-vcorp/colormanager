@@ -86,6 +86,50 @@
 
 ---
 
+## 📋 MICRO-SPRINT 4: Persistencia e Historial
+**Fecha:** 2026-01-27
+**Duración estimada:** 2 horas
+**Objetivo:** Implementar la capa de persistencia (SQLite) para guardar las mezclas finalizadas y una pantalla para consultar el historial.
+
+### 🎯 Entregable Demostrable
+> "Al finalizar una mezcla, esta se guarda en base de datos. El usuario puede ir a la pestaña 'Historial', ver la lista de mezclas de hoy, y al hacer clic ver los detalles de lo que pesó."
+
+### ✅ Tareas Técnicas
+- [x] **(1) Setup DB:** Configurar `better-sqlite3` en `src/main/database` con tabla `mezclas` y `movimientos`. `(SOFIA)`
+- [x] **(2) IPC Save:** Crear handler IPC `sesion:guardar` para recibir la sesión finalizada desde el Renderer. `(SOFIA)`
+- [x] **(3) Vista Historial:** Crear `<HistoryView />` en React con tabla de registros. `(SOFIA)`
+- [x] **(4) Navegación:** Agregar botón "Historial" en el Header para cambiar de vista. `(SOFIA)`
+
+### 🧪 Cómo Demostrar
+1. Realizar una mezcla completa con el simulador.
+2. Al finalizar, verificar que no se pierde, sino que se guarda.
+3. Ir a "Historial" y ver el registro nuevo.
+4. Reiniciar la app (recargar página) y ver que los datos persisten.
+
+---
+
+## 📋 MICRO-SPRINT 5: Control de Inventario Básico
+**Fecha:** 2026-01-27
+**Duración estimada:** 2 horas
+**Objetivo:** Implementar una gestión de stock local. Validar que exista material antes de mezclar y descontarlo al finalizar.
+
+### 🎯 Entregable Demostrable
+> "Una nueva pestaña 'Inventario' muestra los botes de pintura y sus niveles. Al terminar una mezcla, se ve cómo bajan los gramos disponibles de los tintes usados."
+
+### ✅ Tareas Técnicas
+- [ ] **(1) Modelo de Datos:** Definir `Producto` (SKU, Nombre, Stock) y `Movimiento` en `types.ts`.
+- [ ] **(2) Seed Data:** Cargar datos iniciales de stock para los tintes de prueba (KT-1400, etc.) en `mock-ipc.ts`.
+- [ ] **(3) Vista Inventario:** Crear `<InventoryView />` con tabla de productos y barras de nivel.
+- [ ] **(4) Lógica de Descuento:** Al `guardarMezcla`, restar el peso *real* utilizado del stock del producto.
+
+### 🧪 Cómo Demostrar
+1. Ir a pestaña "Inventario" y ver que el `KT-1400` tiene por ejemplo 1000g.
+2. Hacer una mezcla que use 323g de `KT-1400`.
+3. Finalizar y guardar.
+4. Volver a "Inventario" y verificar que ahora tiene 677g.
+
+---
+
 ## Roadmap de Sprints
 
 ### 🗓️ [/] SPRINT 1: Control de Mezcla (Core)

@@ -1,15 +1,17 @@
 /**
  * HeaderBar Component
- * Barra superior con estado del sistema
+ * Barra superior con estado del sistema y navegación
  * 
- * ID Intervención: IMPL-20260127-01
+ * ID Intervención: IMPL-20260127-05
  */
 
 interface HeaderBarProps {
   basculaConectada: boolean
+  onHistorialClick?: () => void
+  onInventarioClick?: () => void
 }
 
-export default function HeaderBar({ basculaConectada }: HeaderBarProps) {
+export default function HeaderBar({ basculaConectada, onHistorialClick, onInventarioClick }: HeaderBarProps) {
   return (
     <header className="bg-cm-surface border-b border-cm-border px-6 py-4 shadow-sm">
       <div className="flex items-center justify-between max-w-full">
@@ -44,6 +46,26 @@ export default function HeaderBar({ basculaConectada }: HeaderBarProps) {
               Impresora: <span className="font-bold text-cm-text">READY</span>
             </span>
           </div>
+
+          {/* Inventario Button */}
+          {onInventarioClick && (
+            <button
+              onClick={onInventarioClick}
+              className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              📦 Inventario
+            </button>
+          )}
+
+          {/* Historial Button */}
+          {onHistorialClick && (
+            <button
+              onClick={onHistorialClick}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              📊 Historial
+            </button>
+          )}
         </div>
       </div>
     </header>

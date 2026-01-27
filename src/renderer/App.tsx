@@ -3,7 +3,7 @@
  * Interfaz principal de ColorManager
  * Estilo: Clean Industrial (SPEC-UX-UI)
  * 
- * ID Intervención: IMPL-20260127-03, actualizado en IMPL-20260127-04
+ * ID Intervención: IMPL-20260127-05 (Navegación entre vistas: home | mezcla | historial | inventario)
  */
 
 import { useState, useEffect } from "react"
@@ -12,6 +12,8 @@ import ScaleDisplay from "./components/ScaleDisplay"
 import HeaderBar from "./components/HeaderBar"
 import RecetaViewer from "./components/RecetaViewer"
 import SessionController from "./components/SessionController"
+import HistoryView from "./components/HistoryView"
+import InventoryView from "./components/InventoryView"
 
 declare global {
   interface Window {
@@ -22,6 +24,10 @@ declare global {
       onError: (cb: (error: any) => void) => void
       iniciarMezcla: (recetaId: string) => Promise<any>
       cancelarMezcla: () => Promise<any>
+      guardarMezcla: (registro: any) => Promise<any>
+      obtenerHistorial: () => Promise<any>
+      obtenerInventario: () => Promise<any>
+      resetearInventario: () => Promise<any>
     }
   }
 }
@@ -32,7 +38,8 @@ export default function App() {
   const [mezclando, setMezclando] = useState(false)
   const [recetaDetectada, setRecetaDetectada] = useState<RecetaSayer | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [sesionMezcla, setSesionMezcla] = useState(false) // Estado para SessionController
+  const [sesionMezcla, setSesionMezcla] = useState(false)
+  const [vista, setVista] = useState<"home" | "mezcla" | "historial" | "inventario">("home") // Sistema de vistas
 
   // Listeners para cambios de peso y recetas
   useEffect(() => {
@@ -67,7 +74,8 @@ export default function App() {
     try {
       await window.colorManager.iniciarMezcla("RECETA-" + recetaDetectada.numero)
       setMezclando(true)
-      setSesionMezcla(true) // Transicionar a SessionController
+      setSesionMezcla(true)
+      setVista("mezcla")
     } catch (error) {
       console.error("Error iniciando mezcla:", error)
     }
@@ -79,6 +87,7 @@ export default function App() {
       setSesionMezcla(false) // Volver a la pantalla principal
       setMezclando(false)
       setRecetaDetectada(null) // Limpiar receta
+      setVista("home") // Volver a vista home
     } catch (error) {
       console.error("Error finalizando mezcla:", error)
     }
@@ -86,19 +95,33 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-cm-bg flex flex-col">
-      {/* Si estamos en sesión de mezcla, mostrar SessionController */}
-      {sesionMezcla && recetaDetectada && (
+      {/* Vista: Inventario */}
+      {vista === "inventario" && (
+        <InventoryView />
+      )}
+
+      {/* Vista: Historial */}
+      {vista === "historial" && (
+        <HistoryView onBack={() => setVista("home")} />
+      )}
+
+      {/* Vista: Mezcla */}
+      {vista === "mezcla" && sesionMezcla && recetaDetectada && (
         <SessionController
           receta={recetaDetectada}
           onFinish={handleFinalizarMezcla}
         />
       )}
 
-      {/* Si no estamos en sesión, mostrar pantalla principal */}
-      {!sesionMezcla && (
+      {/* Vista: Home */}
+      {vista === "home" && (
         <>
           {/* Header */}
-          <HeaderBar basculaConectada={basculaConectada} />
+          <HeaderBar 
+            basculaConectada={basculaConectada}
+            onHistorialClick={() => setVista("historial")}
+            onInventarioClick={() => setVista("inventario")}
+          />
 
           {/* Main Content */}
           <main className="flex-1 flex flex-col items-center justify-center gap-8 p-8">
@@ -172,7 +195,7 @@ export default function App() {
                   <li>• Estado báscula: <span className="text-cm-text font-bold">{basculaConectada ? "OK" : "ERROR"}</span></li>
                   <li>• Modo: <span className="text-cm-text font-bold">{mezclando ? "MEZCLA ACTIVA" : "ESPERA"}</span></li>
                   <li>• Recetas detectadas: <span className="text-cm-text font-bold">{recetaDetectada ? "1" : "0"}</span></li>
-                  <li>• Build: IMPL-20260127-04</li>
+                  <li>• Build: IMPL-20260127-05</li>
                 </ul>
               </div>
             )}

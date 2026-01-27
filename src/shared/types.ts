@@ -61,6 +61,27 @@ export interface SesionMezcla {
   finishedAt?: number
 }
 
+// Registro de mezcla finalizada (persistencia)
+export interface RegistroMezcla {
+  id: string
+  recetaId: string
+  recetaNombre: string
+  fecha: string // ISO 8601
+  horaInicio: string
+  horaFin: string
+  pesoTotal: number
+  pesoFinal: number
+  ingredientes: Array<{
+    codigo: string
+    pesoTarget: number
+    pesoPesado: number
+  }>
+  estado: "perfecto" | "desviado" | "cancelado"
+  diferencia: number // pesoFinal - pesoTotal
+  tolerancia: number
+  notas?: string
+}
+
 // Canales de IPC (Main -> Renderer)
 export const IPCChannels = {
   PESO_ACTUALIZADO: "peso:actualizado",
@@ -70,6 +91,15 @@ export const IPCChannels = {
   ESTADO_BASCULA: "bascula:estado",
 } as const
 
+// Producto de inventario
+export interface Producto {
+  sku: string
+  nombre: string
+  stockActual: number
+  unidad: "g" | "ml"
+  costoPromedio?: number
+}
+
 // Canales de IPC (Renderer -> Main)
 export const IPCInvokeChannels = {
   GET_SESION_ACTUAL: "sesion:obtener",
@@ -77,4 +107,8 @@ export const IPCInvokeChannels = {
   REGISTRAR_PESO: "sesion:registrar-peso",
   CANCELAR_MEZCLA: "sesion:cancelar",
   SIGUIENTE_INGREDIENTE: "sesion:siguiente",
+  GUARDAR_MEZCLA: "mezcla:guardar",
+  OBTENER_HISTORIAL: "mezcla:historial",
+  OBTENER_INVENTARIO: "inventario:obtener",
+  RESETEAR_INVENTARIO: "inventario:resetear",
 } as const

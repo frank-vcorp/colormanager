@@ -2,14 +2,15 @@
  * SessionController Component
  * Orquesta el flujo de mezcla con una receta
  * Mantiene estado del ingrediente actual y facilita navegación entre ingredientes
+ * Captura y guarda registro de mezcla finalizada
  * 
  * Estilo: Industrial limpio, tipografía grande (pantalla táctil/taller)
- * ID Intervención: IMPL-20260127-04
+ * ID Intervención: IMPL-20260127-05
  * @see SPEC-UX-COLORMANAGER.md
  */
 
 import { useState, useEffect } from "react"
-import { RecetaSayer, IngredienteReceta } from "@shared/types"
+import { RecetaSayer, IngredienteReceta, RegistroMezcla } from "@shared/types"
 import { useBascula } from "../hooks/useBascula"
 import SmartScale from "./SmartScale"
 import HeaderBar from "./HeaderBar"
@@ -27,6 +28,9 @@ export default function SessionController({ receta, onFinish }: SessionControlle
   const { peso, estable } = useBascula()
   const [ingredienteActualIdx, setIngredienteActualIdx] = useState(0)
   const [basculaConectada] = useState(true)
+  const [pesosRegistrados, setPesosRegistrados] = useState<number[]>([]) // Pesos por ingrediente
+  const [horaInicio] = useState(new Date().toISOString())
+  const [guardando, setGuardando] = useState(false)
 
   // Obtener lista de todos los ingredientes de la receta
   const ingredientes: IngredienteReceta[] = receta.capas.flatMap((capa) =>
@@ -55,18 +59,70 @@ export default function SessionController({ receta, onFinish }: SessionControlle
     window.colorManager.iniciarMezcla("RECETA-" + receta.numero)
   }, [receta.numero])
 
-  // Ir al siguiente ingrediente
+  // Ir al siguiente ingrediente (o finalizar)
   const handleSiguiente = async () => {
+    // Registrar peso del ingrediente actual
+    const pesoFinal = peso
+    const nuevosPesos = [...pesosRegistrados, pesoFinal]
+    setPesosRegistrados(nuevosPesos)
+
     if (ingredienteActualIdx < ingredientes.length - 1) {
+      // Ir al siguiente ingrediente
       setIngredienteActualIdx(ingredienteActualIdx + 1)
       // Realizar tara para el siguiente ingrediente
       if (window.colorManager?.tara) {
         await window.colorManager.tara()
       }
     } else {
-      // Fin de la mezcla
-      console.log("[SessionController] Mezcla completada")
+      // Fin de la mezcla: guardar registro
+      console.log("[SessionController] Finalizando mezcla...")
+      await guardarMezcla(nuevosPesos)
+    }
+  }
+
+  // Guardar mezcla en base de datos
+  const guardarMezcla = async (pesos: number[]) => {
+    try {
+      setGuardando(true)
+      if (!window.colorManager?.guardarMezcla) {
+        console.error("guardarMezcla no disponible")
+        onFinish()
+        return
+      }
+
+      const ahora = new Date()
+      const pesoFinal = pesos.reduce((a, b) => a + b, 0)
+      const tolerancia = 0.5 // gramos
+      const diferencia = pesoFinal - pesoTotal
+      const estado = Math.abs(diferencia) <= tolerancia ? "perfecto" : "desviado"
+
+      const registro: RegistroMezcla = {
+        id: `MZC-${Date.now()}`,
+        recetaId: `RECETA-${receta.numero}`,
+        recetaNombre: `Receta ${receta.numero}`,
+        fecha: ahora.toISOString(),
+        horaInicio,
+        horaFin: ahora.toISOString(),
+        pesoTotal,
+        pesoFinal,
+        ingredientes: ingredientes.map((ing, idx) => ({
+          codigo: ing.codigo,
+          pesoTarget: ing.pesoTarget,
+          pesoPesado: pesos[idx] || 0,
+        })),
+        estado,
+        diferencia,
+        tolerancia,
+      }
+
+      await window.colorManager.guardarMezcla(registro)
+      console.log("[SessionController] Mezcla guardada exitosamente:", registro)
       onFinish()
+    } catch (error) {
+      console.error("[SessionController] Error guardando mezcla:", error)
+      onFinish()
+    } finally {
+      setGuardando(false)
     }
   }
 
@@ -146,17 +202,21 @@ export default function SessionController({ receta, onFinish }: SessionControlle
         {/* Botón Siguiente */}
         <button
           onClick={handleSiguiente}
-          disabled={!siguienteHabilitado}
+          disabled={!siguienteHabilitado || guardando}
           className={`
             px-12 py-6 rounded-lg font-bold text-2xl transition-all
             ${
-              siguienteHabilitado
+              siguienteHabilitado && !guardando
                 ? "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-lg hover:shadow-xl"
                 : "bg-gray-300 text-gray-500 cursor-not-allowed opacity-50"
             }
           `}
         >
-          {ingredienteActualIdx === ingredientes.length - 1 ? "✓ FINALIZAR MEZCLA" : "SIGUIENTE INGREDIENTE →"}
+          {guardando 
+            ? "⏳ Guardando..."
+            : ingredienteActualIdx === ingredientes.length - 1 
+            ? "✓ FINALIZAR MEZCLA" 
+            : "SIGUIENTE INGREDIENTE →"}
         </button>
 
         {/* Estado del Peso */}

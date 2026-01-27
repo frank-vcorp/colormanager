@@ -1,11 +1,11 @@
-import { PesoEvent, IPCChannels, RecetaSayer } from "../shared/types"
+import { PesoEvent, IPCChannels, RecetaSayer, RegistroMezcla, Producto } from "../shared/types"
 
 /**
  * Mock IPC para desarrollo en navegador (sin Electron)
  * Permite visualizar la UI en Simple Browser simulando los eventos de Node.js
  * 
- * Versión 2.0: Panel de control manual de hardware en esquina inferior derecha
- * ID Intervención: IMPL-20260128-01
+ * Versión 2.2: Persistencia con localStorage + Inventario (Micro-Sprint 5: Control de Inventario)
+ * ID Intervención: IMPL-20260127-05
  */
 export function setupBrowserMock() {
   if (window.colorManager) return // Ya estamos en Electron
@@ -15,6 +15,24 @@ export function setupBrowserMock() {
   // Simulación de Estado Interno
   const listeners: Record<string, Function[]> = {}
   let pesoActual = 0
+
+  // Inicializar inventario si no existe
+  const initInventario = () => {
+    const existente = localStorage.getItem("colormanager:inventario")
+    if (!existente) {
+      const inventarioInicial: Producto[] = [
+        { sku: "KT-1400", nombre: "Tinte Rojo Base", stockActual: 2000, unidad: "g" },
+        { sku: "KT-1100", nombre: "Tinte Amarillo Oscuro", stockActual: 2000, unidad: "g" },
+        { sku: "KT-1930", nombre: "Tinte Naranja", stockActual: 2000, unidad: "g" },
+        { sku: "KT-1420", nombre: "Tinte Blanco", stockActual: 2000, unidad: "g" },
+        { sku: "KT-1550", nombre: "Tinte Negro", stockActual: 2000, unidad: "g" },
+        { sku: "KT-1220", nombre: "Tinte Verde", stockActual: 2000, unidad: "g" },
+      ]
+      localStorage.setItem("colormanager:inventario", JSON.stringify(inventarioInicial))
+      console.log("[MOCK] Inventario inicializado")
+    }
+  }
+  initInventario()
 
   // Receta de ejemplo para simulación
   const recetaEjemplo: RecetaSayer = {
@@ -129,6 +147,67 @@ export function setupBrowserMock() {
       console.log("[MOCK] Simulando receta:", r)
       const subs = listeners[IPCChannels.RECETA_DETECTADA] || []
       subs.forEach((cb) => cb(r))
+    },
+
+    // Persistencia: Guardar mezcla en localStorage + descontar inventario
+    guardarMezcla: async (registro: RegistroMezcla) => {
+      console.log("[MOCK] Guardando mezcla en localStorage:", registro)
+      
+      // Guardar en historial
+      const historial = JSON.parse(localStorage.getItem("colormanager:historial") || "[]")
+      historial.push(registro)
+      localStorage.setItem("colormanager:historial", JSON.stringify(historial))
+      
+      // Descontar stock del inventario
+      const inventario = JSON.parse(localStorage.getItem("colormanager:inventario") || "[]")
+      
+      registro.ingredientes.forEach((ingrediente: any) => {
+        const producto = inventario.find((p: Producto) => p.sku === ingrediente.codigo)
+        if (producto) {
+          const descontar = ingrediente.pesoPesado || ingrediente.pesoTarget || 0
+          producto.stockActual = Math.max(0, producto.stockActual - descontar)
+          console.log(`[MOCK] Descontado ${descontar}g de ${producto.sku}. Stock actual: ${producto.stockActual}g`)
+        }
+      })
+      
+      localStorage.setItem("colormanager:inventario", JSON.stringify(inventario))
+      return { id: registro.id, guardado: true }
+    },
+
+    // Persistencia: Obtener historial de mezclas
+    obtenerHistorial: async () => {
+      const historial = JSON.parse(localStorage.getItem("colormanager:historial") || "[]") as RegistroMezcla[]
+      console.log("[MOCK] Historial cargado:", historial)
+      return historial
+    },
+
+    // Persistencia: Limpiar historial (para testing)
+    limpiarHistorial: async () => {
+      localStorage.removeItem("colormanager:historial")
+      console.log("[MOCK] Historial limpiado")
+      return true
+    },
+
+    // Inventario: Obtener lista de productos
+    obtenerInventario: async () => {
+      const inventario = JSON.parse(localStorage.getItem("colormanager:inventario") || "[]") as Producto[]
+      console.log("[MOCK] Inventario cargado:", inventario)
+      return inventario
+    },
+
+    // Inventario: Resetear stock a valores iniciales
+    resetearInventario: async () => {
+      const inventarioInicial: Producto[] = [
+        { sku: "KT-1400", nombre: "Tinte Rojo Base", stockActual: 2000, unidad: "g" },
+        { sku: "KT-1100", nombre: "Tinte Amarillo Oscuro", stockActual: 2000, unidad: "g" },
+        { sku: "KT-1930", nombre: "Tinte Naranja", stockActual: 2000, unidad: "g" },
+        { sku: "KT-1420", nombre: "Tinte Blanco", stockActual: 2000, unidad: "g" },
+        { sku: "KT-1550", nombre: "Tinte Negro", stockActual: 2000, unidad: "g" },
+        { sku: "KT-1220", nombre: "Tinte Verde", stockActual: 2000, unidad: "g" },
+      ]
+      localStorage.setItem("colormanager:inventario", JSON.stringify(inventarioInicial))
+      console.log("[MOCK] Inventario reseteado")
+      return inventarioInicial
     },
   } as any
 
