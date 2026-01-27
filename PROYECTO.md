@@ -117,10 +117,10 @@
 > "Una nueva pestaña 'Inventario' muestra los botes de pintura y sus niveles. Al terminar una mezcla, se ve cómo bajan los gramos disponibles de los tintes usados."
 
 ### ✅ Tareas Técnicas
-- [ ] **(1) Modelo de Datos:** Definir `Producto` (SKU, Nombre, Stock) y `Movimiento` en `types.ts`.
-- [ ] **(2) Seed Data:** Cargar datos iniciales de stock para los tintes de prueba (KT-1400, etc.) en `mock-ipc.ts`.
-- [ ] **(3) Vista Inventario:** Crear `<InventoryView />` con tabla de productos y barras de nivel.
-- [ ] **(4) Lógica de Descuento:** Al `guardarMezcla`, restar el peso *real* utilizado del stock del producto.
+- [x] **(1) Modelo de Datos:** Definir `Producto` (SKU, Nombre, Stock) y `Movimiento` en `types.ts`.
+- [x] **(2) Seed Data:** Cargar datos iniciales de stock para los tintes de prueba (KT-1400, etc.) en `mock-ipc.ts`.
+- [x] **(3) Vista Inventario:** Crear `<InventoryView />` con tabla de productos y barras de nivel.
+- [x] **(4) Lógica de Descuento:** Al `guardarMezcla`, restar el peso *real* utilizado del stock del producto.
 
 ### 🧪 Cómo Demostrar
 1. Ir a pestaña "Inventario" y ver que el `KT-1400` tiene por ejemplo 1000g.
@@ -130,14 +130,55 @@
 
 ---
 
+## 📋 MICRO-SPRINT 6: Refactor & Hardening
+**Fecha:** 2026-01-27
+**Duración estimada:** 2 horas
+**Objetivo:** Limpieza técnica post-MVP. Eliminar deuda técnica detectada por QA (Tipos débiles, alertas nativas) y preparar arquitectura para producción.
+
+### 🎯 Entregable Demostrable
+> "El sistema ya no usa ventanas emergentes feas del navegador para confirmar acciones. El código es más seguro (menos `any`) y visualmente consistente."
+
+### ✅ Tareas Técnicas
+- [x] **(1) Hardening Tipos:** Mover definición de `window.colorManager` a `src/renderer/types/electron.d.ts` y eliminar `any`. `(SOFIA/DEBY)`
+- [x] **(2) UI Notifications:** Crear componente `<ToastContainer />` y hook `useToast` para reemplazar `alert()` y mensajes de error estáticos. `(SOFIA)`
+- [x] **(3) Refactor Inventario:** Reemplazar `confirm()` nativo en `InventoryView` por un Modal de confirmación UI. `(SOFIA)`
+
+### 🧪 Cómo Demostrar
+1. Intentar resetear inventario -> Ver un Modal bonito en lugar de la ventana del navegador.
+2. Finalizar una mezcla -> Ver un Toast flotante "Guardado con éxito" en lugar de console logs.
+3. Revisar código y ver que `window.colorManager` tiene autocompletado real.
+
+---
+
+## 📋 MICRO-SPRINT 7: Validación de Seguridad (SKU Scanner)
+**Fecha:** 2026-01-27
+**Duración estimada:** 1 hora
+**Objetivo:** Evitar errores de mezcla obligando al usuario a escanear (o escribir) el código del bote antes de permitir el pesaje.
+
+### 🎯 Entregable Demostrable
+> "Al iniciar un ingrediente, la báscula está bloqueada. El usuario debe escribir el SKU correcto (ej. K-1400) y dar Enter. Solo si coincide, el sistema desbloquea la barra de progreso."
+
+### ✅ Tareas Técnicas
+- [ ] **(1) Input de Validación:** Agregar campo de texto auto-enfocado en `SessionController`. `(SOFIA)`
+- [ ] **(2) Lógica de Bloqueo:** Estado `verificado` que impide ver la báscula hasta que el SKU coincida. `(SOFIA)`
+- [ ] **(3) Feedback Visual:** Animación de éxito/error al validar el código. `(SOFIA)`
+
+### 🧪 Cómo Demostrar
+1. Iniciar mezcla.
+2. Intentar pesar -> La báscula debe decir "Esperando Validación".
+3. Escribir un código incorrecto -> Error rojo.
+4. Escribir el código correcto (scanner) -> Desbloqueo y check verde.
+
+---
+
 ## Roadmap de Sprints
 
-### 🗓️ [/] SPRINT 1: Control de Mezcla (Core)
+### 🗓️ [✓] SPRINT 1: Control de Mezcla (Core)
 > **Objetivo:** Que el igualador pueda pesar y mezclar una fórmula básica proveniente de Sayer.
-- [ ] **Lectura Sayer:** Watcher de archivos para detectar impresión de recetas.
-- [ ] **Parser Recetas:** Convertir texto plano de Sayer a Objeto JSON (Receta).
-- [ ] **Conexión Báscula Real:** Lectura de stream de peso de Mettler Toledo.
-- [ ] **UI Mezcla:** Barra de progreso visual (Semáforo estático).
+- [x] **Lectura Sayer:** Watcher de archivos para detectar impresión de recetas.
+- [x] **Parser Recetas:** Convertir texto plano de Sayer a Objeto JSON (Receta).
+- [~] **Conexión Báscula Real:** Soporte listo via `MockScaleService`. driver `SerialPort` pendiente de deploy físico.
+- [x] **UI Mezcla:** Barra de progreso visual (Semáforo estático).
 - [ ] **Validación SKU:** Input de Scanner que compare contra ingrediente activo.
 
 ### 🗓️ SPRINT 2: Inventario Cloud (Híbrido)
