@@ -53,24 +53,36 @@
 ---
 
 ## 📋 MICRO-SPRINT 3: Báscula y UX de Mezcla
-**Fecha estimada:** Próxima Sesión
-**Duración estimada:** 2 horas
-**Objetivo:** Conectar el flujo, de pesaje en tiempo real y guiar al usuario visualmente durante la mezcla.
+**Fecha:** 2026-01-27
+**Duración:** 1.5 horas
+**Objetivo:** Conectar el flujo de pesaje en tiempo real y guiar al usuario visualmente durante la mezcla.
 
 ### 🎯 Entregable Demostrable
 > "El usuario selecciona un ingrediente de la receta y ve una barra de progreso que se llena en tiempo real al subir peso en la báscula (simulada), cambiando de color cuando llega a la meta."
 
 ### ✅ Tareas Técnicas
-- [ ] **(1) Pipeline de Pesaje:** Conectar `MockScaleService` -> IPC `peso:actualizado` -> Renderer.
-- [ ] **(2) Hook useBascula:** Crear hook de React para suscripción limpia a eventos de pesaje.
-- [ ] **(3) Componente SmartScale:** Indicador visual de peso grande + Barra de progreso con zonas de tolerancia.
-- [ ] **(4) Lógica de Estado:** Gestionar estado de sesión (Ingrediente Actual, Peso Inicial, Peso Target).
+- [x] **(1) Pipeline de Pesaje:** Conectar `MockScaleService` -> IPC `peso:actualizado` -> Renderer. `(SOFIA)`
+- [x] **(2) Hook useBascula:** Crear hook de React para suscripción limpia a eventos de pesaje. `(SOFIA)`
+- [x] **(3) Componente SmartScale:** Indicador visual de peso grande + Barra de progreso con zonas de tolerancia. `(SOFIA)`
+- [x] **(4) Componente SessionController:** Gestionar estado de sesión (Ingrediente Actual, Peso Inicial, Peso Target) y orquestar flujo. `(SOFIA)`
+- [x] **(5) Integración App.tsx:** Transición fluida entre pantalla principal y sesión de mezcla. `(SOFIA)`
 
 ### 🧪 Cómo Demostrar
-1. Cargar receta simulada.
-2. Click en "Iniciar Mezcla" (Primer ingrediente).
-3. Usar controles de simulación de báscula (slider o botón "+1g") para subir peso.
-4. Ver cómo la barra de progreso avanza y se pone verde al llegar al target.
+1. Cargar receta simulada (botón flotante "🧪 Simular Receta").
+2. Hacer click en "▶ Iniciar Mezcla" en la ventana RecetaViewer.
+3. Ver pantalla SessionController con primer ingrediente GIGANTE.
+4. Ver cómo la barra de progreso avanza automáticamente (mock incrementa peso).
+5. Cuando el peso entra en rango, barra se pone verde y botón "SIGUIENTE" se activa.
+6. Click "SIGUIENTE" para ir al siguiente ingrediente.
+7. Repetir hasta "✓ FINALIZAR MEZCLA".
+
+### 📦 Entregables
+- [x] Hook `useBascula.ts` - Gestiona suscripción a peso
+- [x] Componente `SmartScale.tsx` - Display inteligente con feedback cromático
+- [x] Componente `SessionController.tsx` - Orquestador de mezcla
+- [x] Modificación `App.tsx` - Lógica de transición
+- [x] Checkpoint `IMPL-20260127-04-AsistenciaMezclado.md` - Documentación completa
+- [x] Commit en español con ID `IMPL-20260127-04`
 
 ---
 
@@ -111,3 +123,5 @@
 
 ## Historial
 - 2026-01-27 · [X] Aprobado Micro-Sprint 1 "Inicialización y Cimientos": framework base Electron + React + SQLite aceptado tras demo visual del usuario. (ID: DOC-20260127-01)
+- 2026-01-27 · [X] Completado Micro-Sprint 2 "Lectura Sayer": Parser de recetas Sayer y visualización en RecetaViewer. (ID: IMPL-20260127-03)
+- 2026-01-27 · [X] Completado Micro-Sprint 3 "Báscula y UX de Mezcla": Componentes SmartScale y SessionController con hook useBascula. (ID: IMPL-20260127-04)
