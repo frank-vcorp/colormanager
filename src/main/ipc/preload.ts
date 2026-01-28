@@ -2,11 +2,14 @@
  * Preload Script para ContextBridge
  * Establece puente seguro entre Main (Node) y Renderer (React)
  * 
- * ID Intervención: IMPL-20260127-02
+ * ID Intervención: FIX-20260127-04 + IMPL-20260127-09
+ * @updated IMPL-20260128-01: Validar compilación a .cjs y path aliases resueltos
+ * @see Checkpoints/IMPL-20260128-01-ElectronEnContenedor.md
  */
 
 import { contextBridge, ipcRenderer } from "electron"
-import { IPCChannels, IPCInvokeChannels, PesoEvent, RecetaSayer } from "@shared/types"
+import { IPCChannels, IPCInvokeChannels, PesoEvent, RecetaSayer } from "../../shared/types"
+// FIX REFERENCE: FIX-20260127-04
 
 // Exponer solo lo necesario via ContextBridge
 contextBridge.exposeInMainWorld("colorManager", {
@@ -16,7 +19,7 @@ contextBridge.exposeInMainWorld("colorManager", {
   },
 
   onRecetaDetectada: (callback: (receta: RecetaSayer) => void) => {
-    ipcRenderer.on(IPCChannels.SESION_ACTUALIZADA, (_, data) => callback(data))
+    ipcRenderer.on(IPCChannels.RECETA_DETECTADA, (_, data) => callback(data))
   },
 
   onError: (callback: (error: string) => void) => {
@@ -33,6 +36,11 @@ contextBridge.exposeInMainWorld("colorManager", {
   registrarPeso: (peso: number) => ipcRenderer.invoke(IPCInvokeChannels.REGISTRAR_PESO, peso),
   cancelarMezcla: () => ipcRenderer.invoke(IPCInvokeChannels.CANCELAR_MEZCLA),
   siguienteIngrediente: () => ipcRenderer.invoke(IPCInvokeChannels.SIGUIENTE_INGREDIENTE),
+  guardarMezcla: (registro: any) => ipcRenderer.invoke(IPCInvokeChannels.GUARDAR_MEZCLA, registro),
+  obtenerHistorial: () => ipcRenderer.invoke(IPCInvokeChannels.OBTENER_HISTORIAL),
+  obtenerInventario: () => ipcRenderer.invoke(IPCInvokeChannels.OBTENER_INVENTARIO),
+  resetearInventario: () => ipcRenderer.invoke(IPCInvokeChannels.RESETEAR_INVENTARIO),
+  importarInventarioCSV: () => ipcRenderer.invoke(IPCInvokeChannels.IMPORTAR_INVENTARIO_CSV),
 })
 
 export type ColorManagerAPI = typeof contextBridge.exposeInMainWorld

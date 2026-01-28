@@ -40,11 +40,14 @@ export function useBascula(): UseBasculaReturn {
       setEstable(evento.estable)
     })
 
-    setDesuscribirse(() => unsub)
+    // Si hay una función de desuscripción, guardarla
+    if (typeof unsub === "function") {
+      setDesuscribirse(() => unsub)
+    }
 
     // Limpiar suscripción al desmontar
     return () => {
-      if (unsub) unsub()
+      if (typeof unsub === "function") unsub()
     }
   }, [])
 
@@ -55,9 +58,11 @@ export function useBascula(): UseBasculaReturn {
       return
     }
     try {
-      await window.colorManager.tara()
-      setPeso(0)
-      setEstable(false)
+      if (window.colorManager?.tara) {
+        await window.colorManager.tara()
+        setPeso(0)
+        setEstable(false)
+      }
     } catch (error) {
       console.error("[useBascula] Error al realizar tara:", error)
     }

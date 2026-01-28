@@ -9,7 +9,8 @@ import fs from "fs"
 import path from "path"
 import { watch } from "chokidar"
 import { BrowserWindow } from "electron"
-import { IPCChannels, RecetaSayer } from "@shared/types"
+import { IPCChannels, RecetaSayer } from "../../shared/types"
+// FIX REFERENCE: FIX-20260127-04
 
 export interface SayerServiceConfig {
   spoolDir: string

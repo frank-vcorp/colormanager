@@ -1,13 +1,14 @@
 /**
  * InventoryView Component
- * Vista de control de inventario (Micro-Sprint 5)
- * Versión Simplificada: Tabla blanca limpia con navegación
+ * Vista de control de inventario (Micro-Sprint 5 + IMPL-20260127-09)
+ * Versión Simplificada: Tabla blanca limpia con navegación y importador SICAR
  * 
- * ID Intervención: FIX-UX-20260127
+ * ID Intervención: FIX-UX-20260127 + IMPL-20260127-09
  */
 
 import { useState, useEffect } from "react"
 import { Producto } from "@shared/types"
+import { ImportacionResultado } from "@shared/types"
 
 interface Props {
   onBack: () => void
@@ -17,6 +18,8 @@ export default function InventoryView({ onBack }: Props) {
   const [inventario, setInventario] = useState<Producto[]>([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [importando, setImportando] = useState(false)
+  const [mensajeImportacion, setMensajeImportacion] = useState<string | null>(null)
 
   useEffect(() => {
     cargarInventario()
@@ -44,6 +47,47 @@ export default function InventoryView({ onBack }: Props) {
     }
   }
 
+  const importarSicar = async () => {
+    try {
+      setImportando(true)
+      setMensajeImportacion(null)
+
+      const respuesta = await window.colorManager.importarInventarioCSV()
+
+      if (!respuesta.success) {
+        setMensajeImportacion(`❌ Error: ${respuesta.error}`)
+        return
+      }
+
+      const resultado = respuesta.data as ImportacionResultado
+
+      // Construir mensaje de resumen
+      const detalles = [
+        `${resultado.procesados} registros procesados`,
+        `${resultado.actualizados} actualizados`,
+        `${resultado.creados} creados`,
+      ]
+
+      if (resultado.errores.length > 0) {
+        detalles.push(`${resultado.errores.length} errores`)
+      }
+
+      setMensajeImportacion(
+        `✅ Importación completada: ${detalles.join(" | ")}`
+      )
+
+      // Recargar inventario después de la importación exitosa
+      await cargarInventario()
+
+      // Limpiar mensaje después de 5 segundos
+      setTimeout(() => setMensajeImportacion(null), 5000)
+    } catch (err) {
+      setMensajeImportacion(`❌ Error: ${String(err)}`)
+    } finally {
+      setImportando(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 p-8">
       {/* Header */}
@@ -53,6 +97,17 @@ export default function InventoryView({ onBack }: Props) {
           <p className="text-gray-500 mt-1">Gestión de stock en tiempo real</p>
         </div>
         <div className="flex gap-3">
+          <button
+            onClick={importarSicar}
+            disabled={importando}
+            className={`px-4 py-2 text-sm rounded transition-colors font-medium flex items-center gap-2 ${
+              importando
+                ? "bg-blue-200 text-blue-700 cursor-not-allowed"
+                : "bg-blue-100 text-blue-600 border border-blue-200 hover:bg-blue-200"
+            }`}
+          >
+            {importando ? "📥 Importando..." : "📥 Importar SICAR"}
+          </button>
           <button
             onClick={resetearStock}
             className="px-4 py-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded hover:bg-red-100 transition-colors"
@@ -67,6 +122,13 @@ export default function InventoryView({ onBack }: Props) {
           </button>
         </div>
       </div>
+
+      {/* Mensaje de Importación */}
+      {mensajeImportacion && (
+        <div className="max-w-5xl mx-auto mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 text-sm">
+          {mensajeImportacion}
+        </div>
+      )}
 
       {/* Contenido */}
       <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -129,3 +191,4 @@ export default function InventoryView({ onBack }: Props) {
     </div>
   )
 }
+

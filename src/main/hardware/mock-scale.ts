@@ -6,7 +6,8 @@
  */
 
 import { BrowserWindow } from "electron"
-import { PesoEvent, IPCChannels } from "@shared/types"
+import { PesoEvent, IPCChannels } from "../../shared/types"
+// FIX REFERENCE: FIX-20260127-04
 
 export class MockScaleService {
   private isRunning = false

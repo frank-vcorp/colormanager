@@ -159,15 +159,59 @@
 > "Al iniciar un ingrediente, la báscula está bloqueada. El usuario debe escribir el SKU correcto (ej. K-1400) y dar Enter. Solo si coincide, el sistema desbloquea la barra de progreso."
 
 ### ✅ Tareas Técnicas
-- [ ] **(1) Input de Validación:** Agregar campo de texto auto-enfocado en `SessionController`. `(SOFIA)`
-- [ ] **(2) Lógica de Bloqueo:** Estado `verificado` que impide ver la báscula hasta que el SKU coincida. `(SOFIA)`
-- [ ] **(3) Feedback Visual:** Animación de éxito/error al validar el código. `(SOFIA)`
+- [x] **(1) Input de Validación:** Agregar campo de texto auto-enfocado en `SessionController`. `(SOFIA)`
+- [x] **(2) Lógica de Bloqueo:** Estado `verificado` que impide ver la báscula hasta que el SKU coincida. `(SOFIA)`
+- [x] **(3) Feedback Visual:** Animación de éxito/error al validar el código. `(SOFIA)`
 
 ### 🧪 Cómo Demostrar
 1. Iniciar mezcla.
 2. Intentar pesar -> La báscula debe decir "Esperando Validación".
 3. Escribir un código incorrecto -> Error rojo.
 4. Escribir el código correcto (scanner) -> Desbloqueo y check verde.
+
+---
+
+## 📋 MICRO-SPRINT 8 (Sprint 2.1): Base de Datos Real (Prisma + SQLite)
+**Fecha:** 2026-01-27
+**Duración estimada:** 2 horas
+**Objetivo:** Reemplazar la persistencia en archivos/localStorage por una Base de Datos SQLite robusta gestionada con Prisma ORM.
+
+### 🎯 Entregable Demostrable
+> "El sistema ahora guarda los datos en un archivo `.db` real. Podemos cerrar la app, borrar caché del navegador, reiniciar el PC y los datos (Inventario e Historial) persisten intactos."
+
+### ✅ Tareas Técnicas
+- [x] **(1) Setup Prisma:** Instalar `prisma`, `better-sqlite3` y configurar `schema.prisma` (Modelos: Product, UsageLog). `(SOFIA)`
+- [x] **(2) DB Service:** Crear `InventoryService` en el proceso Main para interactuar con la DB. `(SOFIA)`
+- [x] **(3) Migración IPC:** Conectar los canales IPC existentes (`obtenerInventario`, `guardarMezcla`) al nuevo servicio real. `(SOFIA)`
+- [x] **(4) Seed Script:** Script para poblar la DB inicial con los tintes de Sayer. `(SOFIA)`
+
+### 🧪 Cómo Demostrar
+1. Ejecutar migración de DB.
+2. Hacer modificaciones en inventario (consumir stock).
+3. Reiniciar completamente el proceso (Frontend y Backend).
+4. Verificar que el stock modificado se mantiene.
+
+---
+
+## 📋 MICRO-SPRINT 9 (Sprint 2.2): Importador Masivo SICAR
+**Fecha:** 2026-01-27
+**Duración estimada:** 2 horas
+**Objetivo:** Permitir cargar el inventario real desde un archivo CSV exportado de SICAR para inicializar o corregir stocks masivamente.
+
+### 🎯 Entregable Demostrable
+> "El usuario hace clic en 'Importar CSV', selecciona un archivo exportado de SICAR, y el sistema actualiza automáticamente los stocks de todos los tintes en la base de datos."
+
+### ✅ Tareas Técnicas
+- [x] **(1) CSV Parser Service:** Crear `ImportService` en Backend para parsear archivos CSV de SICAR.
+- [x] **(2) Prisma Upsert:** Implementar lógica para Crear o Actualizar ingredientes masivamente.
+- [x] **(3) IPC & Dialog:** Conectar botón de UI con `dialog.showOpenDialog` nativo de Electron.
+- [x] **(4) Feedback UI:** Mostrar estado de carga y resumen final (ej. "50 productos actualizados").
+
+### 🧪 Cómo Demostrar
+1. Tener un archivo `inventario_sicar.csv` con datos de prueba.
+2. Ir a Inventario -> Importar.
+3. Seleccionar archivo.
+4. Ver que la tabla se refresca con los nuevos valores del CSV.
 
 ---
 
@@ -179,7 +223,7 @@
 - [x] **Parser Recetas:** Convertir texto plano de Sayer a Objeto JSON (Receta).
 - [~] **Conexión Báscula Real:** Soporte listo via `MockScaleService`. driver `SerialPort` pendiente de deploy físico.
 - [x] **UI Mezcla:** Barra de progreso visual (Semáforo estático).
-- [ ] **Validación SKU:** Input de Scanner que compare contra ingrediente activo.
+- [x] **Validación SKU:** Input de Scanner que compare contra ingrediente activo.
 
 ### 🗓️ SPRINT 2: Inventario Cloud (Híbrido)
 > **Objetivo:** Gestión de inventario local, importación de SICAR y réplica a Nube (Railway/Next.js).
@@ -203,6 +247,7 @@
 
 ## Decisiones Arquitectónicas
 - [ARCH-20260127-01] Stack: Electron + React + SQLite.
+ - [ARCH-20260127-03] Importador Masivo SICAR: flujo de carga CSV para inicializar/corregir inventario.
 
 ---
 
@@ -210,3 +255,6 @@
 - 2026-01-27 · [X] Aprobado Micro-Sprint 1 "Inicialización y Cimientos": framework base Electron + React + SQLite aceptado tras demo visual del usuario. (ID: DOC-20260127-01)
 - 2026-01-27 · [X] Completado Micro-Sprint 2 "Lectura Sayer": Parser de recetas Sayer y visualización en RecetaViewer. (ID: IMPL-20260127-03)
 - 2026-01-27 · [X] Completado Micro-Sprint 3 "Báscula y UX de Mezcla": Componentes SmartScale y SessionController con hook useBascula. (ID: IMPL-20260127-04)
+ - 2026-01-27 · [X] Completado Micro-Sprint 8 "Base de Datos Real (Prisma + SQLite)": Integración de Prisma con SQLite, servicio de inventario y migración IPC finalizados. (ID: IMPL-20260127-08)
+ - 2026-01-27 · [x] Completado Micro-Sprint 9 "Importador SICAR": Carga masiva de inventario desde CSV funcionando. (ID: IMPL-20260127-09)
+ - 2026-01-27 · [x] Mejora Micro-Sprint 9: Soporte añadido para importar archivos Excel (.xls, .xlsx) usando librería `xlsx`. (ID: IMPL-20260127-10)

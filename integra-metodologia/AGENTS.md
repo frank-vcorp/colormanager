@@ -5,11 +5,11 @@
 ### Agentes Disponibles
 | Agente | Descripción | Modelo | Puede Escalar a |
 |--------|-------------|--------|-----------------|
-| **INTEGRA - Arquitecto** | Define qué construir, prioriza backlog y toma decisiones de arquitectura | Gemini 3 Pro | SOFIA, GEMINI, Deby, CRONISTA |
-| **SOFIA - Builder** | Implementa código, escribe tests y genera checkpoints de cada entrega | Claude Haiku 4.5 | INTEGRA, GEMINI, Deby, CRONISTA |
-| **GEMINI-CLOUD-QA** | Configura hosting (Vercel/GCP), valida Soft Gates y revisa código | Gemini 3 Pro | SOFIA, Deby, CRONISTA |
-| **Deby** | Analiza errores complejos, identifica causa raíz y genera dictámenes técnicos | Claude Opus 4.5 | ❌ (Solo recibe, no escala) |
-| **CRONISTA-Estados-Notas** | Mantiene PROYECTO.md actualizado, sincroniza estados y detecta inconsistencias | GPT-5.1 | Todos (notificaciones) |
+| **INTEGRA - Arquitecto** | Define qué construir, prioriza backlog y toma decisiones de arquitectura | GPT-5.2-Codex (272K ctx) | SOFIA, GEMINI, Deby, CRONISTA |
+| **SOFIA - Builder** | Implementa código, escribe tests y genera checkpoints de cada entrega | Claude Haiku 4.5 (128K ctx) | INTEGRA, GEMINI, Deby, CRONISTA |
+| **GEMINI-CLOUD-QA** | Configura hosting (Vercel/GCP), valida Soft Gates y revisa código | Gemini 3 Pro (109K ctx) | SOFIA, Deby, CRONISTA |
+| **Deby** | Analiza errores complejos, identifica causa raíz y genera dictámenes técnicos | Claude Opus 4.5 (128K ctx) | ❌ (Solo recibe, no escala) |
+| **CRONISTA-Estados-Notas** | Mantiene PROYECTO.md actualizado, sincroniza estados y detecta inconsistencias | GPT-5.1 (128K ctx) | Todos (notificaciones) |
 
 ### Mapa de Interconsultas
 ```

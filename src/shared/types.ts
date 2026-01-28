@@ -111,4 +111,13 @@ export const IPCInvokeChannels = {
   OBTENER_HISTORIAL: "mezcla:historial",
   OBTENER_INVENTARIO: "inventario:obtener",
   RESETEAR_INVENTARIO: "inventario:resetear",
+  IMPORTAR_INVENTARIO_CSV: "inventario:importar-csv",
 } as const
+
+// Resultado de importación CSV
+export interface ImportacionResultado {
+  procesados: number
+  actualizados: number
+  creados: number
+  errores: string[]
+}
