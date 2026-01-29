@@ -45,5 +45,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: colormanager-${{ matrix.os }}
-          path: dist/*.{exe,AppImage,yml,blockmap}
+          path: release/*.{exe,AppImage,yml,blockmap}
           if-no-files-found: warn

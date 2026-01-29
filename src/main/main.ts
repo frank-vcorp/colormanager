@@ -45,7 +45,7 @@ function createWindow() {
   const isDevelopment = process.env.NODE_ENV === "development"
   const startUrl = isDevelopment
     ? "http://localhost:5173" // Vite dev server
-    : `file://${path.join(__dirname, "../renderer/index.html")}` // Production build
+    : `file://${path.join(__dirname, "../../renderer/index.html")}` // Production build
 
   mainWindow.loadURL(startUrl)
 

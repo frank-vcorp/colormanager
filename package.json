@@ -57,11 +57,15 @@
     "appId": "com.frank-vcorp.colormanager",
     "productName": "ColorManager",
     "directories": {
-      "output": "dist"
+      "output": "release"
     },
     "files": [
-      "dist/**/*",
       "dist-electron/**/*",
+      {
+        "from": "dist-renderer",
+        "to": "renderer",
+        "filter": ["**/*"]
+      },
       "package.json",
       "prisma/**/*"
     ],
