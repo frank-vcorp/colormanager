@@ -4,14 +4,17 @@
  *
  * ID Intervención: IMPL-20260127-10
  * Referencia: context/specs/SPEC-IMPORTADOR-SICAR.md
+ * @updated IMPL-20260129-02: Agregar creación de Lotes con FIFO en importación
  */
 
 import fs from "fs"
 import path from "path"
+import { randomUUID } from "crypto"
 import { parse } from "csv-parse"
 import * as xlsx from "xlsx"
 import { getPrismaClient } from "../database/db"
 import { ImportacionResultado } from "../../shared/types"
+import { consumirStockFIFO } from "../database/inventoryService"
 // FIX REFERENCE: FIX-20260127-04
 
 /**
@@ -194,6 +197,11 @@ function readExcel(filePath: string): SicarRow[] {
 
 /**
  * Procesa las filas de datos (común para CSV y Excel)
+ * 
+ * Lógica FIFO (IMPL-20260129-02):
+ * 1. Si nuevo stock > stock actual: Crear Lote con delta = (nuevo - actual)
+ * 2. Si nuevo stock < stock actual: Consumir FIFO (actual - nuevo)
+ * 3. Si se crea producto: Crear Lote con todo el stock
  */
 async function processRows(rows: SicarRow[]): Promise<ImportacionResultado> {
   const prisma = getPrismaClient()
@@ -214,8 +222,9 @@ async function processRows(rows: SicarRow[]): Promise<ImportacionResultado> {
         }
 
         try {
-          const existencia = parseFloat(String(row.Existencia || 0))
+          const nuevoStock = parseFloat(String(row.Existencia || 0))
           const costo = row.Costo ? parseFloat(String(row.Costo)) : 0
+          const hoy = new Date().toISOString().split('T')[0] // YYYYMMDD format
 
           // Intentar actualizar primero
           const existente = await tx.ingrediente.findUnique({
@@ -223,31 +232,76 @@ async function processRows(rows: SicarRow[]): Promise<ImportacionResultado> {
           })
 
           if (existente) {
-            // Actualizar
+            // ACTUALIZACIÓN: Manejar diferencia de stock
+            const stockActual = existente.stockActual
+            const diferencia = nuevoStock - stockActual
+
+            if (diferencia > 0) {
+              // Ingreso: Crear Lote con el delta
+              await tx.lote.create({
+                data: {
+                  id: randomUUID(),
+                  ingredienteId: existente.id,
+                  numeroLote: `SICAR-IMPORT-${hoy}-${row.Clave}`,
+                  cantidad: diferencia,
+                  estado: "activo",
+                },
+              })
+              console.log(
+                `[ImportService] Ingreso detectado para ${row.Clave}: +${diferencia}g, Lote creado`
+              )
+            } else if (diferencia < 0) {
+              // Salida: Consumir FIFO usando transacción local
+              const cantidadAConsumir = Math.abs(diferencia)
+              await consumirStockFIFO(existente.id, cantidadAConsumir, tx)
+
+              console.log(
+                `[ImportService] Salida detectada para ${row.Clave}: -${cantidadAConsumir}g, FIFO consumido`
+              )
+            }
+
+            // Actualizar el ingrediente
             await tx.ingrediente.update({
               where: { codigo: row.Clave },
               data: {
                 nombre: row.Descripcion,
-                stockActual: existencia,
+                stockActual: nuevoStock,
                 costo: costo,
                 updatedAt: new Date(),
               },
             })
             resultado.actualizados++
           } else {
-            // Crear nuevo
+            // CREACIÓN: Crear ingrediente con Lote Inicial
+            const nuevoIngredienteId = `ING-${row.Clave}-${Date.now()}`
+            
             await tx.ingrediente.create({
               data: {
-                id: `ING-${row.Clave}-${Date.now()}`,
+                id: nuevoIngredienteId,
                 codigo: row.Clave,
                 nombre: row.Descripcion,
                 descripcion: `Importado de SICAR: ${row.Descripcion}`,
                 densidad: 1.0,
                 costo: costo,
-                stockActual: existencia,
+                stockActual: nuevoStock,
                 stockMinimo: 100,
               },
             })
+
+            // Crear Lote Inicial con todo el stock (IMPL-20260129-02)
+            await tx.lote.create({
+              data: {
+                id: randomUUID(),
+                ingredienteId: nuevoIngredienteId,
+                numeroLote: `SICAR-IMPORT-${hoy}-${row.Clave}`,
+                cantidad: nuevoStock,
+                estado: nuevoStock > 0 ? "activo" : "agotado",
+              },
+            })
+
+            console.log(
+              `[ImportService] Producto creado: ${row.Clave} con Lote Inicial (${nuevoStock}g)`
+            )
             resultado.creados++
           }
           resultado.procesados++

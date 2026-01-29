@@ -3,24 +3,29 @@
   "version": "0.0.1",
   "description": "Auditor de Mezclas - Sistema de control de producción para taller de igualación automotriz",
   "type": "module",
-  "main": "dist-electron/main/main.cjs",
+  "main": "dist-electron/main/main.js",
   "homepage": "./",
   "scripts": {
-    "build:main": "tsc -p tsconfig.main.json && find dist-electron -name '*.js' ! -name '*.map' -exec sh -c 'mv \"$1\" \"${1%.js}.cjs\"' _ {} \\;",
+    "build:main": "tsc -p tsconfig.main.json",
     "watch:main": "node scripts/watch-main.mjs",
-    "dev": "concurrently -k \"npm run build:main -- -w\" \"vite\" \"wait-on http://localhost:5173 && wait-on dist-electron/main/main.cjs && ELECTRON_DISABLE_GPU=1 electron . --no-sandbox --disable-gpu\"",
+    "dev": "concurrently -k \"pnpm run watch:main\" \"vite\" \"wait-on http://localhost:5173 && wait-on dist-electron/main/main.js && NODE_ENV=development ELECTRON_DISABLE_GPU=1 electron . --no-sandbox --disable-gpu\"",
+    "dev:container": "concurrently -k \"pnpm run watch:main\" \"vite\" \"wait-on http://localhost:5173 && wait-on dist-electron/main/main.js && NODE_ENV=development ELECTRON_DISABLE_GPU=1 xvfb-run --auto-servernum --server-args='-screen 0 1280x1024x24' electron . --no-sandbox --disable-gpu --disable-dev-shm-usage\"",
     "dev:headless": "pnpm run build:main && concurrently -k \"pnpm run watch:main\" \"vite\"",
-    "build": "vite build && electron-builder",
+    "build": "pnpm run build:main && vite build && electron-builder",
     "preview": "vite preview",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@prisma/client": "^5.21.1",
     "@tanstack/react-query": "^5.51.21",
+    "@types/jsbarcode": "^3.11.4",
+    "bcryptjs": "^3.0.3",
     "chokidar": "^5.0.0",
     "csv-parse": "^6.1.0",
     "electron-squirrel-startup": "^1.0.0",
+    "jsbarcode": "^3.12.3",
     "react": "^19.0.0",
+    "react-barcode": "^1.6.1",
     "react-dom": "^19.0.0",
     "recharts": "^2.12.5",
     "uuid": "^10.0.0",
@@ -28,6 +33,7 @@
     "zustand": "^4.5.5"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^3.0.0",
     "@types/chokidar": "^2.1.7",
     "@types/node": "^20.12.12",
     "@types/react": "^19.0.0",
@@ -46,5 +52,29 @@
     "typescript": "^5.4.5",
     "vite": "^5.2.11",
     "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.frank-vcorp.colormanager",
+    "productName": "ColorManager",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "package.json",
+      "prisma/**/*"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "Office"
+    }
   }
 }

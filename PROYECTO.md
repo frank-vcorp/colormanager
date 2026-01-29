@@ -215,6 +215,123 @@
 
 ---
 
+## 📋 MICRO-SPRINT 10 (Sprint 2.3): Sync Nube (Railway)
+**Fecha:** 2026-01-28
+**Duración estimada:** 2-4 horas
+**Objetivo:** Sincronizar el inventario local hacia un servicio cloud en Railway y mostrar estado de envío.
+
+### 🎯 Entregable Demostrable
+> "El inventario local se sincroniza a la nube y el usuario ve el estado de envío."
+
+### ✅ Tareas Técnicas
+- [x] **(1) Endpoint Cloud:** Definir endpoint REST en servicio Railway.
+- [x] **(2) Sync Service:** Crear servicio en Main para enviar batch de inventario.
+- [x] **(3) IPC:** Exponer `SYNC_INVENTARIO` para ejecutar sincronización.
+- [x] **(4) UI Estado:** Botón y feedback de sincronización en Inventario.
+
+### 🧪 Cómo Demostrar
+1. Abrir Inventario.
+2. Clic en "Sincronizar".
+3. Ver estado "Enviado" con timestamp.
+
+---
+
+## 📋 MICRO-SPRINT 11 (Sprint 2.4): Ajustes de Inventario y Mermas
+**Fecha estimada:** 2026-01-28
+**Duración estimada:** 2 horas
+**Estado:** [✓] Completado
+**Objetivo:** Permitir ajustes manuales (positivos o negativos) al stock desde la UI, registrando motivo y dejando traza en SyncLog para auditoría.
+
+### 🎯 Entregable Demostrable
+> "Desde la vista de Inventario, el usuario puede aplicar un ajuste manual a un SKU (ingreso o merma), ver el nuevo stock reflejado en la tabla y confirmar que existe un registro de auditoría asociado al ajuste."
+
+### ✅ Tareas Técnicas
+- [x] **(1) Servicio de Ajustes:** Extender el servicio de inventario para aplicar deltas de stock sobre `Ingrediente` y registrar la acción en `SyncLog` con `AJUSTE_MANUAL`.
+- [x] **(2) Canal IPC:** Implementar `inventory:adjust-stock` (Invoke) recibiendo `{ sku, cantidad, motivo, operacion }` y devolviendo `{ success, nuevoStock }`.
+- [x] **(3) UI de Ajuste:** Agregar columna "Acciones" y botón "📝 Ajustar" en `InventoryView`, con modal "Ajustar Stock" que permita seleccionar tipo de ajuste (+/-), cantidad y motivo.
+- [x] **(4) Validaciones y Feedback:** Evitar stock negativo, exigir motivo y cantidad > 0, mostrando mensajes claros de éxito/error.
+
+### 🧪 Cómo Demostrar
+1. Seleccionar un ingrediente con 1000g en Inventario.
+2. Abrir el modal "Ajustar Stock" y registrar una merma de -100g con motivo "Merma/Derrame".
+3. Verificar que el stock visual pasa a 900g.
+4. Verificar en la base de datos que existe un registro en `SyncLog` con `AJUSTE_MANUAL` y los campos `{ sku, delta, motivo, stockAnterior, stockNuevo }`.
+
+> ID de intervención: DOC-20260128-01 · Basado en SPEC `SPEC-AJUSTES-INVENTARIO` (ARCH-20260128-02).
+
+## 📋 MICRO-SPRINT 12 (Sprint 2.5): Etiquetado PDF de Inventario
+**Fecha estimada:** 2026-01-28
+**Duración estimada:** 2 horas
+**Estado:** [✓] Completado
+**Objetivo:** Permitir la generación e impresión de etiquetas PDF universales para cada producto de inventario, con código de barras escaneable.
+
+### 🎯 Entregable Demostrable
+> "Desde la vista de Inventario, el usuario puede imprimir una etiqueta en PDF para un SKU específico, que incluya nombre, SKU, código de barras y fecha, lista para escanearse en la estación de mezcla."
+
+### ✅ Tareas Técnicas
+- [x] **(1) Acción de Etiquetado en UI:** Agregar botón "🖨️" en la columna de Acciones de `InventoryView` para disparar la generación de etiqueta.
+- [x] **(2) Componente de Etiqueta:** Crear componente `LabelTemplate` que use `react-barcode` para renderizar el código de barras (Code 128) y muestre nombre, SKU y fecha de impresión.
+- [x] **(3) Modal de Previsualización:** Implementar modal `PrintPreview` con layout específico y estilos `@media print` para optimizar la salida a PDF/impresora del SO.
+- [x] **(4) Flujo de Impresión:** Conectar el botón "Imprimir" del modal con `window.print()`, validando que el código de barras sea legible y el SKU coincida con el de base de datos.
+
+### 🧪 Cómo Demostrar
+1. Abrir Inventario y seleccionar un producto.
+2. Hacer clic en el botón "🖨️" de la fila.
+3. Ver el modal de previsualización con la etiqueta y su código de barras.
+4. Pulsar "Imprimir" y guardar como PDF.
+5. Validar visualmente el layout y, si es posible, escanear el código de barras generado.
+
+> ID de intervención: DOC-20260128-02 · Basado en SPEC `SPEC-ETIQUETADO-PDF` (ARCH-20260128-03).
+
+---
+
+## 📋 MICRO-SPRINT 13 (Sprint 3.1): Seguridad y Roles
+**Fecha estimada:** 2026-01-28
+**Duración estimada:** 2-3 horas
+**Estado:** [✓] Completado
+**Objetivo:** Implementar autenticación de usuarios y restricción de funcionalidades sensibles (Ajustes, Configuración) mediante roles (ADMIN/OPERADOR).
+
+### 🎯 Entregable Demostrable
+> "Al abrir la app, se bloquea el acceso hasta que el usuario se identifique. Un usuario 'Operador' puede mezclar y ver inventario, pero los botones de 'Importar' y 'Ajustar Stock' desaparecen o están deshabilitados para él. Solo el Admin tiene control total." Implementado con Login View y Route Guards en Inventario. Admin default: admin/admin123.
+
+### ✅ Tareas Técnicas
+- [x] **(1) Modelo User:** Actualizar Schema Prisma con tabla `User` (username, hash, role) y migrar DB. `(SOFIA)`
+- [x] **(2) AuthService Main:** Servicio en Backend para hash de contraseñas (bcrypt), validación de credenciales y seed inicial de Admin. `(SOFIA)`
+- [x] **(3) Login UI:** Pantalla de Login y Contexto de React (`AuthProvider`) para gestionar la sesión en el cliente. `(SOFIA)`
+- [x] **(4) Route Guards:** Proteger componentes sensibles. Ocultar botones de 'Ajuste' e 'Importación' en `InventoryView` según el rol. `(SOFIA)`
+
+### 🧪 Cómo Demostrar
+1. Abrir la app -> Ver pantalla de Login.
+2. Ingresar como Operador -> Ir a Inventario -> Verificar que NO aparece el botón "Ajustar" ni "Importar".
+3. Salir (Logout).
+4. Ingresar como Admin -> Ir a Inventario -> Verificar que SÍ aparecen los botones.
+
+> ID de intervención: ARCH-20260128-04 · Basado en SPEC `SPEC-SEGURIDAD-LOGIN` y `SPEC-SEGURIDAD`.
+> ID de intervención: DOC-20260129-01 · Actualización de estado Sprint 3.1 y cierre de tareas técnicas. Relacionado: IMPL-20260128-04.
+
+## 📋 MICRO-SPRINT 14 (Sprint 2.6): Gestión FIFO y Lotes
+**Fecha estimada:** 2026-01-29
+**Estado:** [✓] Completado
+**Objetivo:** Implementar sistema de rotación de inventario FIFO (First-In-First-Out) mediante gestión de lotes.
+
+### 🎯 Entregable Demostrable
+> "Al realizar mezclas, el sistema descuenta automáticamente material del lote más antiguo. En el inventario, se pueden desplegar los detalles de cada producto para ver sus lotes individuales. Implementación completa backend (FIFO) y frontend (tabla anidada de lotes). Importador crea lotes automáticos."
+
+### ✅ Tareas Técnicas
+- [x] **(1) DB Relations:** Relacionar `Ingrediente` 1:N `Lote` en Prisma y migrar.
+- [x] **(2) Algoritmo FIFO:** Implementar lógica de consumo en cascada en `inventoryService`.
+- [x] **(3) Adaptación Importador:** Ajustar importación CSV para crear lotes por diferencia o lote inicial.
+- [x] **(4) UI Detalles:** Vista expandible en tabla de inventario para mostrar desglose por lotes.
+
+### 🧪 Cómo Demostrar
+1. Tener un producto con 2 lotes: Lote A (50g, Viejo) y Lote B (100g, Nuevo).
+2. Hacer mezcla de 70g.
+3. Verificar que Lote A queda en 0 (agotado) y Lote B en 80g.
+
+> ID de intervención: DOC-20260129-03 · Actualización de estado Micro-Sprint 14 (Sprint 2.6) y Roadmap. Relacionado: IMPL-20260129-03.
+
+---
+
 ## Roadmap de Sprints
 
 ### 🗓️ [✓] SPRINT 1: Control de Mezcla (Core)
@@ -234,11 +351,15 @@
 - [ ] **Gestión FIFO:** Lógica para bloquear lotes nuevos si hay viejos.
 - [ ] **Etiquetado:** Generación de ZPL para Zebra (IDs Únicos).
 
+- [✓] **Sprint 2.6 - Gestión FIFO y Lotes:** Implementación de rotación FIFO por lotes en inventario y consumo durante mezclas.
+
 ### 🗓️ SPRINT 3: Seguridad y Hardening
 > **Objetivo:** Bloqueos de seguridad, roles de usuario y manejo de excepciones (mermas).
 - [ ] **Login:** Roles Admin vs Igualador.
 - [ ] **Modo Kiosco:** Bloqueo de cierre de ventana para igualadores.
 - [ ] **Reporte Mermas:** Pantalla de justificación de pérdidas.
+
+- [✓] **Sprint 3.1 - Seguridad y Roles:** Autenticación de usuarios y restricción de funcionalidades sensibles (Ajustes, Configuración) según rol (ADMIN/OPERADOR).
 
 ---
 
@@ -258,3 +379,13 @@
  - 2026-01-27 · [X] Completado Micro-Sprint 8 "Base de Datos Real (Prisma + SQLite)": Integración de Prisma con SQLite, servicio de inventario y migración IPC finalizados. (ID: IMPL-20260127-08)
  - 2026-01-27 · [x] Completado Micro-Sprint 9 "Importador SICAR": Carga masiva de inventario desde CSV funcionando. (ID: IMPL-20260127-09)
  - 2026-01-27 · [x] Mejora Micro-Sprint 9: Soporte añadido para importar archivos Excel (.xls, .xlsx) usando librería `xlsx`. (ID: IMPL-20260127-10)
+ - 2026-01-28 · [x] Completado Micro-Sprint 10 "Sync Nube (Railway)": Servicio de sincronización, IPC y UI de estado implementados y auditados. (ID: QA-20260128-01)
+ - 2026-01-28 · [x] Completado Micro-Sprint 11 "Ajustes de Inventario y Mermas" (Sprint 2.4): Definición de alcance, implementación y tareas técnicas según SPEC-AJUSTES-INVENTARIO. (ID: DOC-20260128-01)
+ - 2026-01-28 · [~] Planificado Micro-Sprint 12 "Etiquetado PDF de Inventario" (Sprint 2.5): Definición de alcance y tareas técnicas según SPEC-ETIQUETADO-PDF. (ID: DOC-20260128-02)
+
+- 2026-01-28 · [x] Completado Micro-Sprint 11 "Ajustes de Inventario y Mermas": Funcionalidad de corrección de stock con auditoría. (ID: IMPL-20260128-02)
+- 2026-01-28 · [x] Completado Micro-Sprint 12 "Etiquetado PDF": Generador universal de etiquetas de código de barras. (ID: INFRA-20260128-02)
+
+> ID de intervención: DOC-20260128-03 · Actualización de Historial (Micro-Sprints 11 y 12). Respaldo: context/infraestructura/QA_REPORT_20260128_ETIQUETADO.md
+
+> ID de intervención: DOC-20260129-02 · Alta Micro-Sprint 14 (Sprint 2.6) y actualización de Roadmap. Relacionado: ARCH-20260129-02.

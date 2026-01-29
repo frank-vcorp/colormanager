@@ -198,12 +198,84 @@ export function setupBrowserMock() {
     // Inventario: Resetear stock a valores iniciales
     resetearInventario: async () => {
       const inventarioInicial: Producto[] = [
-        { sku: "KT-1400", nombre: "Tinte Rojo Base", stockActual: 2000, unidad: "g" },
-        { sku: "KT-1100", nombre: "Tinte Amarillo Oscuro", stockActual: 2000, unidad: "g" },
-        { sku: "KT-1930", nombre: "Tinte Naranja", stockActual: 2000, unidad: "g" },
-        { sku: "KT-1420", nombre: "Tinte Blanco", stockActual: 2000, unidad: "g" },
-        { sku: "KT-1550", nombre: "Tinte Negro", stockActual: 2000, unidad: "g" },
-        { sku: "KT-1220", nombre: "Tinte Verde", stockActual: 2000, unidad: "g" },
+        { 
+          sku: "KT-1400", 
+          nombre: "Tinte Rojo Base", 
+          stockActual: 2000, 
+          unidad: "g",
+          lotes: [{
+            id: "lote-1",
+            numeroLote: "LOTE-INICIAL-KT-1400",
+            cantidad: 2000,
+            estado: "activo",
+            createdAt: new Date().toISOString(),
+          }]
+        },
+        { 
+          sku: "KT-1100", 
+          nombre: "Tinte Amarillo Oscuro", 
+          stockActual: 2000, 
+          unidad: "g",
+          lotes: [{
+            id: "lote-2",
+            numeroLote: "LOTE-INICIAL-KT-1100",
+            cantidad: 2000,
+            estado: "activo",
+            createdAt: new Date().toISOString(),
+          }]
+        },
+        { 
+          sku: "KT-1930", 
+          nombre: "Tinte Naranja", 
+          stockActual: 2000, 
+          unidad: "g",
+          lotes: [{
+            id: "lote-3",
+            numeroLote: "LOTE-INICIAL-KT-1930",
+            cantidad: 2000,
+            estado: "activo",
+            createdAt: new Date().toISOString(),
+          }]
+        },
+        { 
+          sku: "KT-1420", 
+          nombre: "Tinte Blanco", 
+          stockActual: 2000, 
+          unidad: "g",
+          lotes: [{
+            id: "lote-4",
+            numeroLote: "LOTE-INICIAL-KT-1420",
+            cantidad: 2000,
+            estado: "activo",
+            createdAt: new Date().toISOString(),
+          }]
+        },
+        { 
+          sku: "KT-1550", 
+          nombre: "Tinte Negro", 
+          stockActual: 2000, 
+          unidad: "g",
+          lotes: [{
+            id: "lote-5",
+            numeroLote: "LOTE-INICIAL-KT-1550",
+            cantidad: 2000,
+            estado: "activo",
+            createdAt: new Date().toISOString(),
+          }]
+        },
+        { 
+          sku: "KT-1220", 
+          nombre: "Tinte Verde", 
+          stockActual: 2000, 
+          unidad: "g",
+          lotes: [{
+            id: "lote-6",
+            numeroLote: "LOTE-INICIAL-KT-1220",
+            cantidad: 2000,
+            estado: "activo",
+            createdAt: new Date().toISOString(),
+          }]
+        },
       ]
       localStorage.setItem("colormanager:inventario", JSON.stringify(inventarioInicial))
       console.log("[MOCK] Inventario reseteado")

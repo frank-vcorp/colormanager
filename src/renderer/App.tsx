@@ -5,6 +5,7 @@
  * 
  * ID Intervención: IMPL-20260127-06 (Tipado seguro + Toasts + Modales)
  * FIX REFERENCE: FIX-20260127-03 - Eliminado import de electron.d.ts (tipos globales no se importan)
+ * @updated IMPL-20260128-01: Integración de AuthProvider y LoginView
  * @see /src/renderer/types/electron.d.ts para interfaz Window.colorManager
  */
 
@@ -13,6 +14,8 @@ import { useState, useEffect } from "react"
 import { PesoEvent, RecetaSayer } from "@shared/types"
 import { ToastProvider } from "./hooks/useToast" // FIX-20260127-03: extensión cambiada a .tsx
 import { ModalProvider } from "./components/ui/Modal"
+import { AuthProvider, useAuth } from "./context/AuthProvider"
+import { LoginView } from "./components/LoginView"
 import Toast from "./components/ui/Toast"
 import ScaleDisplay from "./components/ScaleDisplay"
 import HeaderBar from "./components/HeaderBar"
@@ -21,7 +24,31 @@ import SessionController from "./components/SessionController"
 import HistoryView from "./components/HistoryView"
 import InventoryView from "./components/InventoryView"
 
-export default function App() {
+function AppContent() {
+  const { user, loading } = useAuth()
+
+  // Si está cargando, mostrar spinner simple
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-cm-bg flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <p className="mt-4 text-cm-text">Cargando...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Si no hay usuario, mostrar login
+  if (!user) {
+    return <LoginView />
+  }
+
+  // Si hay usuario, mostrar la aplicación
+  return <AppMain />
+}
+
+function AppMain() {
   const [pesoActual, setPesoActual] = useState(0)
   const [basculaConectada, setBasculaConectada] = useState(false)
   const [mezclando, setMezclando] = useState(false)
@@ -83,40 +110,38 @@ export default function App() {
   }
 
   return (
-    <ModalProvider>
-      <ToastProvider>
-        <div className="min-h-screen bg-cm-bg flex flex-col">
-          <Toast />
-          {/* Vista: Inventario */}
-          {vista === "inventario" && (
-            <InventoryView onBack={() => setVista("home")} />
-          )}
+    <div className="min-h-screen bg-cm-bg flex flex-col">
+      <Toast />
+      {/* Vista: Inventario */}
+      {vista === "inventario" && (
+        <InventoryView onBack={() => setVista("home")} />
+      )}
 
-          {/* Vista: Historial */}
-          {vista === "historial" && (
-            <HistoryView onBack={() => setVista("home")} />
-          )}
+      {/* Vista: Historial */}
+      {vista === "historial" && (
+        <HistoryView onBack={() => setVista("home")} />
+      )}
 
-          {/* Vista: Mezcla */}
-          {vista === "mezcla" && sesionMezcla && recetaDetectada && (
-            <SessionController
-              receta={recetaDetectada}
-              onFinish={handleFinalizarMezcla}
-            />
-          )}
+      {/* Vista: Mezcla */}
+      {vista === "mezcla" && sesionMezcla && recetaDetectada && (
+        <SessionController
+          receta={recetaDetectada}
+          onFinish={handleFinalizarMezcla}
+        />
+      )}
 
-          {/* Vista: Home */}
-          {vista === "home" && (
-            <>
-              {/* Header */}
-              <HeaderBar 
-                basculaConectada={basculaConectada}
-                onHistorialClick={() => setVista("historial")}
-                onInventarioClick={() => setVista("inventario")}
-              />
+      {/* Vista: Home */}
+      {vista === "home" && (
+        <>
+          {/* Header */}
+          <HeaderBar 
+            basculaConectada={basculaConectada}
+            onHistorialClick={() => setVista("historial")}
+            onInventarioClick={() => setVista("inventario")}
+          />
 
-              {/* Main Content */}
-              <main className="flex-1 flex flex-col items-center justify-center gap-8 p-8">
+          {/* Main Content */}
+          <main className="flex-1 flex flex-col items-center justify-center gap-8 p-8">
                 {/* Error Message */}
                 {error && (
                   <div className="w-full max-w-2xl bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
@@ -200,6 +225,16 @@ export default function App() {
             </>
           )}
         </div>
+      )
+    }
+
+export default function App() {
+  return (
+    <ModalProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
       </ToastProvider>
     </ModalProvider>
   )

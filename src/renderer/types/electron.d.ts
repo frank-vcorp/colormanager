@@ -6,7 +6,7 @@
  * @see /src/shared/types.ts para interfaces compartidas
  */
 
-import { PesoEvent, RecetaSayer, RegistroMezcla, Producto, ImportacionResultado } from "@shared/types"
+import { PesoEvent, RecetaSayer, RegistroMezcla, Producto, ImportacionResultado, SyncResponse, AjusteStockParams, AjusteStockResponse, AuthResponse } from "@shared/types"
 
 declare global {
   interface Window {
@@ -27,7 +27,14 @@ declare global {
       obtenerInventario: () => Promise<Producto[]>
       resetearInventario: () => Promise<Producto[]>
       importarInventarioCSV: () => Promise<{ success: boolean; error?: string; data?: ImportacionResultado }>
+      sincronizarInventario: () => Promise<SyncResponse>
+      ajustarStock: (params: AjusteStockParams) => Promise<AjusteStockResponse>
       tara?: () => Promise<void> // Opcional para báscula
+      
+      // Auth
+      login: (username: string, pass: string) => Promise<AuthResponse>
+      logout: () => Promise<void>
+      checkAuth: () => Promise<AuthResponse>
     }
   }
 }

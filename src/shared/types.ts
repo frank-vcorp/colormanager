@@ -91,6 +91,25 @@ export const IPCChannels = {
   ESTADO_BASCULA: "bascula:estado",
 } as const
 
+// Lote (Partida) de Ingrediente - IMPL-20260129-01
+export interface Lote {
+  id: string
+  numeroLote: string
+  cantidad: number
+  estado: "activo" | "parcial" | "agotado"
+  createdAt: string
+}
+
+// Lote de producto (FIFO - IMPL-20260129-01)
+export interface Lote {
+  id: string
+  numeroLote: string
+  cantidad: number
+  fechaVencimiento?: string
+  estado: "activo" | "parcial" | "agotado"
+  createdAt: string
+}
+
 // Producto de inventario
 export interface Producto {
   sku: string
@@ -98,6 +117,7 @@ export interface Producto {
   stockActual: number
   unidad: "g" | "ml"
   costoPromedio?: number
+  lotes?: Lote[] // Lotes del producto (opcional, cargado por demanda - IMPL-20260129-01)
 }
 
 // Canales de IPC (Renderer -> Main)
@@ -112,7 +132,29 @@ export const IPCInvokeChannels = {
   OBTENER_INVENTARIO: "inventario:obtener",
   RESETEAR_INVENTARIO: "inventario:resetear",
   IMPORTAR_INVENTARIO_CSV: "inventario:importar-csv",
+  SYNC_INVENTARIO: "inventario:sincronizar",
+  AJUSTAR_STOCK: "inventario:ajustar-stock",
+  AUTH_LOGIN: "auth:login",
+  AUTH_LOGOUT: "auth:logout",
+  AUTH_CHECK: "auth:check",
 } as const
+
+// Usuario autenticado
+export interface User {
+  id: number
+  username: string
+  role: "ADMIN" | "OPERADOR"
+  nombre: string
+}
+
+// Resultado de autenticación
+export interface AuthResponse {
+  success: boolean
+  user?: User
+  error?: string
+  sessionId?: string
+}
+
 
 // Resultado de importación CSV
 export interface ImportacionResultado {
@@ -120,4 +162,26 @@ export interface ImportacionResultado {
   actualizados: number
   creados: number
   errores: string[]
+}
+
+// Respuesta de sincronización con nube
+export interface SyncResponse {
+  success: boolean
+  processed?: number
+  error?: string
+  timestamp?: string
+}
+
+// Parámetros y respuesta de ajuste de stock
+export interface AjusteStockParams {
+  sku: string
+  cantidad: number
+  motivo: string
+  operacion: "sumar" | "restar"
+}
+
+export interface AjusteStockResponse {
+  success: boolean
+  nuevoStock?: number
+  error?: string
 }

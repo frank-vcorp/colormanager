@@ -1,3 +1,8 @@
+/**
+ * Configuración de Vite
+ * ID Intervención: FIX-20260128-02
+ * Respaldo: context/interconsultas/DICTAMEN_FIX-20260128-02.md
+ */
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
@@ -14,7 +19,7 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    strictPort: false,
+    strictPort: true,
   },
   build: {
     outDir: 'dist-renderer',

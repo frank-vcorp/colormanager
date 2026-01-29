@@ -4,11 +4,13 @@
  * 
  * ID Intervención: FIX-20260127-04 + IMPL-20260127-09
  * @updated IMPL-20260128-01: Validar compilación a .cjs y path aliases resueltos
+ * @updated IMPL-20260128-03: Agregar sincronizarInventario() para Micro-Sprint 10
+ * @updated IMPL-20260128-02: Agregar ajustarStock() para Micro-Sprint 11
  * @see Checkpoints/IMPL-20260128-01-ElectronEnContenedor.md
  */
 
 import { contextBridge, ipcRenderer } from "electron"
-import { IPCChannels, IPCInvokeChannels, PesoEvent, RecetaSayer } from "../../shared/types"
+import { IPCChannels, IPCInvokeChannels, PesoEvent, RecetaSayer, AjusteStockParams } from "../../shared/types"
 // FIX REFERENCE: FIX-20260127-04
 
 // Exponer solo lo necesario via ContextBridge
@@ -41,6 +43,13 @@ contextBridge.exposeInMainWorld("colorManager", {
   obtenerInventario: () => ipcRenderer.invoke(IPCInvokeChannels.OBTENER_INVENTARIO),
   resetearInventario: () => ipcRenderer.invoke(IPCInvokeChannels.RESETEAR_INVENTARIO),
   importarInventarioCSV: () => ipcRenderer.invoke(IPCInvokeChannels.IMPORTAR_INVENTARIO_CSV),
+  sincronizarInventario: () => ipcRenderer.invoke(IPCInvokeChannels.SYNC_INVENTARIO),
+  ajustarStock: (params: AjusteStockParams) => ipcRenderer.invoke(IPCInvokeChannels.AJUSTAR_STOCK, params),
+  
+  // Auth
+  login: (username: string, pass: string) => ipcRenderer.invoke(IPCInvokeChannels.AUTH_LOGIN, username, pass),
+  logout: () => ipcRenderer.invoke(IPCInvokeChannels.AUTH_LOGOUT),
+  checkAuth: () => ipcRenderer.invoke(IPCInvokeChannels.AUTH_CHECK),
 })
 
 export type ColorManagerAPI = typeof contextBridge.exposeInMainWorld
