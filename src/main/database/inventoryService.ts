@@ -405,7 +405,8 @@ export async function adjustStock(
       )
     } else {
       // SALIDA: Usar FIFO para consumir (IMPL-20260129-01)
-      await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await prisma.$transaction(async (tx: any) => {
         // Primero consumir FIFO
         await consumirStockFIFO(ingrediente.id, cantidad, tx)
         
