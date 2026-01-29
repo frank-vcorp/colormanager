@@ -1,7 +1,7 @@
-// FIX REFERENCE: FIX-20260129-02 - Output personalizado para empaquetado Electron
+// FIX REFERENCE: FIX-20260129-04 - Output a carpeta dedicada para extraResources
 generator client {
   provider      = "prisma-client-js"
-  output        = "../node_modules/.prisma/client"
+  output        = "../generated/prisma-client"
   binaryTargets = ["native", "debian-openssl-3.0.x", "windows", "linux-musl-openssl-3.0.x"]
 }
 

@@ -3,64 +3,49 @@
  * Gestiona la conexión única a la base de datos SQLite
  *
  * ID Intervención: IMPL-20260127-08
- * FIX REFERENCE: FIX-20260129-02 - Configuración de paths para producción Electron
+ * FIX REFERENCE: FIX-20260129-04 - Usar cliente generado en carpeta dedicada
  * Referencia: context/Contexto_Tecnico_ColorManager.md
  */
 
-import { PrismaClient } from "@prisma/client"
 import path from "path"
 import { app } from "electron"
 import fs from "fs"
 
-let prismaInstance: PrismaClient | null = null
+// Determinar si estamos en desarrollo o producción ANTES de importar Prisma
+const inDev = process.env.NODE_ENV === "development" || !app.isPackaged
 
-/**
- * Determina si estamos en entorno de desarrollo
- */
-function isDev(): boolean {
-  return process.env.NODE_ENV === "development" || !app.isPackaged
-}
-
-/**
- * Obtiene la ruta al Query Engine de Prisma según el entorno
- * FIX REFERENCE: FIX-20260129-02 - Resuelve paths de Query Engine en producción
- */
-function getPrismaEngineDirectory(): string {
-  if (isDev()) {
-    // En desarrollo, el cliente está en node_modules
-    return path.join(process.cwd(), "node_modules", ".prisma", "client")
-  }
-  
-  // En producción, el engine está en resources/prisma-client (extraResources)
+// En producción, configurar las variables de entorno ANTES de importar PrismaClient
+if (!inDev) {
   const resourcesPath = process.resourcesPath
-  const enginePath = path.join(resourcesPath, "prisma-client")
+  const prismaClientPath = path.join(resourcesPath, "prisma-client")
   
-  // Fallback: buscar en app.asar.unpacked
-  const unpackedPath = path.join(resourcesPath, "app.asar.unpacked", "node_modules", ".prisma", "client")
+  // Configurar la ruta del Query Engine
+  const engineName = process.platform === 'win32' 
+    ? 'query_engine-windows.dll.node'
+    : 'libquery_engine-debian-openssl-3.0.x.so.node'
   
-  if (fs.existsSync(enginePath)) {
-    console.log(`[DB] Query Engine encontrado en: ${enginePath}`)
-    return enginePath
-  }
+  process.env.PRISMA_QUERY_ENGINE_LIBRARY = path.join(prismaClientPath, engineName)
   
-  if (fs.existsSync(unpackedPath)) {
-    console.log(`[DB] Query Engine encontrado en unpacked: ${unpackedPath}`)
-    return unpackedPath
-  }
-  
-  console.warn(`[DB] ADVERTENCIA: No se encontró Query Engine en paths esperados`)
-  return enginePath // Retornamos el path esperado para que Prisma muestre error descriptivo
+  console.log(`[DB] Producción detectada. Resources: ${resourcesPath}`)
+  console.log(`[DB] Prisma Client Path: ${prismaClientPath}`)
+  console.log(`[DB] Query Engine: ${process.env.PRISMA_QUERY_ENGINE_LIBRARY}`)
 }
+
+// Ahora sí importamos PrismaClient (después de configurar las variables de entorno)
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { PrismaClient } = inDev 
+  ? require("../../../generated/prisma-client")
+  : require(path.join(process.resourcesPath, "prisma-client"))
+
+let prismaInstance: InstanceType<typeof PrismaClient> | null = null
 
 /**
  * Obtiene o crea la instancia singleton de PrismaClient
  * En desarrollo: usa process.cwd() + '/prisma/dev.db'
  * En producción: usa app.getPath('userData') + '/colormanager.db'
  */
-export function getPrismaClient(): PrismaClient {
+export function getPrismaClient(): InstanceType<typeof PrismaClient> {
   if (!prismaInstance) {
-    const inDev = isDev()
-
     // Ruta de la base de datos
     const dbPath = inDev
       ? path.join(process.cwd(), "prisma", "dev.db")
@@ -72,17 +57,6 @@ export function getPrismaClient(): PrismaClient {
       if (!fs.existsSync(userDataDir)) {
         fs.mkdirSync(userDataDir, { recursive: true })
       }
-    }
-
-    // Configurar la variable de entorno para el Query Engine
-    // FIX REFERENCE: FIX-20260129-02 - Configura PRISMA_QUERY_ENGINE_LIBRARY para producción
-    if (!inDev) {
-      const engineDir = getPrismaEngineDirectory()
-      process.env.PRISMA_QUERY_ENGINE_LIBRARY = path.join(
-        engineDir, 
-        `libquery_engine-${process.platform === 'win32' ? 'windows' : 'debian-openssl-3.0.x'}.${process.platform === 'win32' ? 'dll.node' : 'so.node'}`
-      )
-      console.log(`[DB] Query Engine configurado: ${process.env.PRISMA_QUERY_ENGINE_LIBRARY}`)
     }
 
     console.log(`[DB] Conectando a SQLite en: ${dbPath}`)

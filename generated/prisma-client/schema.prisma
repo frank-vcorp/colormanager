@@ -1,0 +1,92 @@
+// FIX REFERENCE: FIX-20260129-04 - Output a carpeta dedicada para extraResources
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../generated/prisma-client"
+  binaryTargets = ["native", "debian-openssl-3.0.x", "windows", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Ingrediente {
+  id          String   @id
+  codigo      String   @unique
+  nombre      String
+  descripcion String?
+  densidad    Float
+  costo       Float
+  stockActual Float
+  stockMinimo Float    @default(100)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relación 1:N con Lotes (IMPL-20260129-01)
+  // FIX REFERENCE: FIX-20260129-01 - Nombre en minúscula para consistencia con código
+  lotes Lote[]
+
+  @@index([codigo])
+}
+
+model Lote {
+  id               String    @id
+  ingredienteId    String
+  numeroLote       String    @unique
+  cantidad         Float
+  fechaVencimiento DateTime?
+  estado           String    @default("activo")
+  createdAt        DateTime  @default(now())
+
+  // Relación inversa (FIX REFERENCE: FIX-20260129-01)
+  ingrediente Ingrediente @relation(fields: [ingredienteId], references: [id], onDelete: Cascade)
+
+  @@index([estado])
+  @@index([ingredienteId])
+}
+
+model Mezcla {
+  id            String   @id
+  nodeId        String
+  recetaId      String
+  recetaNombre  String
+  fechaCreacion DateTime @default(now())
+  estado        String   @default("pendiente")
+  pesoTotal     Float
+  pesoActual    Float    @default(0)
+  operadorId    String?
+  notas         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime
+
+  @@index([fechaCreacion])
+  @@index([estado])
+  @@index([nodeId])
+}
+
+model SyncLog {
+  id         String    @id
+  tabla      String
+  accion     String
+  registroId String
+  cambios    String
+  nodeId     String
+  syncedAt   DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([tabla])
+  @@index([syncedAt])
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  role      String
+  nombre    String
+  createdAt DateTime @default(now())
+  active    Boolean  @default(true)
+
+  @@index([active])
+  @@index([username])
+}

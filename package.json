@@ -71,22 +71,18 @@
           "**/*"
         ]
       },
-      "prisma/**/*",
-      "node_modules/.prisma/**/*",
-      "node_modules/@prisma/client/**/*"
+      "prisma/**/*"
     ],
     "extraResources": [
       {
-        "from": "node_modules/.prisma/client/",
+        "from": "generated/prisma-client",
         "to": "prisma-client",
         "filter": [
-          "*.node",
-          "schema.prisma"
+          "**/*"
         ]
       }
     ],
     "asarUnpack": [
-      "node_modules/.prisma/**/*",
       "**/libquery_engine*",
       "**/query_engine*"
     ],
