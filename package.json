@@ -7,6 +7,7 @@
   "main": "dist-electron/main/main.js",
   "homepage": "./",
   "scripts": {
+    "postinstall": "prisma generate",
     "build:main": "tsc -p tsconfig.main.json",
     "watch:main": "node scripts/watch-main.mjs",
     "dev": "concurrently -k \"pnpm run watch:main\" \"vite\" \"wait-on http://localhost:5173 && wait-on dist-electron/main/main.js && NODE_ENV=development ELECTRON_DISABLE_GPU=1 electron . --no-sandbox --disable-gpu\"",
@@ -70,7 +71,24 @@
           "**/*"
         ]
       },
-      "prisma/**/*"
+      "prisma/**/*",
+      "node_modules/.prisma/**/*",
+      "node_modules/@prisma/client/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "node_modules/.prisma/client/",
+        "to": "prisma-client",
+        "filter": [
+          "*.node",
+          "schema.prisma"
+        ]
+      }
+    ],
+    "asarUnpack": [
+      "node_modules/.prisma/**/*",
+      "**/libquery_engine*",
+      "**/query_engine*"
     ],
     "extraMetadata": {
       "type": "commonjs",
