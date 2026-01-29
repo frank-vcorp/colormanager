@@ -24,6 +24,7 @@
     "chokidar": "^5.0.0",
     "csv-parse": "^6.1.0",
     "electron-squirrel-startup": "^1.0.0",
+    "electron-store": "8.2.0",
     "jsbarcode": "^3.12.3",
     "react": "^19.0.0",
     "react-barcode": "^1.6.1",
@@ -65,11 +66,16 @@
       {
         "from": "dist-renderer",
         "to": "renderer",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       },
-      "package.json",
       "prisma/**/*"
     ],
+    "extraMetadata": {
+      "type": "commonjs",
+      "main": "dist-electron/main/main.js"
+    },
     "win": {
       "target": "nsis"
     },

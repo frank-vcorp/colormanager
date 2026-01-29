@@ -6,11 +6,12 @@
  * @updated IMPL-20260128-01: Validar compilación a .cjs y path aliases resueltos
  * @updated IMPL-20260128-03: Agregar sincronizarInventario() para Micro-Sprint 10
  * @updated IMPL-20260128-02: Agregar ajustarStock() para Micro-Sprint 11
+ * @updated IMPL-20260129-01: Agregar métodos de configuración y onConfigChanged listener
  * @see Checkpoints/IMPL-20260128-01-ElectronEnContenedor.md
  */
 
 import { contextBridge, ipcRenderer } from "electron"
-import { IPCChannels, IPCInvokeChannels, PesoEvent, RecetaSayer, AjusteStockParams } from "../../shared/types"
+import { IPCChannels, IPCInvokeChannels, PesoEvent, RecetaSayer, AjusteStockParams, AppConfig } from "../../shared/types"
 // FIX REFERENCE: FIX-20260127-04
 
 // Exponer solo lo necesario via ContextBridge
@@ -32,6 +33,15 @@ contextBridge.exposeInMainWorld("colorManager", {
     ipcRenderer.on(IPCChannels.ESTADO_BASCULA, (_, data) => callback(data))
   },
 
+  // IMPL-20260129-01: Listener para cambios de configuración
+  onConfigChanged: (
+    callback: (data: { oldConfig?: AppConfig; newConfig?: AppConfig; mode?: string }) => void
+  ) => {
+    const handler = (_: any, data: any) => callback(data)
+    ipcRenderer.on(IPCChannels.CONFIG_CHANGED, handler)
+    return () => ipcRenderer.removeListener(IPCChannels.CONFIG_CHANGED, handler)
+  },
+
   // Invokes (Renderer -> Main)
   getSesionActual: () => ipcRenderer.invoke(IPCInvokeChannels.GET_SESION_ACTUAL),
   iniciarMezcla: (recetaId: string) => ipcRenderer.invoke(IPCInvokeChannels.INICIAR_MEZCLA, recetaId),
@@ -50,6 +60,7 @@ contextBridge.exposeInMainWorld("colorManager", {
   login: (username: string, pass: string) => ipcRenderer.invoke(IPCInvokeChannels.AUTH_LOGIN, username, pass),
   logout: () => ipcRenderer.invoke(IPCInvokeChannels.AUTH_LOGOUT),
   checkAuth: () => ipcRenderer.invoke(IPCInvokeChannels.AUTH_CHECK),
-})
 
-export type ColorManagerAPI = typeof contextBridge.exposeInMainWorld
+  // IMPL-20260129-01: Configuración dinámica
+  invoke: (channel: string, ...args: any[]) => ipcRenderer.invoke(channel, ...args),
+})

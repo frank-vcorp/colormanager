@@ -3,10 +3,11 @@
  * Reemplaza tipos genéricos `any` con tipos específicos de @shared/types
  * 
  * ID Intervención: IMPL-20260127-06 + IMPL-20260127-10
+ * @updated IMPL-20260129-01: Agregar tipos para configuración dinámica
  * @see /src/shared/types.ts para interfaces compartidas
  */
 
-import { PesoEvent, RecetaSayer, RegistroMezcla, Producto, ImportacionResultado, SyncResponse, AjusteStockParams, AjusteStockResponse, AuthResponse } from "@shared/types"
+import { PesoEvent, RecetaSayer, RegistroMezcla, Producto, ImportacionResultado, SyncResponse, AjusteStockParams, AjusteStockResponse, AuthResponse, AppConfig } from "@shared/types"
 
 declare global {
   interface Window {
@@ -18,6 +19,10 @@ declare global {
         callback: (estado: { conectada: boolean; peso: number }) => void
       ) => (() => void) | void
       onError: (callback: (error: Error | string) => void) => (() => void) | void
+      // IMPL-20260129-01: Listener para cambios de configuración
+      onConfigChanged: (
+        callback: (data: { oldConfig?: AppConfig; newConfig?: AppConfig; mode?: string }) => void
+      ) => (() => void) | void
 
       // Acciones (Renderer invoca Main)
       iniciarMezcla: (recetaId: string) => Promise<void>
@@ -35,6 +40,12 @@ declare global {
       login: (username: string, pass: string) => Promise<AuthResponse>
       logout: () => Promise<void>
       checkAuth: () => Promise<AuthResponse>
+
+      // IMPL-20260129-01: Métodos genéricos para IPC
+      invoke: (channel: string, ...args: any[]) => Promise<any>
     }
   }
-}
+
+  // Alias para acceso directo desde SettingsView
+  interface Window {
+    electron?: Window["colorManager"]

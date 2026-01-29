@@ -7,6 +7,8 @@
  * @updated FIX-20260128-02: Revertir preload a .js para compatibilidad CommonJS
  * @updated IMPL-20260128-03: Agregar handler SYNC_INVENTARIO para Micro-Sprint 10 (Sync Nube)
  * @updated IMPL-20260128-02: Agregar handler AJUSTAR_STOCK para Micro-Sprint 11 (Ajustes de Inventario)
+ * @updated IMPL-20260129-01: Integrar ConfigService para Modo Demo/Prod dinámico
+ * @updated FIX-20260129-01: Suscribirse a cambios de configuración para reiniciar servicio de báscula
  * Respaldo: context/interconsultas/DICTAMEN_FIX-20260127-04.md
  * @see Checkpoints/IMPL-20260128-01-ElectronEnContenedor.md
  */
@@ -14,6 +16,7 @@
 import { app, BrowserWindow, ipcMain, dialog } from "electron"
 import path from "path"
 import { MockScaleService } from "./hardware/mock-scale"
+import { SerialScaleService, IScaleService } from "./hardware/scale-interface"
 import { SayerService } from "./services/sayer-service"
 import { IPCChannels, IPCInvokeChannels, AjusteStockParams } from "../shared/types"
 // FIX REFERENCE: FIX-20260127-04 - Cambio de @shared/ a ruta relativa para compatibilidad tsc
@@ -24,10 +27,72 @@ import { syncInventory } from "./services/syncService"
 // IMPL-20260128-01: Importar AuthService y canales de autenticación
 import AuthService from "./services/authService"
 import { registerAuthIPC } from "./ipc/authIPC"
+// IMPL-20260129-01: Importar ConfigService y configIPC
+import { configService } from "./services/configService"
+import { registerConfigIPC } from "./ipc/configIPC"
 
 let mainWindow: BrowserWindow | null = null
-let scaleService: MockScaleService | null = null
+let scaleService: IScaleService | null = null
 let sayerService: SayerService | null = null
+
+/**
+ * Reiniciar el servicio de báscula cuando cambia la configuración
+ * FIX-20260129-01: Detener servicio actual, instanciar nuevo, iniciar
+ */
+function restartScaleService(mainWindow: BrowserWindow | null): IScaleService {
+  if (!mainWindow) {
+    throw new Error("[Main] mainWindow no disponible para reiniciar servicio")
+  }
+
+  console.log("[Main] Reiniciando servicio de báscula...")
+
+  // Detener servicio actual si existe
+  if (scaleService) {
+    try {
+      scaleService.stop()
+      console.log("[Main] Servicio anterior detenido")
+    } catch (e) {
+      console.error("[Main] Error al detener servicio anterior:", e)
+    }
+  }
+
+  // Instanciar nuevo servicio según configuración
+  scaleService = initScaleService(mainWindow)
+
+  // Iniciar el nuevo servicio (sin target, esperará a ser llamado por INICIAR_MEZCLA)
+  try {
+    // No iniciamos aquí, solo lo dejamos listo. Se inicia cuando INICIAR_MEZCLA lo requiera
+    console.log("[Main] Nuevo servicio instanciado y listo")
+  } catch (e) {
+    console.error("[Main] Error con nuevo servicio:", e)
+  }
+
+  return scaleService
+}
+
+/**
+ * Inicializar el servicio de báscula según la configuración
+ */
+function initScaleService(mainWindow: BrowserWindow): IScaleService {
+  const config = configService.getConfig()
+  let service: IScaleService
+
+  if (config.mode === "DEMO") {
+    console.log("[Main] Inicializando MockScaleService (MODO DEMO)")
+    service = new MockScaleService(mainWindow)
+  } else {
+    console.log(
+      `[Main] Inicializando SerialScaleService (MODO PROD) - Puerto: ${config.hardware.scalePort}`
+    )
+    service = new SerialScaleService(
+      mainWindow,
+      config.hardware.scalePort,
+      config.hardware.baudRate
+    )
+  }
+
+  return service
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -63,18 +128,40 @@ function createWindow() {
     }
   })
 
-  // Inicializar Mock Scale Service
-  scaleService = new MockScaleService(mainWindow)
+  // IMPL-20260129-01: Inicializar servicio de báscula según configuración
+  scaleService = initScaleService(mainWindow)
 
-  // Inicializar Sayer Service
+  // FIX-20260129-01: Suscribirse a cambios de configuración para reiniciar servicio de báscula
+  configService.on("config-changed", (event) => {
+    console.log("[Main] Evento config-changed recibido:", event)
+    const oldMode = event.oldConfig.mode
+    const newMode = event.newConfig.mode
+    const hardwareChanged =
+      event.oldConfig.hardware.scalePort !== event.newConfig.hardware.scalePort ||
+      event.oldConfig.hardware.baudRate !== event.newConfig.hardware.baudRate
+
+    // Reiniciar servicio si cambió el modo o configuración de hardware
+    if (oldMode !== newMode || hardwareChanged) {
+      console.log(
+        `[Main] Cambio detectado: modo ${oldMode} -> ${newMode} o hardware cambió`
+      )
+      scaleService = restartScaleService(mainWindow)
+    }
+  })
+
+  // Inicializar Sayer Service usando ruta de la configuración
+  const config = configService.getConfig()
   sayerService = new SayerService(mainWindow, {
-    spoolDir: path.join(process.cwd(), "sayer_spool"),
+    spoolDir: config.paths.sayerSpoolDir,
     debounceMs: 500,
   })
   sayerService.start()
 
   // IMPL-20260128-01: Registrar canales de autenticación
   registerAuthIPC()
+
+  // IMPL-20260129-01: Registrar canales de configuración
+  registerConfigIPC(mainWindow)
 
   // IMPL-20260128-01: Seed automático de usuario admin si no existen usuarios
   AuthService.seedDefaultAdmin()

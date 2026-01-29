@@ -366,6 +366,10 @@
 ## Deuda Técnica / Notas
 - *N/A - Proyecto Nuevo*
 
+- 2026-01-29 · Mantenimiento CI/CD: Se reparó el pipeline de GitHub Actions para generar correctamente los instaladores `.exe` y `.AppImage`. Referencia: CHK_2026-01-29_2045.
+
+> ID de intervención: DOC-20260129-04 · Nota de mantenimiento CI/CD. Respaldo: Checkpoints/CHK_2026-01-29_2045.md.
+
 ## Decisiones Arquitectónicas
 - [ARCH-20260127-01] Stack: Electron + React + SQLite.
  - [ARCH-20260127-03] Importador Masivo SICAR: flujo de carga CSV para inicializar/corregir inventario.

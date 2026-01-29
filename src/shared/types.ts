@@ -89,6 +89,7 @@ export const IPCChannels = {
   SESION_ACTUALIZADA: "sesion:actualizada",
   ERROR: "error",
   ESTADO_BASCULA: "bascula:estado",
+  CONFIG_CHANGED: "config:changed", // IMPL-20260129-01: Notificar cambios de configuración
 } as const
 
 // Lote (Partida) de Ingrediente - IMPL-20260129-01
@@ -137,6 +138,11 @@ export const IPCInvokeChannels = {
   AUTH_LOGIN: "auth:login",
   AUTH_LOGOUT: "auth:logout",
   AUTH_CHECK: "auth:check",
+  // IMPL-20260129-01: Canales de Configuración Dinámica
+  CONFIG_GET: "config:get",
+  CONFIG_SET: "config:set",
+  CONFIG_SET_MODE: "config:setMode",
+  CONFIG_RESET: "config:reset",
 } as const
 
 // Usuario autenticado
@@ -184,4 +190,15 @@ export interface AjusteStockResponse {
   success: boolean
   nuevoStock?: number
   error?: string
+}
+// Configuración de aplicación (IMPL-20260129-01: Config Dinámica)
+export interface AppConfig {
+  mode: "DEMO" | "PRODUCTION"
+  hardware: {
+    scalePort: string // ej: "COM3", "/dev/ttyUSB0"
+    baudRate: number // ej: 9600
+  }
+  paths: {
+    sayerSpoolDir: string // Ruta absoluta a carpeta de recetas
+  }
 }

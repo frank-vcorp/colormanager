@@ -3,13 +3,15 @@
  * Emula una báscula Mettler Toledo emitiendo pesos cada 100ms
  * 
  * ID Intervención: IMPL-20260127-01
+ * @updated IMPL-20260129-01: Implementar IScaleService para abstracción de hardware
  */
 
 import { BrowserWindow } from "electron"
 import { PesoEvent, IPCChannels } from "../../shared/types"
+import { IScaleService } from "./scale-interface"
 // FIX REFERENCE: FIX-20260127-04
 
-export class MockScaleService {
+export class MockScaleService implements IScaleService {
   private isRunning = false
   private currentWeight = 0
   private targetWeight = 0
@@ -63,6 +65,13 @@ export class MockScaleService {
       this.interval = null
     }
     this.isRunning = false
+  }
+
+  /**
+   * Verifica si está conectado (siempre true en Mock)
+   */
+  isConnected(): boolean {
+    return true
   }
 
   /**
