@@ -2,6 +2,7 @@
   "name": "colormanager",
   "version": "0.0.1",
   "description": "Auditor de Mezclas - Sistema de control de producción para taller de igualación automotriz",
+  "author": "Frank Saavedra <frank@vcorp.mx>",
   "type": "module",
   "main": "dist-electron/main/main.js",
   "homepage": "./",

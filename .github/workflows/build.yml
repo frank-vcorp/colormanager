@@ -41,9 +41,17 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Check outputs (Debug)
+        shell: bash
+        run: ls -R release || echo "Release directory not found"
+
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: colormanager-${{ matrix.os }}
-          path: release/*.{exe,AppImage,yml,blockmap}
+          path: |
+            release/*.exe
+            release/*.AppImage
+            release/*.yml
+            release/*.blockmap
           if-no-files-found: warn
