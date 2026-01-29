@@ -1,0 +1,24 @@
+﻿2026-01-29T23:13:23.5049174Z ##[group]Run npx prisma generate
+2026-01-29T23:13:23.5049501Z [36;1mnpx prisma generate[0m
+2026-01-29T23:13:23.5082020Z shell: /usr/bin/bash -e {0}
+2026-01-29T23:13:23.5082261Z env:
+2026-01-29T23:13:23.5082497Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-01-29T23:13:23.5082795Z ##[endgroup]
+2026-01-29T23:13:26.2431077Z Prisma schema loaded from prisma/schema.prisma
+2026-01-29T23:13:26.6459423Z 
+2026-01-29T23:13:26.6460583Z ✔ Generated Prisma Client (v5.22.0) to ./node_modules/.prisma/client in 109ms
+2026-01-29T23:13:26.6461033Z 
+2026-01-29T23:13:26.6461504Z Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+2026-01-29T23:13:26.6462093Z 
+2026-01-29T23:13:26.6462817Z Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
+2026-01-29T23:13:26.6463666Z 
+2026-01-29T23:13:26.6698169Z ┌─────────────────────────────────────────────────────────┐
+2026-01-29T23:13:26.6698883Z │  Update available 5.22.0 -> 7.3.0                       │
+2026-01-29T23:13:26.6699526Z │                                                         │
+2026-01-29T23:13:26.6700008Z │  This is a major update - please follow the guide at    │
+2026-01-29T23:13:26.6700530Z │  https://pris.ly/d/major-version-upgrade                │
+2026-01-29T23:13:26.6700975Z │                                                         │
+2026-01-29T23:13:26.6701404Z │  Run the following to update                            │
+2026-01-29T23:13:26.6701867Z │    npm i --save-dev prisma@latest                       │
+2026-01-29T23:13:26.6702312Z │    npm i @prisma/client@latest                          │
+2026-01-29T23:13:26.6702765Z └─────────────────────────────────────────────────────────┘

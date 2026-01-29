@@ -213,7 +213,7 @@ async function processRows(rows: SicarRow[]): Promise<ImportacionResultado> {
   }
 
   try {
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
       for (const row of rows) {
         // Validar datos mínimos
         if (!row.Clave || !row.Descripcion) {

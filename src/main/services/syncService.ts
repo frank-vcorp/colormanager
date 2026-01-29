@@ -62,7 +62,7 @@ export async function syncInventory(nodeId: string = "TALLER-PC01"): Promise<Syn
     const payload: InventarioSync = {
       nodeId,
       timestamp: new Date().toISOString(),
-      items: ingredientes.map((ing) => ({
+      items: ingredientes.map((ing: { codigo: string; nombre: string; stockActual: number; costo: number }) => ({
         sku: ing.codigo,
         nombre: ing.nombre,
         stockActual: ing.stockActual,

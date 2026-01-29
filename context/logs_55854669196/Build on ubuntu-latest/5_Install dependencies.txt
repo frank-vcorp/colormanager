@@ -1,0 +1,211 @@
+﻿2026-01-29T23:13:07.8159640Z ##[group]Run pnpm install --frozen-lockfile
+2026-01-29T23:13:07.8160081Z [36;1mpnpm install --frozen-lockfile[0m
+2026-01-29T23:13:07.8203865Z shell: /usr/bin/bash -e {0}
+2026-01-29T23:13:07.8204187Z env:
+2026-01-29T23:13:07.8204496Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-01-29T23:13:07.8204829Z ##[endgroup]
+2026-01-29T23:13:08.3084206Z Lockfile is up to date, resolution step is skipped
+2026-01-29T23:13:08.3755361Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-01-29T23:13:08.4934949Z Packages: +599
+2026-01-29T23:13:08.4935789Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-01-29T23:13:09.3895261Z Progress: resolved 599, reused 0, downloaded 81, added 37
+2026-01-29T23:13:10.3879765Z Progress: resolved 599, reused 0, downloaded 342, added 342
+2026-01-29T23:13:11.3901231Z Progress: resolved 599, reused 0, downloaded 597, added 597
+2026-01-29T23:13:12.3887577Z Progress: resolved 599, reused 0, downloaded 598, added 598
+2026-01-29T23:13:12.7607637Z Progress: resolved 599, reused 0, downloaded 599, added 599, done
+2026-01-29T23:13:12.9716317Z .../node_modules/@prisma/engines postinstall$ node scripts/postinstall.js
+2026-01-29T23:13:12.9893462Z .../node_modules/@serialport/bindings install$ prebuild-install --tag-prefix @serialport/bindings@ || node-gyp rebuild
+2026-01-29T23:13:12.9898932Z .../node_modules/electron postinstall$ node install.js
+2026-01-29T23:13:13.0175081Z .../esbuild@0.21.5/node_modules/esbuild postinstall$ node install.js
+2026-01-29T23:13:13.0942812Z .../esbuild@0.21.5/node_modules/esbuild postinstall: Done
+2026-01-29T23:13:13.3381400Z .../node_modules/@serialport/bindings install: prebuild-install warn install No prebuilt binaries found (target=20.20.0 runtime=node arch=x64 libc= platform=linux)
+2026-01-29T23:13:13.3946490Z .../node_modules/@serialport/bindings install: gyp info it worked if it ends with ok
+2026-01-29T23:13:13.3974502Z .../node_modules/@serialport/bindings install: gyp info using node-gyp@11.5.0
+2026-01-29T23:13:13.3978875Z .../node_modules/@serialport/bindings install: gyp info using node@20.20.0 | linux | x64
+2026-01-29T23:13:13.5067426Z .../node_modules/@serialport/bindings install: gyp info find Python using Python version 3.12.3 found at "/usr/bin/python3"
+2026-01-29T23:13:13.6527411Z .../node_modules/@serialport/bindings install: gyp http GET https://nodejs.org/download/release/v20.20.0/node-v20.20.0-headers.tar.gz
+2026-01-29T23:13:13.7970321Z .../node_modules/@serialport/bindings install: gyp http 200 https://nodejs.org/download/release/v20.20.0/node-v20.20.0-headers.tar.gz
+2026-01-29T23:13:13.9030408Z .../node_modules/@prisma/engines postinstall: Done
+2026-01-29T23:13:16.7048172Z .../node_modules/@serialport/bindings install: gyp http GET https://nodejs.org/download/release/v20.20.0/SHASUMS256.txt
+2026-01-29T23:13:16.7350872Z .../node_modules/@serialport/bindings install: gyp http 200 https://nodejs.org/download/release/v20.20.0/SHASUMS256.txt
+2026-01-29T23:13:17.1327789Z .../node_modules/electron postinstall: Done
+2026-01-29T23:13:17.4013442Z .../node_modules/@serialport/bindings install: gyp info spawn /usr/bin/python3
+2026-01-29T23:13:17.4035027Z .../node_modules/@serialport/bindings install: gyp info spawn args [
+2026-01-29T23:13:17.4039116Z .../node_modules/@serialport/bindings install: gyp info spawn args '/home/runner/setup-pnpm/node_modules/.pnpm/pnpm@10.28.2/node_modules/pnpm/dist/node_modules/node-gyp/gyp/gyp_main.py',
+2026-01-29T23:13:17.4042988Z .../node_modules/@serialport/bindings install: gyp info spawn args 'binding.gyp',
+2026-01-29T23:13:17.4047038Z .../node_modules/@serialport/bindings install: gyp info spawn args '-f',
+2026-01-29T23:13:17.4050609Z .../node_modules/@serialport/bindings install: gyp info spawn args 'make',
+2026-01-29T23:13:17.4054121Z .../node_modules/@serialport/bindings install: gyp info spawn args '-I',
+2026-01-29T23:13:17.4058942Z .../node_modules/@serialport/bindings install: gyp info spawn args '/home/runner/work/colormanager/colormanager/node_modules/.pnpm/@serialport+bindings@9.2.8/node_modules/@serialport/bindings/build/config.gypi',
+2026-01-29T23:13:17.4062787Z .../node_modules/@serialport/bindings install: gyp info spawn args '-I',
+2026-01-29T23:13:17.4066545Z .../node_modules/@serialport/bindings install: gyp info spawn args '/home/runner/setup-pnpm/node_modules/.pnpm/pnpm@10.28.2/node_modules/pnpm/dist/node_modules/node-gyp/addon.gypi',
+2026-01-29T23:13:17.4071386Z .../node_modules/@serialport/bindings install: gyp info spawn args '-I',
+2026-01-29T23:13:17.4076810Z .../node_modules/@serialport/bindings install: gyp info spawn args '/home/runner/.cache/node-gyp/20.20.0/include/node/common.gypi',
+2026-01-29T23:13:17.4081388Z .../node_modules/@serialport/bindings install: gyp info spawn args '-Dlibrary=shared_library',
+2026-01-29T23:13:17.4084835Z .../node_modules/@serialport/bindings install: gyp info spawn args '-Dvisibility=default',
+2026-01-29T23:13:17.4089546Z .../node_modules/@serialport/bindings install: gyp info spawn args '-Dnode_root_dir=/home/runner/.cache/node-gyp/20.20.0',
+2026-01-29T23:13:17.4093527Z .../node_modules/@serialport/bindings install: gyp info spawn args '-Dnode_gyp_dir=/home/runner/setup-pnpm/node_modules/.pnpm/pnpm@10.28.2/node_modules/pnpm/dist/node_modules/node-gyp',
+2026-01-29T23:13:17.4097497Z .../node_modules/@serialport/bindings install: gyp info spawn args '-Dnode_lib_file=/home/runner/.cache/node-gyp/20.20.0/<(target_arch)/node.lib',
+2026-01-29T23:13:17.4103604Z .../node_modules/@serialport/bindings install: gyp info spawn args '-Dmodule_root_dir=/home/runner/work/colormanager/colormanager/node_modules/.pnpm/@serialport+bindings@9.2.8/node_modules/@serialport/bindings',
+2026-01-29T23:13:17.4107319Z .../node_modules/@serialport/bindings install: gyp info spawn args '-Dnode_engine=v8',
+2026-01-29T23:13:17.4112144Z .../node_modules/@serialport/bindings install: gyp info spawn args '--depth=.',
+2026-01-29T23:13:17.4117491Z .../node_modules/@serialport/bindings install: gyp info spawn args '--no-parallel',
+2026-01-29T23:13:17.4122480Z .../node_modules/@serialport/bindings install: gyp info spawn args '--generator-output',
+2026-01-29T23:13:17.4125698Z .../node_modules/@serialport/bindings install: gyp info spawn args 'build',
+2026-01-29T23:13:17.4129735Z .../node_modules/@serialport/bindings install: gyp info spawn args '-Goutput_dir=.'
+2026-01-29T23:13:17.4132945Z .../node_modules/@serialport/bindings install: gyp info spawn args ]
+2026-01-29T23:13:17.5672862Z .../node_modules/@serialport/bindings install: gyp info spawn make
+2026-01-29T23:13:17.5675095Z .../node_modules/@serialport/bindings install: gyp info spawn args [ 'BUILDTYPE=Release', '-C', 'build' ]
+2026-01-29T23:13:17.5695986Z .../node_modules/@serialport/bindings install: make: Entering directory '/home/runner/work/colormanager/colormanager/node_modules/.pnpm/@serialport+bindings@9.2.8/node_modules/@serialport/bindings/build'
+2026-01-29T23:13:17.5710681Z .../node_modules/@serialport/bindings install:   CXX(target) Release/obj.target/bindings/src/serialport.o
+2026-01-29T23:13:18.4138949Z .../node_modules/@serialport/bindings install: ../src/serialport.cpp: In function ‘Nan::NAN_METHOD_RETURN_TYPE Open(Nan::NAN_METHOD_ARGS_TYPE)’:
+2026-01-29T23:13:18.4144841Z .../node_modules/@serialport/bindings install: ../src/serialport.cpp:78:51: warning: cast between incompatible function types from ‘void (*)(uv_work_t*)’ {aka ‘void (*)(uv_work_s*)’} to ‘uv_after_work_cb’ {aka ‘void (*)(uv_work_s*, int)’} [-Wcast-function-type]
+2026-01-29T23:13:18.4149925Z .../node_modules/@serialport/bindings install:    78 |   uv_queue_work(uv_default_loop(), req, EIO_Open, (uv_after_work_cb)EIO_AfterOpen);
+2026-01-29T23:13:18.4151697Z .../node_modules/@serialport/bindings install:       |                                                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2026-01-29T23:13:18.4154602Z .../node_modules/@serialport/bindings install: ../src/serialport.cpp: In function ‘Nan::NAN_METHOD_RETURN_TYPE Update(Nan::NAN_METHOD_ARGS_TYPE)’:
+2026-01-29T23:13:18.4159426Z .../node_modules/@serialport/bindings install: ../src/serialport.cpp:135:53: warning: cast between incompatible function types from ‘void (*)(uv_work_t*)’ {aka ‘void (*)(uv_work_s*)’} to ‘uv_after_work_cb’ {aka ‘void (*)(uv_work_s*, int)’} [-Wcast-function-type]
+2026-01-29T23:13:18.4161253Z .../node_modules/@serialport/bindings install:   135 |   uv_queue_work(uv_default_loop(), req, EIO_Update, (uv_after_work_cb)EIO_AfterUpdate);
+2026-01-29T23:13:18.4162749Z .../node_modules/@serialport/bindings install:       |                                                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2026-01-29T23:13:18.4164628Z .../node_modules/@serialport/bindings install: ../src/serialport.cpp: In function ‘Nan::NAN_METHOD_RETURN_TYPE Close(Nan::NAN_METHOD_ARGS_TYPE)’:
+2026-01-29T23:13:18.4167536Z .../node_modules/@serialport/bindings install: ../src/serialport.cpp:175:52: warning: cast between incompatible function types from ‘void (*)(uv_work_t*)’ {aka ‘void (*)(uv_work_s*)’} to ‘uv_after_work_cb’ {aka ‘void (*)(uv_work_s*, int)’} [-Wcast-function-type]
+2026-01-29T23:13:18.4169023Z .../node_modules/@serialport/bindings install:   175 |   uv_queue_work(uv_default_loop(), req, EIO_Close, (uv_after_work_cb)EIO_AfterClose);
+2026-01-29T23:13:18.4169925Z .../node_modules/@serialport/bindings install:       |                                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2026-01-29T23:13:18.4171021Z .../node_modules/@serialport/bindings install: ../src/serialport.cpp: In function ‘Nan::NAN_METHOD_RETURN_TYPE Flush(Nan::NAN_METHOD_ARGS_TYPE)’:
+2026-01-29T23:13:18.4172719Z .../node_modules/@serialport/bindings install: ../src/serialport.cpp:215:52: warning: cast between incompatible function types from ‘void (*)(uv_work_t*)’ {aka ‘void (*)(uv_work_s*)’} to ‘uv_after_work_cb’ {aka ‘void (*)(uv_work_s*, int)’} [-Wcast-function-type]
+2026-01-29T23:13:18.4174327Z .../node_modules/@serialport/bindings install:   215 |   uv_queue_work(uv_default_loop(), req, EIO_Flush, (uv_after_work_cb)EIO_AfterFlush);
+2026-01-29T23:13:18.4175596Z .../node_modules/@serialport/bindings install:       |                                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2026-01-29T23:13:18.4177062Z .../node_modules/@serialport/bindings install: ../src/serialport.cpp: In function ‘Nan::NAN_METHOD_RETURN_TYPE Set(Nan::NAN_METHOD_ARGS_TYPE)’:
+2026-01-29T23:13:18.4180038Z .../node_modules/@serialport/bindings install: ../src/serialport.cpp:271:50: warning: cast between incompatible function types from ‘void (*)(uv_work_t*)’ {aka ‘void (*)(uv_work_s*)’} to ‘uv_after_work_cb’ {aka ‘void (*)(uv_work_s*, int)’} [-Wcast-function-type]
+2026-01-29T23:13:18.4181907Z .../node_modules/@serialport/bindings install:   271 |   uv_queue_work(uv_default_loop(), req, EIO_Set, (uv_after_work_cb)EIO_AfterSet);
+2026-01-29T23:13:18.4182790Z .../node_modules/@serialport/bindings install:       |                                                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2026-01-29T23:13:18.4186179Z .../node_modules/@serialport/bindings install: ../src/serialport.cpp: In function ‘Nan::NAN_METHOD_RETURN_TYPE Get(Nan::NAN_METHOD_ARGS_TYPE)’:
+2026-01-29T23:13:18.4189426Z .../node_modules/@serialport/bindings install: ../src/serialport.cpp:316:50: warning: cast between incompatible function types from ‘void (*)(uv_work_t*)’ {aka ‘void (*)(uv_work_s*)’} to ‘uv_after_work_cb’ {aka ‘void (*)(uv_work_s*, int)’} [-Wcast-function-type]
+2026-01-29T23:13:18.4193810Z .../node_modules/@serialport/bindings install:   316 |   uv_queue_work(uv_default_loop(), req, EIO_Get, (uv_after_work_cb)EIO_AfterGet);
+2026-01-29T23:13:18.4196730Z .../node_modules/@serialport/bindings install:       |                                                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2026-01-29T23:13:18.4203779Z .../node_modules/@serialport/bindings install: ../src/serialport.cpp: In function ‘Nan::NAN_METHOD_RETURN_TYPE GetBaudRate(Nan::NAN_METHOD_ARGS_TYPE)’:
+2026-01-29T23:13:18.4209238Z .../node_modules/@serialport/bindings install: ../src/serialport.cpp:366:58: warning: cast between incompatible function types from ‘void (*)(uv_work_t*)’ {aka ‘void (*)(uv_work_s*)’} to ‘uv_after_work_cb’ {aka ‘void (*)(uv_work_s*, int)’} [-Wcast-function-type]
+2026-01-29T23:13:18.4212278Z .../node_modules/@serialport/bindings install:   366 |   uv_queue_work(uv_default_loop(), req, EIO_GetBaudRate, (uv_after_work_cb)EIO_AfterGetBaudRate);
+2026-01-29T23:13:18.4214304Z .../node_modules/@serialport/bindings install:       |                                                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2026-01-29T23:13:18.4219123Z .../node_modules/@serialport/bindings install: ../src/serialport.cpp: In function ‘Nan::NAN_METHOD_RETURN_TYPE Drain(Nan::NAN_METHOD_ARGS_TYPE)’:
+2026-01-29T23:13:18.4224211Z .../node_modules/@serialport/bindings install: ../src/serialport.cpp:412:52: warning: cast between incompatible function types from ‘void (*)(uv_work_t*)’ {aka ‘void (*)(uv_work_s*)’} to ‘uv_after_work_cb’ {aka ‘void (*)(uv_work_s*, int)’} [-Wcast-function-type]
+2026-01-29T23:13:18.4227060Z .../node_modules/@serialport/bindings install:   412 |   uv_queue_work(uv_default_loop(), req, EIO_Drain, (uv_after_work_cb)EIO_AfterDrain);
+2026-01-29T23:13:18.4228892Z .../node_modules/@serialport/bindings install:       |                                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2026-01-29T23:13:18.4230258Z .../node_modules/@serialport/bindings install: ../src/serialport.cpp: At global scope:
+2026-01-29T23:13:18.4232473Z .../node_modules/@serialport/bindings install: ../src/serialport.cpp:433:28: warning: unnecessary parentheses in declaration of ‘ToParityEnum’ [-Wparentheses]
+2026-01-29T23:13:18.4234908Z .../node_modules/@serialport/bindings install:   433 | SerialPortParity NAN_INLINE(ToParityEnum(const v8::Local<v8::String>& v8str)) {
+2026-01-29T23:13:18.4236471Z .../node_modules/@serialport/bindings install:       |                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2026-01-29T23:13:18.4237772Z .../node_modules/@serialport/bindings install: ../src/serialport.cpp:433:28: note: remove parentheses
+2026-01-29T23:13:18.4239544Z .../node_modules/@serialport/bindings install:   433 | SerialPortParity NAN_INLINE(ToParityEnum(const v8::Local<v8::String>& v8str)) {
+2026-01-29T23:13:18.4241306Z .../node_modules/@serialport/bindings install:       |                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2026-01-29T23:13:18.4242769Z .../node_modules/@serialport/bindings install:       |                            -                                                -
+2026-01-29T23:13:18.4245246Z .../node_modules/@serialport/bindings install: ../src/serialport.cpp:452:30: warning: unnecessary parentheses in declaration of ‘ToStopBitEnum’ [-Wparentheses]
+2026-01-29T23:13:18.4247591Z .../node_modules/@serialport/bindings install:   452 | SerialPortStopBits NAN_INLINE(ToStopBitEnum(double stopBits)) {
+2026-01-29T23:13:18.4249185Z .../node_modules/@serialport/bindings install:       |                              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2026-01-29T23:13:18.4250628Z .../node_modules/@serialport/bindings install: ../src/serialport.cpp:452:30: note: remove parentheses
+2026-01-29T23:13:18.4252278Z .../node_modules/@serialport/bindings install:   452 | SerialPortStopBits NAN_INLINE(ToStopBitEnum(double stopBits)) {
+2026-01-29T23:13:18.4254078Z .../node_modules/@serialport/bindings install:       |                              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2026-01-29T23:13:18.4255548Z .../node_modules/@serialport/bindings install:       |                              -                              -
+2026-01-29T23:13:18.4257141Z .../node_modules/@serialport/bindings install: In file included from ../../../../../nan@2.25.0/node_modules/nan/nan.h:67,
+2026-01-29T23:13:18.4258661Z .../node_modules/@serialport/bindings install:                  from ../src/./serialport.h:13,
+2026-01-29T23:13:18.4259999Z .../node_modules/@serialport/bindings install:                  from ../src/serialport.cpp:1:
+2026-01-29T23:13:18.4264446Z .../node_modules/@serialport/bindings install: /home/runner/.cache/node-gyp/20.20.0/include/node/node.h:1227:7: warning: cast between incompatible function types from ‘void (*)(Nan::ADDON_REGISTER_FUNCTION_ARGS_TYPE)’ {aka ‘void (*)(v8::Local<v8::Object>)’} to ‘node::addon_register_func’ {aka ‘void (*)(v8::Local<v8::Object>, v8::Local<v8::Value>, void*)’} [-Wcast-function-type]
+2026-01-29T23:13:18.4267951Z .../node_modules/@serialport/bindings install:  1227 |       (node::addon_register_func) (regfunc),                          \
+2026-01-29T23:13:18.4269457Z .../node_modules/@serialport/bindings install:       |       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2026-01-29T23:13:18.4271602Z .../node_modules/@serialport/bindings install: /home/runner/.cache/node-gyp/20.20.0/include/node/node.h:1261:3: note: in expansion of macro ‘NODE_MODULE_X’
+2026-01-29T23:13:18.4273892Z .../node_modules/@serialport/bindings install:  1261 |   NODE_MODULE_X(modname, regfunc, NULL, 0)  // NOLINT (readability/null_usage)
+2026-01-29T23:13:18.4275293Z .../node_modules/@serialport/bindings install:       |   ^~~~~~~~~~~~~
+2026-01-29T23:13:18.4276928Z .../node_modules/@serialport/bindings install: ../src/serialport.cpp:486:1: note: in expansion of macro ‘NODE_MODULE’
+2026-01-29T23:13:18.4278344Z .../node_modules/@serialport/bindings install:   486 | NODE_MODULE(serialport, init);
+2026-01-29T23:13:18.4279379Z .../node_modules/@serialport/bindings install:       | ^~~~~~~~~~~
+2026-01-29T23:13:19.0980155Z .../node_modules/@serialport/bindings install:   CXX(target) Release/obj.target/bindings/src/serialport_unix.o
+2026-01-29T23:13:19.8229613Z .../node_modules/@serialport/bindings install: ../src/serialport_unix.cpp: In function ‘int setup(int, OpenBaton*)’:
+2026-01-29T23:13:19.8232624Z .../node_modules/@serialport/bindings install: ../src/serialport_unix.cpp:179:82: warning: ‘%s’ directive output may be truncated writing up to 1023 bytes into a region of size 1005 [-Wformat-truncation=]
+2026-01-29T23:13:19.8235644Z .../node_modules/@serialport/bindings install:   179 |     snprintf(data->errorString, sizeof(data->errorString), "Error %s Cannot open %s", strerror(errno), data->path);
+2026-01-29T23:13:19.8237700Z .../node_modules/@serialport/bindings install:       |                                                                                  ^~
+2026-01-29T23:13:19.8238767Z .../node_modules/@serialport/bindings install: In file included from /usr/include/stdio.h:980,
+2026-01-29T23:13:19.8239605Z .../node_modules/@serialport/bindings install:                  from ../src/serialport.h:10,
+2026-01-29T23:13:19.8240417Z .../node_modules/@serialport/bindings install:                  from ../src/serialport_unix.cpp:2:
+2026-01-29T23:13:19.8241944Z .../node_modules/@serialport/bindings install: In function ‘int snprintf(char*, size_t, const char*, ...)’,
+2026-01-29T23:13:19.8243633Z .../node_modules/@serialport/bindings install:     inlined from ‘int setup(int, OpenBaton*)’ at ../src/serialport_unix.cpp:179:13:
+2026-01-29T23:13:19.8245140Z .../node_modules/@serialport/bindings install: /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:35: note: ‘__builtin___snprintf_chk’ output 20 or more bytes (assuming 1043) into a destination of size 1024
+2026-01-29T23:13:19.8246496Z .../node_modules/@serialport/bindings install:    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+2026-01-29T23:13:19.8247334Z .../node_modules/@serialport/bindings install:       |          ~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2026-01-29T23:13:19.8248647Z .../node_modules/@serialport/bindings install:    55 |                                    __glibc_objsize (__s), __fmt,
+2026-01-29T23:13:19.8250110Z .../node_modules/@serialport/bindings install:       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2026-01-29T23:13:19.8251464Z .../node_modules/@serialport/bindings install:    56 |                                    __va_arg_pack ());
+2026-01-29T23:13:19.8252837Z .../node_modules/@serialport/bindings install:       |                                    ~~~~~~~~~~~~~~~~~
+2026-01-29T23:13:19.8347800Z .../node_modules/@serialport/bindings install: ../src/serialport_unix.cpp: In function ‘void EIO_Open(uv_work_t*)’:
+2026-01-29T23:13:19.8350612Z .../node_modules/@serialport/bindings install: ../src/serialport_unix.cpp:89:84: warning: ‘%s’ directive output may be truncated writing up to 1023 bytes into a region of size 1003 [-Wformat-truncation=]
+2026-01-29T23:13:19.8353547Z .../node_modules/@serialport/bindings install:    89 |     snprintf(data->errorString, sizeof(data->errorString), "Error: %s, cannot open %s", strerror(errno), data->path);
+2026-01-29T23:13:19.8355589Z .../node_modules/@serialport/bindings install:       |                                                                                    ^~
+2026-01-29T23:13:19.8357353Z .../node_modules/@serialport/bindings install: In function ‘int snprintf(char*, size_t, const char*, ...)’,
+2026-01-29T23:13:19.8359262Z .../node_modules/@serialport/bindings install:     inlined from ‘void EIO_Open(uv_work_t*)’ at ../src/serialport_unix.cpp:89:13:
+2026-01-29T23:13:19.8362141Z .../node_modules/@serialport/bindings install: /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:35: note: ‘__builtin___snprintf_chk’ output 22 or more bytes (assuming 1045) into a destination of size 1024
+2026-01-29T23:13:19.8364756Z .../node_modules/@serialport/bindings install:    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+2026-01-29T23:13:19.8366420Z .../node_modules/@serialport/bindings install:       |          ~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2026-01-29T23:13:19.8367935Z .../node_modules/@serialport/bindings install:    55 |                                    __glibc_objsize (__s), __fmt,
+2026-01-29T23:13:19.8369441Z .../node_modules/@serialport/bindings install:       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2026-01-29T23:13:19.8370848Z .../node_modules/@serialport/bindings install:    56 |                                    __va_arg_pack ());
+2026-01-29T23:13:19.8372229Z .../node_modules/@serialport/bindings install:       |                                    ~~~~~~~~~~~~~~~~~
+2026-01-29T23:13:19.8740920Z .../node_modules/@serialport/bindings install:   CXX(target) Release/obj.target/bindings/src/poller.o
+2026-01-29T23:13:20.7185996Z .../node_modules/@serialport/bindings install:   CXX(target) Release/obj.target/bindings/src/serialport_linux.o
+2026-01-29T23:13:20.7691712Z .../node_modules/@serialport/bindings install:   SOLINK_MODULE(target) Release/obj.target/bindings.node
+2026-01-29T23:13:20.8323660Z .../node_modules/@serialport/bindings install:   COPY Release/bindings.node
+2026-01-29T23:13:20.8361810Z .../node_modules/@serialport/bindings install: make: Leaving directory '/home/runner/work/colormanager/colormanager/node_modules/.pnpm/@serialport+bindings@9.2.8/node_modules/@serialport/bindings/build'
+2026-01-29T23:13:20.8372027Z .../node_modules/@serialport/bindings install: gyp info ok 
+2026-01-29T23:13:20.8495374Z .../node_modules/@serialport/bindings install: Done
+2026-01-29T23:13:20.8675546Z .../prisma@5.22.0/node_modules/prisma preinstall$ node scripts/preinstall-entry.js
+2026-01-29T23:13:20.9103232Z .../prisma@5.22.0/node_modules/prisma preinstall: Done
+2026-01-29T23:13:20.9655696Z .../node_modules/@prisma/client postinstall$ node scripts/postinstall.js
+2026-01-29T23:13:21.3869441Z .../node_modules/@prisma/client postinstall: Prisma schema loaded from prisma/schema.prisma
+2026-01-29T23:13:22.1174044Z .../node_modules/@prisma/client postinstall: ✔ Generated Prisma Client (v5.22.0) to ./node_modules/.prisma/client in 100ms
+2026-01-29T23:13:22.1176024Z .../node_modules/@prisma/client postinstall: Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+2026-01-29T23:13:22.1178433Z .../node_modules/@prisma/client postinstall: Tip: Curious about the SQL queries Prisma ORM generates? Optimize helps you enhance your visibility: https://pris.ly/tip-2-optimize
+2026-01-29T23:13:22.3218539Z .../node_modules/@prisma/client postinstall: Done
+2026-01-29T23:13:22.4392021Z 
+2026-01-29T23:13:22.4392902Z dependencies:
+2026-01-29T23:13:22.4393568Z + @prisma/client 5.22.0
+2026-01-29T23:13:22.4394091Z + @tanstack/react-query 5.90.20
+2026-01-29T23:13:22.4394574Z + @types/jsbarcode 3.11.4
+2026-01-29T23:13:22.4394970Z + bcryptjs 3.0.3
+2026-01-29T23:13:22.4395322Z + chokidar 5.0.0
+2026-01-29T23:13:22.4395717Z + csv-parse 6.1.0
+2026-01-29T23:13:22.4396195Z + electron-squirrel-startup 1.0.1
+2026-01-29T23:13:22.4396712Z + electron-store 8.2.0
+2026-01-29T23:13:22.4397126Z + jsbarcode 3.12.3
+2026-01-29T23:13:22.4397492Z + react 19.2.4
+2026-01-29T23:13:22.4397870Z + react-barcode 1.6.1
+2026-01-29T23:13:22.4398286Z + react-dom 19.2.4
+2026-01-29T23:13:22.4398634Z + recharts 2.15.4
+2026-01-29T23:13:22.4398980Z + uuid 10.0.0
+2026-01-29T23:13:22.4399321Z + xlsx 0.18.5
+2026-01-29T23:13:22.4399649Z + zustand 4.5.7
+2026-01-29T23:13:22.4399771Z 
+2026-01-29T23:13:22.4399857Z devDependencies:
+2026-01-29T23:13:22.4400230Z + @types/bcryptjs 3.0.0
+2026-01-29T23:13:22.4400672Z + @types/chokidar 2.1.7
+2026-01-29T23:13:22.4401101Z + @types/node 20.19.30
+2026-01-29T23:13:22.4401520Z + @types/react 19.2.10
+2026-01-29T23:13:22.4401954Z + @types/react-dom 19.2.3
+2026-01-29T23:13:22.4402414Z + @types/xlsx 0.0.36
+2026-01-29T23:13:22.4402848Z + @vitejs/plugin-react 4.7.0
+2026-01-29T23:13:22.4403531Z + autoprefixer 10.4.23
+2026-01-29T23:13:22.4403960Z + concurrently 8.2.2
+2026-01-29T23:13:22.4404359Z + electron 40.0.0
+2026-01-29T23:13:22.4404742Z + electron-builder 25.1.8
+2026-01-29T23:13:22.4405159Z + electron-is-dev 3.0.1
+2026-01-29T23:13:22.4405513Z + postcss 8.5.6
+2026-01-29T23:13:22.4405848Z + prisma 5.22.0
+2026-01-29T23:13:22.4406200Z + serialport 9.2.8
+2026-01-29T23:13:22.4406613Z + tailwindcss 3.4.19
+2026-01-29T23:13:22.4407029Z + typescript 5.9.3
+2026-01-29T23:13:22.4407394Z + vite 5.4.21
+2026-01-29T23:13:22.4407736Z + wait-on 7.2.0
+2026-01-29T23:13:22.4407941Z 
+2026-01-29T23:13:22.4564869Z . postinstall$ prisma generate
+2026-01-29T23:13:22.8475510Z . postinstall: Prisma schema loaded from prisma/schema.prisma
+2026-01-29T23:13:23.2532866Z . postinstall: ✔ Generated Prisma Client (v5.22.0) to ./node_modules/.prisma/client in 109ms
+2026-01-29T23:13:23.2534525Z . postinstall: Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+2026-01-29T23:13:23.2535771Z . postinstall: Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
+2026-01-29T23:13:23.4551900Z . postinstall: Done
+2026-01-29T23:13:23.4781977Z Done in 15.6s using pnpm v10.28.2

@@ -1,0 +1,23 @@
+﻿2026-01-29T23:13:26.8610274Z ##[group]Run pnpm run build
+2026-01-29T23:13:26.8610561Z [36;1mpnpm run build[0m
+2026-01-29T23:13:26.8641868Z shell: /usr/bin/bash -e {0}
+2026-01-29T23:13:26.8642110Z env:
+2026-01-29T23:13:26.8642343Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-01-29T23:13:26.8643334Z   GH_TOKEN: ***
+2026-01-29T23:13:26.8643550Z ##[endgroup]
+2026-01-29T23:13:27.2285865Z 
+2026-01-29T23:13:27.2286537Z > colormanager@0.0.1 build /home/runner/work/colormanager/colormanager
+2026-01-29T23:13:27.2287507Z > pnpm run build:main && vite build && electron-builder
+2026-01-29T23:13:27.2287967Z 
+2026-01-29T23:13:27.5972364Z 
+2026-01-29T23:13:27.5973370Z > colormanager@0.0.1 build:main /home/runner/work/colormanager/colormanager
+2026-01-29T23:13:27.5973894Z > tsc -p tsconfig.main.json
+2026-01-29T23:13:27.5974063Z 
+2026-01-29T23:13:29.3559297Z ##[error]src/main/database/inventoryService.ts(53,30): error TS7006: Parameter 'ing' implicitly has an 'any' type.
+2026-01-29T23:13:29.3569899Z ##[error]src/main/database/inventoryService.ts(58,29): error TS7006: Parameter 'lote' implicitly has an 'any' type.
+2026-01-29T23:13:29.3572670Z ##[error]src/main/database/inventoryService.ts(408,40): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+2026-01-29T23:13:29.3575300Z ##[error]src/main/services/importService.ts(216,38): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+2026-01-29T23:13:29.3577798Z ##[error]src/main/services/syncService.ts(65,32): error TS7006: Parameter 'ing' implicitly has an 'any' type.
+2026-01-29T23:13:29.3848732Z  ELIFECYCLE  Command failed with exit code 2.
+2026-01-29T23:13:29.4143894Z  ELIFECYCLE  Command failed with exit code 2.
+2026-01-29T23:13:29.4322722Z ##[error]Process completed with exit code 2.

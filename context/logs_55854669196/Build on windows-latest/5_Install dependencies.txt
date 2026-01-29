@@ -1,0 +1,17 @@
+﻿2026-01-29T23:13:21.1399992Z ##[group]Run pnpm install --frozen-lockfile
+2026-01-29T23:13:21.1400420Z [36;1mpnpm install --frozen-lockfile[0m
+2026-01-29T23:13:21.2092318Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-01-29T23:13:21.2092732Z env:
+2026-01-29T23:13:21.2093025Z   PNPM_HOME: C:\Users\runneradmin\setup-pnpm\node_modules\.bin
+2026-01-29T23:13:21.2093382Z ##[endgroup]
+2026-01-29T23:13:26.5734988Z Lockfile is up to date, resolution step is skipped
+2026-01-29T23:13:26.6622821Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-01-29T23:13:26.7920137Z Packages: +600
+2026-01-29T23:13:26.7925005Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-01-29T23:13:27.6603499Z Progress: resolved 600, reused 0, downloaded 11, added 0
+2026-01-29T23:13:28.6626732Z Progress: resolved 600, reused 0, downloaded 75, added 19
+2026-01-29T23:13:29.6637218Z Progress: resolved 600, reused 0, downloaded 168, added 52
+2026-01-29T23:13:30.6689650Z Progress: resolved 600, reused 0, downloaded 264, added 86
+2026-01-29T23:13:31.6743753Z Progress: resolved 600, reused 0, downloaded 378, added 131
+2026-01-29T23:13:31.9060924Z Terminate batch job (Y/N)? 
+2026-01-29T23:13:32.2320648Z ##[error]The operation was canceled.

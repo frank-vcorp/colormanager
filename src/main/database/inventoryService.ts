@@ -50,12 +50,12 @@ export async function getAllProducts(): Promise<Producto[]> {
     })
 
     // Mapear modelo Prisma a tipo Producto
-    return ingredientes.map((ing) => ({
+    return ingredientes.map((ing: { codigo: string; nombre: string; stockActual: number; lotes: Array<{ id: string; numeroLote: string; cantidad: number; estado: string; createdAt: Date }> }) => ({
       sku: ing.codigo,
       nombre: ing.nombre,
       stockActual: ing.stockActual,
       unidad: "g" as const, // Por ahora todos en gramos
-      lotes: ing.lotes.map((lote) => ({
+      lotes: ing.lotes.map((lote: { id: string; numeroLote: string; cantidad: number; estado: string; createdAt: Date }) => ({
         id: lote.id,
         numeroLote: lote.numeroLote,
         cantidad: lote.cantidad,
@@ -405,7 +405,7 @@ export async function adjustStock(
       )
     } else {
       // SALIDA: Usar FIFO para consumir (IMPL-20260129-01)
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
         // Primero consumir FIFO
         await consumirStockFIFO(ingrediente.id, cantidad, tx)
         
