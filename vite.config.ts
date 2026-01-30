@@ -9,6 +9,8 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
+  // FIX: Usar rutas relativas para que funcione en file:// protocol (Electron)
+  base: './',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -24,7 +26,5 @@ export default defineConfig({
   build: {
     outDir: 'dist-renderer',
     emptyOutDir: true,
-    // FIX: Usar rutas relativas para que funcione en file:// protocol
-    base: './',
   },
 })
