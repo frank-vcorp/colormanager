@@ -1,6 +1,7 @@
 /**
  * IMPL-20260128-01: AuthService - Sistema de Autenticación y Gestión de Roles
  * Ref: context/SPEC-SEGURIDAD-LOGIN.md (ARCH-20260128-04)
+ * FIX REFERENCE: FIX-20260130-01 - Usar singleton de db.ts para Prisma
  * 
  * Servicio responsable de:
  * - Hash y validación de contraseñas con bcryptjs
@@ -10,9 +11,10 @@
  */
 
 import * as bcryptjs from 'bcryptjs'
-import { PrismaClient } from '@prisma/client'
+import { getPrismaClient } from '../database/db'
 
-const prisma = new PrismaClient()
+// Usar singleton centralizado en lugar de instancia local
+const getPrisma = () => getPrismaClient()
 
 export interface UserSession {
   id: number
@@ -42,6 +44,7 @@ class AuthService {
    * Si la tabla está vacía, crea el usuario admin/admin123
    */
   static async seedDefaultAdmin(): Promise<void> {
+    const prisma = getPrisma()
     const userCount = await prisma.user.count()
     
     if (userCount === 0) {
@@ -66,6 +69,7 @@ class AuthService {
    */
   static async login(username: string, password: string): Promise<UserSession | null> {
     try {
+      const prisma = getPrisma()
       const user = await prisma.user.findUnique({
         where: { username },
       })
@@ -96,6 +100,7 @@ class AuthService {
    */
   static async checkUser(userId: number): Promise<UserSession | null> {
     try {
+      const prisma = getPrisma()
       const user = await prisma.user.findUnique({
         where: { id: userId },
       })
@@ -116,12 +121,6 @@ class AuthService {
     }
   }
 
-  /**
-   * Cleanup de conexiones
-   */
-  static async disconnect(): Promise<void> {
-    await prisma.$disconnect()
-  }
 }
 
 export default AuthService
