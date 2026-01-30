@@ -96,8 +96,10 @@ function initScaleService(mainWindow: BrowserWindow): IScaleService {
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 800,
+    width: 1024,
+    height: 700,
+    minWidth: 900,
+    minHeight: 600,
     webPreferences: {
       // FIX REFERENCE: FIX-20260128-02 - Preload en .js con CommonJS
       preload: path.join(__dirname, "ipc/preload.js"),
@@ -106,6 +108,9 @@ function createWindow() {
       sandbox: false, // Requerido en contenedor sin SUID sandbox
     },
   })
+  
+  // FIX-20260130-01: Maximizar ventana para mejor visualización en laptops
+  mainWindow.maximize()
 
   const isDevelopment = process.env.NODE_ENV === "development"
   const startUrl = isDevelopment
@@ -339,6 +344,25 @@ ipcMain.handle(
     }
   }
 )
+
+// ==================== HANDLER DE HISTORIAL (FIX-20260130-01) ====================
+/**
+ * OBTENER_HISTORIAL: Retorna el historial de mezclas finalizadas
+ * Por ahora retorna un array vacío hasta que se implemente la persistencia de mezclas
+ */
+ipcMain.handle(IPCInvokeChannels.OBTENER_HISTORIAL, async () => {
+  try {
+    console.log("[IPC] Solicitud: OBTENER_HISTORIAL")
+    // TODO: Implementar persistencia de mezclas en BD
+    // Por ahora retornamos array vacío para que no falle la UI
+    const historial: any[] = []
+    console.log(`[IPC] Retornando ${historial.length} registros de historial`)
+    return historial
+  } catch (error) {
+    console.error("[IPC] Error en OBTENER_HISTORIAL:", error)
+    return []
+  }
+})
 
 // App lifecycle
 app.on("ready", createWindow)

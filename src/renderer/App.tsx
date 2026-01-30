@@ -140,8 +140,8 @@ function AppMain() {
             onInventarioClick={() => setVista("inventario")}
           />
 
-          {/* Main Content */}
-          <main className="flex-1 flex flex-col items-center justify-center gap-8 p-8">
+          {/* Main Content - FIX-20260130-01: Reducir espaciado para laptops */}
+          <main className="flex-1 flex flex-col items-center justify-center gap-4 p-4 overflow-auto">
                 {/* Error Message */}
                 {error && (
                   <div className="w-full max-w-2xl bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">

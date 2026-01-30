@@ -71,10 +71,22 @@ export default function InventoryView({ onBack }: Props) {
   const cargarInventario = async () => {
     try {
       setCargando(true)
-      const data = await window.colorManager.obtenerInventario()
-      setInventario(data)
+      setError(null)
+      const response = await window.colorManager.obtenerInventario()
+      // FIX-20260130-01: El handler devuelve {success, data}, no array directo
+      if (response && response.success && Array.isArray(response.data)) {
+        setInventario(response.data)
+      } else if (Array.isArray(response)) {
+        // Compatibilidad con respuesta directa
+        setInventario(response)
+      } else {
+        setError(response?.error || "Respuesta inesperada del servidor")
+        setInventario([])
+      }
     } catch (err) {
-      setError("Error al cargar inventario")
+      console.error("[InventoryView] Error al cargar inventario:", err)
+      setError(err instanceof Error ? err.message : "Error al cargar inventario")
+      setInventario([])
     } finally {
       setCargando(false)
     }
