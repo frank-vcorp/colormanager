@@ -21,7 +21,7 @@ import { SayerService } from "./services/sayer-service"
 import { IPCChannels, IPCInvokeChannels, AjusteStockParams } from "../shared/types"
 // FIX REFERENCE: FIX-20260127-04 - Cambio de @shared/ a ruta relativa para compatibilidad tsc
 import { seedInitialInventory, getAllProducts, resetInventory, adjustStock } from "./database/inventoryService"
-import { closePrismaClient } from "./database/db"
+import { closePrismaClient, initializeDatabase } from "./database/db"
 import { importarSicar } from "./services/importService"
 import { syncInventory } from "./services/syncService"
 // IMPL-20260128-01: Importar AuthService y canales de autenticación
@@ -163,8 +163,14 @@ function createWindow() {
   // IMPL-20260129-01: Registrar canales de configuración
   registerConfigIPC(mainWindow)
 
-  // IMPL-20260128-01: Seed automático de usuario admin si no existen usuarios
-  AuthService.seedDefaultAdmin()
+  // FIX-20260130-02: Inicializar base de datos (crear tablas si no existen)
+  initializeDatabase()
+    .then(() => {
+      console.log("[Main] Base de datos inicializada")
+      
+      // IMPL-20260128-01: Seed automático de usuario admin si no existen usuarios
+      return AuthService.seedDefaultAdmin()
+    })
     .then(() => console.log("[Main] Sistema de autenticación inicializado"))
     .catch((err) => console.error("[Main] Error al inicializar autenticación:", err))
 

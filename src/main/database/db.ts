@@ -75,6 +75,86 @@ export function getPrismaClient(): InstanceType<typeof PrismaClient> {
 }
 
 /**
+ * Inicializa la base de datos creando las tablas si no existen
+ * Usa $executeRawUnsafe para crear tablas SQLite directamente
+ */
+export async function initializeDatabase(): Promise<void> {
+  const prisma = getPrismaClient()
+  
+  console.log("[DB] Verificando/creando tablas de base de datos...")
+  
+  try {
+    // Crear tabla User si no existe
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "User" (
+        "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+        "username" TEXT NOT NULL UNIQUE,
+        "password" TEXT NOT NULL,
+        "nombre" TEXT NOT NULL,
+        "role" TEXT NOT NULL DEFAULT 'OPERADOR',
+        "active" BOOLEAN NOT NULL DEFAULT true,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `)
+    
+    // Crear tabla Ingrediente si no existe
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "Ingrediente" (
+        "id" TEXT PRIMARY KEY,
+        "codigo" TEXT NOT NULL UNIQUE,
+        "nombre" TEXT NOT NULL,
+        "descripcion" TEXT,
+        "densidad" REAL NOT NULL,
+        "costo" REAL NOT NULL,
+        "stockActual" REAL NOT NULL,
+        "stockMinimo" REAL NOT NULL DEFAULT 100,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `)
+    
+    // Crear índice en Ingrediente.codigo
+    await prisma.$executeRawUnsafe(`
+      CREATE INDEX IF NOT EXISTS "Ingrediente_codigo_idx" ON "Ingrediente"("codigo")
+    `)
+    
+    // Crear tabla Lote si no existe
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "Lote" (
+        "id" TEXT PRIMARY KEY,
+        "ingredienteId" TEXT NOT NULL,
+        "numeroLote" TEXT NOT NULL,
+        "cantidad" REAL NOT NULL,
+        "estado" TEXT NOT NULL DEFAULT 'activo',
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY ("ingredienteId") REFERENCES "Ingrediente"("id") ON DELETE CASCADE
+      )
+    `)
+    
+    // Crear tabla SyncLog si no existe
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "SyncLog" (
+        "id" TEXT PRIMARY KEY,
+        "tabla" TEXT NOT NULL,
+        "accion" TEXT NOT NULL,
+        "registroId" TEXT NOT NULL,
+        "cambios" TEXT NOT NULL,
+        "nodeId" TEXT NOT NULL,
+        "sincronizado" BOOLEAN NOT NULL DEFAULT false,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `)
+    
+    console.log("[DB] ✅ Tablas de base de datos verificadas/creadas")
+  } catch (error) {
+    console.error("[DB] ❌ Error al inicializar tablas:", error)
+    throw error
+  }
+}
+
+/**
  * Cierra la conexión de Prisma (llamar al finalizar)
  */
 export async function closePrismaClient(): Promise<void> {
