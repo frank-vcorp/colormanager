@@ -37,7 +37,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const result = await (window as any).electron.ipcRenderer.invoke('auth:check')
+        // FIX: Usar window.colorManager en lugar de window.electron.ipcRenderer
+        const result = await (window as any).colorManager.checkAuth()
         if (result.user) {
           setUser(result.user)
         }
@@ -56,7 +57,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    */
   const login = async (username: string, password: string) => {
     try {
-      const result = await (window as any).electron.ipcRenderer.invoke('auth:login', username, password)
+      // FIX: Usar window.colorManager en lugar de window.electron.ipcRenderer
+      const result = await (window as any).colorManager.login(username, password)
       
       if (result.success) {
         setUser(result.user)
@@ -75,7 +77,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    */
   const logout = () => {
     try {
-      (window as any).electron.ipcRenderer.send('auth:logout')
+      // FIX: Usar window.colorManager en lugar de window.electron.ipcRenderer
+      (window as any).colorManager.logout()
       setUser(null)
     } catch (error) {
       console.error('[AuthProvider] Error in logout:', error)
