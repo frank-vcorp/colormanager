@@ -24,5 +24,7 @@ export default defineConfig({
   build: {
     outDir: 'dist-renderer',
     emptyOutDir: true,
+    // FIX: Usar rutas relativas para que funcione en file:// protocol
+    base: './',
   },
 })
