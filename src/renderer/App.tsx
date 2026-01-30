@@ -19,7 +19,6 @@ import { LoginView } from "./components/LoginView"
 import Toast from "./components/ui/Toast"
 import ScaleDisplay from "./components/ScaleDisplay"
 import HeaderBar from "./components/HeaderBar"
-import RecetaViewer from "./components/RecetaViewer"
 import SessionController from "./components/SessionController"
 import HistoryView from "./components/HistoryView"
 import InventoryView from "./components/InventoryView"
@@ -110,7 +109,7 @@ function AppMain() {
   }
 
   return (
-    <div className="min-h-screen bg-cm-bg flex flex-col">
+    <div className="h-screen bg-[#1e1e1e] flex flex-col overflow-hidden">
       <Toast />
       {/* Vista: Inventario */}
       {vista === "inventario" && (
@@ -130,103 +129,116 @@ function AppMain() {
         />
       )}
 
-      {/* Vista: Home */}
+      {/* Vista: Home - Layout estilo IDE */}
       {vista === "home" && (
-        <>
-          {/* Header */}
+        <div className="flex flex-col h-full">
+          {/* Header compacto estilo VS Code */}
           <HeaderBar 
             basculaConectada={basculaConectada}
             onHistorialClick={() => setVista("historial")}
             onInventarioClick={() => setVista("inventario")}
           />
 
-          {/* Main Content - FIX-20260130-01: Reducir espaciado para laptops */}
-          <main className="flex-1 flex flex-col items-center justify-center gap-4 p-4 overflow-auto">
-                {/* Error Message */}
-                {error && (
-                  <div className="w-full max-w-2xl bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                    <strong>⚠️ Error:</strong> {error}
-                  </div>
-                )}
-
-                {/* Receta Detectada Alert */}
-                {recetaDetectada && (
-                  <div className="w-full max-w-4xl">
-                    <RecetaViewer
-                      receta={recetaDetectada}
-                      onDismiss={() => setRecetaDetectada(null)}
-                    />
-                    {/* Botón para Iniciar Mezcla - Added after RecetaViewer */}
-                    <div className="mt-4 flex gap-4 justify-center">
-                      <button
-                        onClick={handleIniciarMezcla}
-                        className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-bold text-lg transition-colors shadow-lg hover:shadow-xl"
-                      >
-                        ▶ Iniciar Mezcla
-                      </button>
+          {/* Main area con sidebar */}
+          <div className="flex-1 flex overflow-hidden">
+            {/* Sidebar izquierdo - Receta detectada */}
+            <aside className="w-72 bg-[#252526] border-r border-[#3c3c3c] flex flex-col">
+              {/* Título del sidebar */}
+              <div className="px-4 py-2 text-[10px] uppercase tracking-wider text-[#6e6e6e] border-b border-[#3c3c3c]">
+                Receta Activa
+              </div>
+              
+              {/* Contenido del sidebar */}
+              <div className="flex-1 overflow-auto p-3">
+                {recetaDetectada ? (
+                  <div className="space-y-3">
+                    {/* Info de la receta */}
+                    <div className="bg-[#2d2d2d] rounded p-3 border border-[#3c3c3c]">
+                      <p className="text-blue-400 font-mono text-sm mb-1">#{recetaDetectada.numero}</p>
+                      <p className="text-[#cccccc] text-xs">{recetaDetectada.meta?.colorCode || "Receta detectada"}</p>
                     </div>
+                    
+                    {/* Lista de ingredientes (todas las capas) */}
+                    <div className="space-y-1">
+                      <p className="text-[10px] uppercase tracking-wider text-[#6e6e6e] mb-2">Ingredientes</p>
+                      {recetaDetectada.capas?.flatMap((capa, capaIdx) =>
+                        capa.ingredientes?.map((ing, idx) => (
+                          <div key={`${capaIdx}-${idx}`} className="flex justify-between text-xs py-1.5 px-2 bg-[#2d2d2d] rounded">
+                            <span className="text-[#cccccc] font-mono">{ing.sku}</span>
+                            <span className="text-[#6e6e6e]">{ing.pesoMeta}g</span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    {/* Botón iniciar mezcla */}
+                    <button
+                      onClick={handleIniciarMezcla}
+                      className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded text-sm font-medium transition-colors"
+                    >
+                      ▶ Iniciar Mezcla
+                    </button>
+
+                    {/* Botón descartar */}
+                    <button
+                      onClick={() => setRecetaDetectada(null)}
+                      className="w-full text-[#6e6e6e] hover:text-[#cccccc] text-xs py-1 transition-colors"
+                    >
+                      ✕ Descartar receta
+                    </button>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-[#6e6e6e] text-xs">Esperando receta...</p>
+                    <p className="text-[#4e4e4e] text-[10px] mt-1">Coloque archivo .sayer en la carpeta</p>
                   </div>
                 )}
+              </div>
+            </aside>
 
-                {/* Welcome Message */}
-                {!recetaDetectada && (
-                  <div className="text-center">
-                    <h1 className="text-5xl font-bold text-cm-text mb-2">
-                      Hola ColorManager
-                    </h1>
-                    <p className="text-lg text-cm-text-secondary">
-                      Auditor de Mezclas - Control de Producción
-                    </p>
-                  </div>
-                )}
+            {/* Área principal - Display de peso */}
+            <main className="flex-1 flex flex-col items-center justify-center bg-[#1e1e1e] p-8">
+              {/* Error Message */}
+              {error && (
+                <div className="absolute top-16 left-1/2 transform -translate-x-1/2 bg-red-900/80 border border-red-700 text-red-200 px-4 py-2 rounded text-sm">
+                  ⚠️ {error}
+                </div>
+              )}
 
-                {/* Scale Status */}
-                {!recetaDetectada && (
-                  <div className={`p-6 rounded-lg border-2 ${
-                    basculaConectada
-                      ? "border-cm-success bg-green-50"
-                      : "border-cm-danger bg-red-50"
-                  }`}>
-                    <p className="text-center text-cm-text-secondary mb-2">
-                      Estado de Báscula
-                    </p>
-                    <p className={`text-center font-bold ${
-                      basculaConectada ? "text-cm-success" : "text-cm-danger"
-                    }`}>
-                      {basculaConectada ? "✓ Conectada (Simulación)" : "✗ No conectada"}
-                    </p>
-                  </div>
-                )}
+              {/* Estado de báscula compacto */}
+              <div className={`mb-6 px-4 py-2 rounded-full text-xs font-medium ${
+                basculaConectada 
+                  ? "bg-green-900/30 text-green-400 border border-green-700/50" 
+                  : "bg-red-900/30 text-red-400 border border-red-700/50"
+              }`}>
+                {basculaConectada ? "● Báscula conectada (Simulación)" : "○ Báscula desconectada"}
+              </div>
 
-                {/* Weight Display */}
-                {!recetaDetectada && (
-                  <ScaleDisplay pesoActual={pesoActual} mezclando={mezclando} />
-                )}
+              {/* PESO GIGANTE - Elemento central */}
+              <ScaleDisplay pesoActual={pesoActual} mezclando={mezclando} />
+            </main>
+          </div>
 
-                {/* Info Box */}
-                {!recetaDetectada && (
-                  <div className="w-full max-w-2xl bg-cm-surface border border-cm-border rounded-lg p-6">
-                    <h3 className="font-bold text-cm-text mb-4">ℹ️ Información del Sistema</h3>
-                    <ul className="space-y-2 text-sm text-cm-text-secondary font-mono-numbers">
-                      <li>• Peso actual: <span className="text-cm-text font-bold">{pesoActual.toFixed(1)}g</span></li>
-                      <li>• Estado báscula: <span className="text-cm-text font-bold">{basculaConectada ? "OK" : "ERROR"}</span></li>
-                      <li>• Modo: <span className="text-cm-text font-bold">{mezclando ? "MEZCLA ACTIVA" : "ESPERA"}</span></li>
-                      <li>• Recetas detectadas: <span className="text-cm-text font-bold">{recetaDetectada ? "1" : "0"}</span></li>
-                      <li>• Build: IMPL-20260127-06</li>
-                    </ul>
-                  </div>
-                )}
-              </main>
-
-              {/* Footer */}
-              <footer className="bg-cm-surface border-t border-cm-border p-4 text-center text-sm text-cm-text-secondary">
-                <p>ColorManager v0.0.1 - Sistema de Auditoría de Mezclas Automotrices</p>
-              </footer>
-            </>
-          )}
+          {/* Footer estilo VS Code - Status bar */}
+          <footer className="bg-[#007acc] px-3 py-0.5 flex items-center justify-between text-[11px] text-white">
+            <div className="flex items-center gap-4">
+              <span>◆ ColorManager v0.0.1</span>
+              <span className="opacity-70">|</span>
+              <span className="opacity-80">{mezclando ? "🔴 MEZCLA ACTIVA" : "⚪ Modo Espera"}</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="opacity-80">Peso: {pesoActual.toFixed(1)}g</span>
+              <span className="opacity-70">|</span>
+              <span className="opacity-80">Báscula: {basculaConectada ? "OK" : "ERR"}</span>
+              <span className="opacity-70">|</span>
+              <span className="opacity-60">Build: FIX-20260130-02</span>
+            </div>
+          </footer>
         </div>
-      )
-    }
+      )}
+    </div>
+  )
+}
 
 export default function App() {
   return (

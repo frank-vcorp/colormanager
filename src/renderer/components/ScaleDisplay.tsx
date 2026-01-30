@@ -1,8 +1,9 @@
 /**
  * ScaleDisplay Component
- * Muestra el peso en tiempo real con estilo industrial
+ * Muestra el peso en tiempo real con estilo industrial/IDE
  * 
  * ID Intervención: IMPL-20260127-01
+ * @updated FIX-20260130-02: Rediseño estilo VS Code - fondo oscuro
  */
 
 interface ScaleDisplayProps {
@@ -12,29 +13,32 @@ interface ScaleDisplayProps {
 
 export default function ScaleDisplay({ pesoActual, mezclando }: ScaleDisplayProps) {
   return (
-    <div className="w-full max-w-2xl bg-cm-surface border-2 border-cm-border rounded-lg p-8 text-center">
-      <p className="text-cm-text-secondary text-sm uppercase tracking-widest mb-4">
+    <div className="text-center">
+      {/* Label superior */}
+      <p className="text-[#6e6e6e] text-xs uppercase tracking-[0.3em] mb-2">
         Peso Actual
       </p>
 
-      <div className={`weight-display transition-all duration-100 ${
-        mezclando ? "text-cm-primary" : "text-cm-text-secondary"
-      }`}>
+      {/* PESO GIGANTE */}
+      <div className={`font-mono font-light tracking-tight transition-colors duration-100 ${
+        mezclando ? "text-blue-400" : "text-[#e0e0e0]"
+      }`} style={{ fontSize: "8rem", lineHeight: 1 }}>
         {pesoActual.toFixed(1)}
       </div>
 
-      <p className="text-cm-text-secondary mt-4 text-lg">gramos</p>
+      {/* Unidad */}
+      <p className="text-[#6e6e6e] text-lg mt-2">gramos</p>
 
-      {/* Barra de progreso simple */}
+      {/* Barra de progreso cuando está mezclando */}
       {mezclando && (
-        <div className="mt-6">
-          <div className="w-full bg-cm-border rounded-full h-2 overflow-hidden">
+        <div className="mt-8 w-80 mx-auto">
+          <div className="w-full bg-[#3c3c3c] rounded-full h-1.5 overflow-hidden">
             <div
-              className="bg-cm-primary h-full transition-all duration-200"
+              className="bg-blue-500 h-full transition-all duration-200"
               style={{ width: `${Math.min((pesoActual / 150) * 100, 100)}%` }}
             />
           </div>
-          <p className="text-sm text-cm-text-secondary mt-2">
+          <p className="text-xs text-[#6e6e6e] mt-2">
             Progreso: {Math.round((pesoActual / 150) * 100)}%
           </p>
         </div>

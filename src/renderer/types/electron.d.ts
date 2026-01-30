@@ -49,3 +49,7 @@ declare global {
   // Alias para acceso directo desde SettingsView
   interface Window {
     electron?: Window["colorManager"]
+  }
+}
+
+export {}

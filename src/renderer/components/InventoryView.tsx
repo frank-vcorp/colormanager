@@ -72,8 +72,8 @@ export default function InventoryView({ onBack }: Props) {
     try {
       setCargando(true)
       setError(null)
-      const response = await window.colorManager.obtenerInventario()
-      // FIX-20260130-01: El handler devuelve {success, data}, no array directo
+      // FIX-20260130-01: El handler devuelve {success, data} o array directo
+      const response = await window.colorManager.obtenerInventario() as any
       if (response && response.success && Array.isArray(response.data)) {
         setInventario(response.data)
       } else if (Array.isArray(response)) {

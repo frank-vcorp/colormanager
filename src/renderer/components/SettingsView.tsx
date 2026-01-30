@@ -24,9 +24,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
 
     // Escuchar cambios de configuración desde el main process
     const unsubscribe = window.electron?.onConfigChanged(
-      (data: { oldConfig: AppConfig; newConfig: AppConfig }) => {
+      (data) => {
         console.log("[SettingsView] Configuración cambió:", data)
-        setConfig(data.newConfig)
+        if (data.newConfig) {
+          setConfig(data.newConfig)
+        }
       }
     )
 
