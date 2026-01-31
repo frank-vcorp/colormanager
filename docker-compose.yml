@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      - .:/workspace:cached
+    working_dir: /workspace
+    environment:
+      - NODE_ENV=development
+      - ELECTRON_DISABLE_GPU=1
+    ports:
+      - "5173:5173"
+      - "6080:6080"
+      - "9100:9100"
+    privileged: true
+    command: /bin/sh -c "chmod +x scripts/start-vnc.sh && pnpm install && ./scripts/start-vnc.sh"
+
+# Comandos útiles:
+# docker-compose up --build

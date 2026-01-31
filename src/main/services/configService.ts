@@ -9,20 +9,8 @@ import Store from "electron-store"
 import path from "path"
 import { app } from "electron"
 import { EventEmitter } from "events"
+import { AppConfig } from "../../shared/types"
 
-/**
- * Esquema de configuración de la aplicación
- */
-export interface AppConfig {
-  mode: "DEMO" | "PRODUCTION"
-  hardware: {
-    scalePort: string // ej: "COM3", "/dev/ttyUSB0"
-    baudRate: number // ej: 9600
-  }
-  paths: {
-    sayerSpoolDir: string // Ruta absoluta a carpeta de recetas
-  }
-}
 
 /**
  * Configuración por defecto
@@ -35,6 +23,7 @@ const DEFAULT_CONFIG: AppConfig = {
   },
   paths: {
     sayerSpoolDir: path.join(process.cwd(), "sayer_spool"),
+    printerPort: 9100,
   },
 }
 

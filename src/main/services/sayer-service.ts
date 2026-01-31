@@ -10,6 +10,7 @@ import path from "path"
 import { watch } from "chokidar"
 import { BrowserWindow } from "electron"
 import { IPCChannels, RecetaSayer } from "../../shared/types"
+import { SayerParser } from "./SayerParser"
 // FIX REFERENCE: FIX-20260127-04
 
 export interface SayerServiceConfig {
@@ -108,122 +109,18 @@ export class SayerService {
    */
   private async processFile(filePath: string): Promise<void> {
     try {
-      // FIX DEBY-01: Lectura asíncrona y con encoding flexible (latin1 para legacy apps)
       const content = await fs.promises.readFile(filePath, "latin1")
       console.log(`[SayerService] Leyendo archivo (Latin1): ${filePath}`)
 
-      const receta = this.parseReceta(content)
+      const receta = SayerParser.parse(content)
 
       if (receta) {
-        console.log(`[SayerService] Receta parseada:`, receta)
+        console.log(`[SayerService] Receta detectada vía archivo:`, receta.numero)
         this.sendRecetaToRenderer(receta)
-      } else {
-        this.sendError(`No se pudo parsear la receta: ${path.basename(filePath)}`)
       }
     } catch (error: any) {
       console.error(`[SayerService] Error procesando archivo:`, error)
-      this.sendError(`Error leyendo archivo Sayer: ${error.message}`)
     }
-  }
-
-  /**
-   * Parsea el contenido del archivo según SPEC-SAYER-PARSER
-   */
-  private parseReceta(content: string): RecetaSayer | null {
-    const lines = content.split("\n").map((line) => line.trimEnd())
-
-    // Extraer número de receta
-    const numeroMatch = content.match(/Número\s*:\s*(\w+)/i)
-    const numero = numeroMatch?.[1] || "000"
-
-    // Extraer historia
-    const historiaMatch = content.match(/HISTORIA\s*:\s*(\w+)/i)
-    const historia = historiaMatch?.[1] || "F"
-
-    // Extraer metadatos
-    const carMakerMatch = content.match(/Car Maker\s*:\s*(.+?)(?:\n|$)/i)
-    const colorCodeMatch = content.match(/Color Code\s*:\s*(.+?)(?:\n|$)/i)
-    const sayerCodeMatch = content.match(/Sayer Code\s*:\s*(.+?)(?:\n|$)/i)
-    const coatingTypeMatch = content.match(/Coating Type\s*:\s*(.+?)(?:\n|$)/i)
-    const primerMatch = content.match(/Primer\s*:\s*(.+?)(?:\n|$)/i)
-
-    const meta = {
-      carMaker: carMakerMatch?.[1]?.trim(),
-      colorCode: colorCodeMatch?.[1]?.trim(),
-      sayerCode: sayerCodeMatch?.[1]?.trim(),
-      coatingType: coatingTypeMatch?.[1]?.trim(),
-      primer: primerMatch?.[1]?.trim(),
-    }
-
-    // Parsear capas
-    const capas = this.parseCapas(lines)
-
-    if (capas.length === 0) {
-      console.warn("[SayerService] No se encontraron capas en la receta")
-      return null
-    }
-
-    return {
-      numero,
-      historia,
-      capas,
-      meta,
-    }
-  }
-
-  /**
-   * Parsea las secciones de capas y sus ingredientes
-   */
-  private parseCapas(lines: string[]): RecetaSayer["capas"] {
-    const capas: RecetaSayer["capas"] = []
-    let currentCapa: (typeof capas)[0] | null = null
-    let readingIngredients = false
-
-    // FIX DEBY-02: RegEx Robusta (Soporta minúsculas, comas decimales y variaciones de unidades)
-    // Ej: "01 : kt-1400  323,0 g" o "01 : KT_1400 323.0(gr)"
-    const ingredientRegex = /^\s*(\d+)\s*:\s*([A-Za-z0-9_-]+)\s+(\d+[.,]?\d*)\s*(?:\(g(?:r)?\)|g(?:r)?)?/i
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i]
-
-      // Detectar inicio de capa
-      if (line.match(/Primera capa|Segunda capa|Tercera capa/i)) {
-        if (currentCapa) {
-          capas.push(currentCapa)
-        }
-        currentCapa = {
-          nombre: line.trim(),
-          ingredientes: [],
-        }
-        readingIngredients = true
-        continue
-      }
-
-      // Detectar fin de lectura de ingredientes (línea de Total)
-      if (line.match(/^\s*Total\s+/i)) {
-        readingIngredients = false
-      }
-
-      // Parsear ingredientes
-      if (readingIngredients && currentCapa) {
-        const match = line.match(ingredientRegex)
-        if (match) {
-          const [, orden, sku, peso] = match
-          currentCapa.ingredientes.push({
-            orden: parseInt(orden, 10),
-            sku: sku.trim(),
-            pesoMeta: parseFloat(peso),
-          })
-        }
-      }
-    }
-
-    // Agregar última capa
-    if (currentCapa) {
-      capas.push(currentCapa)
-    }
-
-    return capas
   }
 
   /**
@@ -233,6 +130,15 @@ export class SayerService {
     if (!this.mainWindow || this.mainWindow.isDestroyed()) {
       return
     }
+
+    // Auto-abrir ventana al detectar receta
+    if (this.mainWindow.isMinimized()) {
+      this.mainWindow.restore()
+    }
+    this.mainWindow.show()
+    this.mainWindow.focus()
+    this.mainWindow.setAlwaysOnTop(true)
+    setTimeout(() => this.mainWindow.setAlwaysOnTop(false), 1000)
 
     this.mainWindow.webContents.send(IPCChannels.RECETA_DETECTADA, receta)
   }

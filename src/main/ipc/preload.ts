@@ -11,7 +11,7 @@
  */
 
 import { contextBridge, ipcRenderer } from "electron"
-import { IPCChannels, IPCInvokeChannels, PesoEvent, RecetaSayer, AjusteStockParams, AppConfig } from "../../shared/types"
+import { IPCChannels, IPCInvokeChannels, PesoEvent, RecetaSayer, AjusteStockParams, AppConfig, PrinterStatus, PrintJob } from "../../shared/types"
 // FIX REFERENCE: FIX-20260127-04
 
 // Exponer solo lo necesario via ContextBridge
@@ -42,6 +42,14 @@ contextBridge.exposeInMainWorld("colorManager", {
     return () => ipcRenderer.removeListener(IPCChannels.CONFIG_CHANGED, handler)
   },
 
+  onPrinterStatus: (callback: (status: PrinterStatus) => void) => {
+    ipcRenderer.on(IPCChannels.PRINTER_STATUS, (_, data) => callback(data))
+  },
+
+  onPrinterQueue: (callback: (queue: PrintJob[]) => void) => {
+    ipcRenderer.on(IPCChannels.PRINTER_QUEUE, (_, data) => callback(data))
+  },
+
   // Invokes (Renderer -> Main)
   getSesionActual: () => ipcRenderer.invoke(IPCInvokeChannels.GET_SESION_ACTUAL),
   iniciarMezcla: (recetaId: string) => ipcRenderer.invoke(IPCInvokeChannels.INICIAR_MEZCLA, recetaId),
@@ -58,11 +66,13 @@ contextBridge.exposeInMainWorld("colorManager", {
   importarInventarioCSV: () => ipcRenderer.invoke(IPCInvokeChannels.IMPORTAR_INVENTARIO_CSV),
   sincronizarInventario: () => ipcRenderer.invoke(IPCInvokeChannels.SYNC_INVENTARIO),
   ajustarStock: (params: AjusteStockParams) => ipcRenderer.invoke(IPCInvokeChannels.AJUSTAR_STOCK, params),
-  
+
   // Auth
   login: (username: string, pass: string) => ipcRenderer.invoke(IPCInvokeChannels.AUTH_LOGIN, username, pass),
   logout: () => ipcRenderer.invoke(IPCInvokeChannels.AUTH_LOGOUT),
   checkAuth: () => ipcRenderer.invoke(IPCInvokeChannels.AUTH_CHECK),
+
+  minimizarVentana: () => ipcRenderer.invoke(IPCInvokeChannels.MINIMIZAR_VENTANA),
 
   // IMPL-20260129-01: Configuración dinámica
   invoke: (channel: string, ...args: any[]) => ipcRenderer.invoke(channel, ...args),

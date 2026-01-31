@@ -105,6 +105,11 @@ function AppMain() {
       setMezclando(false)
       setRecetaDetectada(null) // Limpiar receta
       setVista("home") // Volver a vista home
+
+      // ARCH-20260130-02: Auto-minimizar al finalizar mezcla
+      setTimeout(() => {
+        window.colorManager.minimizarVentana()
+      }, 500)
     } catch (error) {
       console.error("Error finalizando mezcla:", error)
     }
@@ -127,17 +132,17 @@ function AppMain() {
   return (
     <div className="h-screen bg-[#1e1e1e] flex flex-col overflow-hidden">
       <Toast />
-      
+
       {/* Modal Login Admin */}
-      <AdminLoginModal 
+      <AdminLoginModal
         isOpen={showAdminLogin}
         onClose={() => setShowAdminLogin(false)}
       />
 
       {/* Vista: Mis Mezclas (Entonador) */}
       {vista === "mis-mezclas" && (
-        <MisMezclasView 
-          onBack={() => setVista("home")} 
+        <MisMezclasView
+          onBack={() => setVista("home")}
           onRepetirMezcla={handleRepetirMezcla}
         />
       )}
@@ -164,7 +169,7 @@ function AppMain() {
       {vista === "home" && (
         <div className="flex flex-col h-full">
           {/* Header compacto estilo VS Code */}
-          <HeaderBar 
+          <HeaderBar
             basculaConectada={basculaConectada}
             onHistorialClick={() => setVista("historial")}
             onInventarioClick={() => setVista("inventario")}
@@ -180,7 +185,7 @@ function AppMain() {
               <div className="px-4 py-2 text-[10px] uppercase tracking-wider text-[#6e6e6e] border-b border-[#3c3c3c]">
                 Receta Activa
               </div>
-              
+
               {/* Contenido del sidebar */}
               <div className="flex-1 overflow-auto p-3">
                 {recetaDetectada ? (
@@ -190,7 +195,7 @@ function AppMain() {
                       <p className="text-blue-400 font-mono text-sm mb-1">#{recetaDetectada.numero}</p>
                       <p className="text-[#cccccc] text-xs">{recetaDetectada.meta?.colorCode || "Receta detectada"}</p>
                     </div>
-                    
+
                     {/* Lista de ingredientes (todas las capas) */}
                     <div className="space-y-1">
                       <p className="text-[10px] uppercase tracking-wider text-[#6e6e6e] mb-2">Ingredientes</p>
@@ -239,11 +244,10 @@ function AppMain() {
               )}
 
               {/* Estado de báscula compacto */}
-              <div className={`mb-6 px-4 py-2 rounded-full text-xs font-medium ${
-                basculaConectada 
-                  ? "bg-green-900/30 text-green-400 border border-green-700/50" 
+              <div className={`mb-6 px-4 py-2 rounded-full text-xs font-medium ${basculaConectada
+                  ? "bg-green-900/30 text-green-400 border border-green-700/50"
                   : "bg-red-900/30 text-red-400 border border-red-700/50"
-              }`}>
+                }`}>
                 {basculaConectada ? "● Báscula conectada (Simulación)" : "○ Báscula desconectada"}
               </div>
 

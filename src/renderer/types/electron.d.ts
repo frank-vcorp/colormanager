@@ -7,7 +7,7 @@
  * @see /src/shared/types.ts para interfaces compartidas
  */
 
-import { PesoEvent, RecetaSayer, RegistroMezcla, Producto, ImportacionResultado, SyncResponse, AjusteStockParams, AjusteStockResponse, AuthResponse, AppConfig } from "@shared/types"
+import { PesoEvent, RecetaSayer, RegistroMezcla, Producto, ImportacionResultado, SyncResponse, AjusteStockParams, AjusteStockResponse, AuthResponse, AppConfig, PrinterStatus, PrintJob } from "@shared/types"
 
 declare global {
   interface Window {
@@ -23,6 +23,8 @@ declare global {
       onConfigChanged: (
         callback: (data: { oldConfig?: AppConfig; newConfig?: AppConfig; mode?: string }) => void
       ) => (() => void) | void
+      onPrinterStatus: (callback: (status: PrinterStatus) => void) => (() => void) | void
+      onPrinterQueue: (callback: (queue: PrintJob[]) => void) => (() => void) | void
 
       // Acciones (Renderer invoca Main)
       iniciarMezcla: (recetaId: string) => Promise<void>
@@ -35,11 +37,13 @@ declare global {
       sincronizarInventario: () => Promise<SyncResponse>
       ajustarStock: (params: AjusteStockParams) => Promise<AjusteStockResponse>
       tara?: () => Promise<void> // Opcional para báscula
-      
+
       // Auth
       login: (username: string, pass: string) => Promise<AuthResponse>
       logout: () => Promise<void>
       checkAuth: () => Promise<AuthResponse>
+
+      minimizarVentana: () => Promise<void>
 
       // IMPL-20260129-01: Métodos genéricos para IPC
       invoke: (channel: string, ...args: any[]) => Promise<any>
@@ -52,4 +56,4 @@ declare global {
   }
 }
 
-export {}
+export { }

@@ -53,7 +53,24 @@ mi-proyecto/
 3. Di: "Iniciemos un nuevo proyecto de [tu descripción]"
 4. INTEGRA ejecutará el **Ritual de Discovery** y creará la arquitectura inicial
 
+
+## 🐳 Entorno en Contenedor
+
+El proyecto está configurado para ejecutarse en un contenedor Docker con todas las dependencias de Electron y Xvfb.
+
+### Dev Container (Recomendado)
+Si usas VS Code, simplemente abre la carpeta y selecciona **"Reopen in Container"**.
+
+### Docker Compose
+Para ejecutar el entorno de desarrollo directamente con Docker:
+
+```bash
+docker build -f .devcontainer/Dockerfile -t colormanager-dev .
+# O usando compose si está disponible
+docker compose up --build
+```
+
 ---
 
-**Versión:** 2.4.0  
-**Autor:** Frank Saavedra
+**Versión:** 2.4.1  
+**Autor:** Frank Saavedra / Antigravity

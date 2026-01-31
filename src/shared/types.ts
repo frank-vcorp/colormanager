@@ -31,6 +31,24 @@ export interface RecetaSayer {
   }
 }
 
+// ARCH-20260130-04: Monitoreo de Impresora Virtual
+export type PrinterState = "IDLE" | "RECEIVING" | "PROCESSING" | "ERROR"
+
+export interface PrintJob {
+  id: string
+  timestamp: string
+  size: number
+  status: "SUCCESS" | "FAILED"
+  preview?: string // Snippet del contenido
+  recetaNumero?: string
+}
+
+export interface PrinterStatus {
+  state: PrinterState
+  lastSync?: string
+  jobsCount: number
+}
+
 // Receta normalizada (compatibilidad)
 export interface Receta {
   id: string
@@ -94,7 +112,9 @@ export const IPCChannels = {
   SESION_ACTUALIZADA: "sesion:actualizada",
   ERROR: "error",
   ESTADO_BASCULA: "bascula:estado",
-  CONFIG_CHANGED: "config:changed", // IMPL-20260129-01: Notificar cambios de configuración
+  CONFIG_CHANGED: "config:changed",
+  PRINTER_STATUS: "printer:status",   // ARCH-20260130-04
+  PRINTER_QUEUE: "printer:queue",     // ARCH-20260130-04
 } as const
 
 // Lote (Partida) de Ingrediente - IMPL-20260129-01
@@ -150,6 +170,7 @@ export const IPCInvokeChannels = {
   CONFIG_SET: "config:set",
   CONFIG_SET_MODE: "config:setMode",
   CONFIG_RESET: "config:reset",
+  MINIMIZAR_VENTANA: "window:minimizar",
 } as const
 
 // Roles del sistema
@@ -213,5 +234,6 @@ export interface AppConfig {
   }
   paths: {
     sayerSpoolDir: string // Ruta absoluta a carpeta de recetas
+    printerPort: number // Puerto para impresora virtual (ej. 9100)
   }
 }

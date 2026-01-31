@@ -27,6 +27,7 @@ import { syncInventory } from "./services/syncService"
 // IMPL-20260128-01: Importar AuthService y canales de autenticación
 import AuthService from "./services/authService"
 import { registerAuthIPC } from "./ipc/authIPC"
+import { VirtualPrinterServer } from "./services/VirtualPrinterServer"
 // IMPL-20260129-01: Importar ConfigService y configIPC
 import { configService } from "./services/configService"
 import { registerConfigIPC } from "./ipc/configIPC"
@@ -34,6 +35,7 @@ import { registerConfigIPC } from "./ipc/configIPC"
 let mainWindow: BrowserWindow | null = null
 let scaleService: IScaleService | null = null
 let sayerService: SayerService | null = null
+let printerServer: VirtualPrinterServer | null = null
 
 /**
  * Reiniciar el servicio de báscula cuando cambia la configuración
@@ -108,7 +110,7 @@ function createWindow() {
       sandbox: false, // Requerido en contenedor sin SUID sandbox
     },
   })
-  
+
   // FIX-20260130-01: Maximizar ventana para mejor visualización en laptops
   mainWindow.maximize()
 
@@ -131,6 +133,9 @@ function createWindow() {
     if (sayerService) {
       sayerService.stop()
     }
+    if (printerServer) {
+      printerServer.stop()
+    }
   })
 
   // IMPL-20260129-01: Inicializar servicio de báscula según configuración
@@ -152,6 +157,17 @@ function createWindow() {
       )
       scaleService = restartScaleService(mainWindow)
     }
+
+    // ARCH-20260130-03: Reiniciar servidor de impresión si cambia el puerto
+    if (event.oldConfig.paths.printerPort !== event.newConfig.paths.printerPort) {
+      console.log(`[Main] Cambio en puerto de impresora: ${event.newConfig.paths.printerPort}`)
+      if (printerServer) printerServer.stop()
+      printerServer = new VirtualPrinterServer(mainWindow!, {
+        port: event.newConfig.paths.printerPort,
+        name: "ColorManager Printer"
+      })
+      printerServer.start()
+    }
   })
 
   // Inicializar Sayer Service usando ruta de la configuración
@@ -161,6 +177,13 @@ function createWindow() {
     debounceMs: 500,
   })
   sayerService.start()
+
+  // Inicializar Servidor de Impresión Virtual (ARCH-20260130-03)
+  printerServer = new VirtualPrinterServer(mainWindow, {
+    port: config.paths.printerPort,
+    name: "ColorManager Printer"
+  })
+  printerServer.start()
 
   // IMPL-20260128-01: Registrar canales de autenticación
   registerAuthIPC()
@@ -172,7 +195,7 @@ function createWindow() {
   initializeDatabase()
     .then(() => {
       console.log("[Main] Base de datos inicializada")
-      
+
       // IMPL-20260128-01: Seed automático de usuario admin si no existen usuarios
       return AuthService.seedDefaultAdmin()
     })
@@ -290,7 +313,7 @@ ipcMain.handle(IPCInvokeChannels.IMPORTAR_INVENTARIO_CSV, async () => {
 
     console.log(
       `[IPC] Importación completada: ${importacionResultado.procesados} procesados, ` +
-        `${importacionResultado.actualizados} actualizados, ${importacionResultado.creados} creados`
+      `${importacionResultado.actualizados} actualizados, ${importacionResultado.creados} creados`
     )
 
     return {
@@ -410,6 +433,17 @@ ipcMain.handle(IPCInvokeChannels.REPETIR_MEZCLA, async (_, mezclaId: string) => 
     console.error("[IPC] Error en REPETIR_MEZCLA:", error)
     return { success: false, error: String(error) }
   }
+})
+
+/**
+ * MINIMIZAR_VENTANA: Minimiza la aplicación (ARCH-20260130-02)
+ */
+ipcMain.handle(IPCInvokeChannels.MINIMIZAR_VENTANA, async () => {
+  if (mainWindow) {
+    mainWindow.minimize()
+    return { success: true }
+  }
+  return { success: false }
 })
 
 // App lifecycle
