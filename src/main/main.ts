@@ -345,22 +345,70 @@ ipcMain.handle(
   }
 )
 
-// ==================== HANDLER DE HISTORIAL (FIX-20260130-01) ====================
+// ==================== HANDLERS DE MEZCLAS (ARCH-20260130-01) ====================
+import { guardarMezcla, obtenerHistorial, obtenerMisMezclas, obtenerMezclaPorId } from "./services/mezclaService"
+
 /**
- * OBTENER_HISTORIAL: Retorna el historial de mezclas finalizadas
- * Por ahora retorna un array vacío hasta que se implemente la persistencia de mezclas
+ * GUARDAR_MEZCLA: Persiste una mezcla finalizada en BD
+ */
+ipcMain.handle(IPCInvokeChannels.GUARDAR_MEZCLA, async (_, registro) => {
+  try {
+    console.log("[IPC] Solicitud: GUARDAR_MEZCLA")
+    const mezclaGuardada = await guardarMezcla(registro)
+    console.log(`[IPC] Mezcla guardada: ${mezclaGuardada.id}`)
+    return { success: true, data: mezclaGuardada }
+  } catch (error) {
+    console.error("[IPC] Error en GUARDAR_MEZCLA:", error)
+    return { success: false, error: String(error) }
+  }
+})
+
+/**
+ * OBTENER_HISTORIAL: Retorna el historial completo de mezclas (Admin)
  */
 ipcMain.handle(IPCInvokeChannels.OBTENER_HISTORIAL, async () => {
   try {
     console.log("[IPC] Solicitud: OBTENER_HISTORIAL")
-    // TODO: Implementar persistencia de mezclas en BD
-    // Por ahora retornamos array vacío para que no falle la UI
-    const historial: any[] = []
+    const historial = await obtenerHistorial()
     console.log(`[IPC] Retornando ${historial.length} registros de historial`)
     return historial
   } catch (error) {
     console.error("[IPC] Error en OBTENER_HISTORIAL:", error)
     return []
+  }
+})
+
+/**
+ * OBTENER_MIS_MEZCLAS: Retorna mezclas del entonador (filtrado por operador y últimos 7 días)
+ */
+ipcMain.handle(IPCInvokeChannels.OBTENER_MIS_MEZCLAS, async (_, operadorId?: number) => {
+  try {
+    console.log(`[IPC] Solicitud: OBTENER_MIS_MEZCLAS (operadorId: ${operadorId || 'todos'})`)
+    const mezclas = await obtenerMisMezclas(operadorId, 7)
+    console.log(`[IPC] Retornando ${mezclas.length} mezclas`)
+    return mezclas
+  } catch (error) {
+    console.error("[IPC] Error en OBTENER_MIS_MEZCLAS:", error)
+    return []
+  }
+})
+
+/**
+ * REPETIR_MEZCLA: Obtiene una mezcla por ID para cargarla de nuevo
+ */
+ipcMain.handle(IPCInvokeChannels.REPETIR_MEZCLA, async (_, mezclaId: string) => {
+  try {
+    console.log(`[IPC] Solicitud: REPETIR_MEZCLA (id: ${mezclaId})`)
+    const mezcla = await obtenerMezclaPorId(mezclaId)
+    if (mezcla) {
+      console.log(`[IPC] Mezcla encontrada: ${mezcla.recetaNombre}`)
+      return { success: true, data: mezcla }
+    } else {
+      return { success: false, error: "Mezcla no encontrada" }
+    }
+  } catch (error) {
+    console.error("[IPC] Error en REPETIR_MEZCLA:", error)
+    return { success: false, error: String(error) }
   }
 })
 

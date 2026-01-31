@@ -1,20 +1,23 @@
 /**
  * IMPL-20260128-01: AuthProvider - Contexto de Autenticación
  * Ref: context/SPEC-SEGURIDAD-LOGIN.md (ARCH-20260128-04)
+ * @updated ARCH-20260130-01: Permitir acceso sin login para Entonador
  * 
  * Proporciona:
  * - useAuth() hook para acceder al usuario actual y roles
  * - Lógica de login/logout
+ * - Modo "invitado" para entonadores sin login
  * - Persistencia de sesión en memoria durante la sesión
  */
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { UserRole } from '@shared/types'
 
 export interface User {
   id: number
   username: string
   nombre: string
-  role: 'ADMIN' | 'OPERADOR'
+  role: UserRole
 }
 
 interface AuthContextType {
@@ -23,6 +26,8 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>
   logout: () => void
   isAdmin: boolean
+  isSuperAdmin: boolean
+  isGuest: boolean // Entonador sin login
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -33,15 +38,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   /**
    * Al montar, verificar si hay sesión activa
+   * ARCH-20260130-01: No bloquear si no hay sesión, permitir modo invitado
    */
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // FIX: Usar window.colorManager en lugar de window.electron.ipcRenderer
         const result = await (window as any).colorManager.checkAuth()
         if (result.user) {
           setUser(result.user)
         }
+        // Si no hay sesión, user queda null (modo invitado/entonador)
       } catch (error) {
         console.error('[AuthProvider] Error checking auth:', error)
       } finally {
@@ -57,7 +63,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    */
   const login = async (username: string, password: string) => {
     try {
-      // FIX: Usar window.colorManager en lugar de window.electron.ipcRenderer
       const result = await (window as any).colorManager.login(username, password)
       
       if (result.success) {
@@ -73,11 +78,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   /**
-   * Logout
+   * Logout - Volver a modo invitado
    */
   const logout = () => {
     try {
-      // FIX: Usar window.colorManager en lugar de window.electron.ipcRenderer
       (window as any).colorManager.logout()
       setUser(null)
     } catch (error) {
@@ -85,10 +89,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const isAdmin = user?.role === 'ADMIN'
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN'
+  const isGuest = user === null // Entonador sin login
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, isAdmin }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, isAdmin, isSuperAdmin, isGuest }}>
       {children}
     </AuthContext.Provider>
   )

@@ -50,6 +50,9 @@ contextBridge.exposeInMainWorld("colorManager", {
   siguienteIngrediente: () => ipcRenderer.invoke(IPCInvokeChannels.SIGUIENTE_INGREDIENTE),
   guardarMezcla: (registro: any) => ipcRenderer.invoke(IPCInvokeChannels.GUARDAR_MEZCLA, registro),
   obtenerHistorial: () => ipcRenderer.invoke(IPCInvokeChannels.OBTENER_HISTORIAL),
+  // ARCH-20260130-01: Nuevos métodos para entonador
+  obtenerMisMezclas: (operadorId?: number) => ipcRenderer.invoke(IPCInvokeChannels.OBTENER_MIS_MEZCLAS, operadorId),
+  repetirMezcla: (mezclaId: string) => ipcRenderer.invoke(IPCInvokeChannels.REPETIR_MEZCLA, mezclaId),
   obtenerInventario: () => ipcRenderer.invoke(IPCInvokeChannels.OBTENER_INVENTARIO),
   resetearInventario: () => ipcRenderer.invoke(IPCInvokeChannels.RESETEAR_INVENTARIO),
   importarInventarioCSV: () => ipcRenderer.invoke(IPCInvokeChannels.IMPORTAR_INVENTARIO_CSV),

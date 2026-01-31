@@ -361,6 +361,37 @@
 
 - [✓] **Sprint 3.1 - Seguridad y Roles:** Autenticación de usuarios y restricción de funcionalidades sensibles (Ajustes, Configuración) según rol (ADMIN/OPERADOR).
 
+- [/] **Sprint 3.2 - Sistema de Roles y Acceso Abierto (ARCH-20260130-01):** Rediseño del sistema de acceso. Entonador trabaja sin login, Admin requiere autenticación para funciones sensibles.
+
+---
+
+## 📋 MICRO-SPRINT 15 (Sprint 3.2): Sistema de Roles y Acceso Abierto
+**Fecha:** 2026-01-30
+**Duración estimada:** 3 horas
+**Estado:** [/] En Progreso
+**ID:** ARCH-20260130-01
+**Objetivo:** Permitir que el Entonador use la app sin login. Admin/SuperAdmin requieren autenticación solo para funciones sensibles.
+
+### 🎯 Entregable Demostrable
+> "La app abre directamente en modo Entonador. El operador puede mezclar, ver sus mezclas, imprimir etiquetas. Para ver precios o ajustar stock, debe autenticarse como Admin."
+
+### ✅ Tareas Técnicas
+- [x] **(1) Schema Roles:** Agregar SUPER_ADMIN, tipos UserRole y TipoMezcla.
+- [x] **(2) Tabla Mezcla:** Crear tabla con campos operadorId, tipoMezcla, notas.
+- [x] **(3) MezclaService:** CRUD para mezclas con filtros por operador/fecha.
+- [x] **(4) Quitar Login Obligatorio:** AuthProvider permite modo invitado.
+- [x] **(5) HeaderBar:** Botones Mis Mezclas, Admin, info de usuario.
+- [x] **(6) AdminLoginModal:** Modal para autenticación temporal.
+- [x] **(7) MisMezclasView:** Vista de mezclas del entonador (7 días).
+- [ ] **(8) Modal Finalizar Mezcla:** Agregar notas y tipo de mezcla.
+- [ ] **(9) Ocultar Precios:** InventoryView sin costos para no-admin.
+
+### 🧪 Cómo Demostrar
+1. Abrir la app -> Entra directo sin login.
+2. Ver botón "📋 Mis Mezclas" y usarlo.
+3. Clic en "🔐 Admin" -> Modal de login.
+4. Con Admin autenticado, ver "📊 Historial" completo.
+
 ---
 
 ## Deuda Técnica / Notas
@@ -393,3 +424,5 @@
 > ID de intervención: DOC-20260128-03 · Actualización de Historial (Micro-Sprints 11 y 12). Respaldo: context/infraestructura/QA_REPORT_20260128_ETIQUETADO.md
 
 > ID de intervención: DOC-20260129-02 · Alta Micro-Sprint 14 (Sprint 2.6) y actualización de Roadmap. Relacionado: ARCH-20260129-02.
+
+- 2026-01-30 · [/] En progreso Micro-Sprint 15 "Sistema de Roles y Acceso Abierto": Implementación del modo Entonador sin login y Admin bajo demanda. (ID: ARCH-20260130-01)

@@ -80,6 +80,11 @@ export interface RegistroMezcla {
   diferencia: number // pesoFinal - pesoTotal
   tolerancia: number
   notas?: string
+  // Nuevos campos ARCH-20260130-01
+  tipoMezcla?: TipoMezcla
+  operadorId?: number
+  operadorNombre?: string
+  colorCode?: string
 }
 
 // Canales de IPC (Main -> Renderer)
@@ -130,6 +135,8 @@ export const IPCInvokeChannels = {
   SIGUIENTE_INGREDIENTE: "sesion:siguiente",
   GUARDAR_MEZCLA: "mezcla:guardar",
   OBTENER_HISTORIAL: "mezcla:historial",
+  OBTENER_MIS_MEZCLAS: "mezcla:mis-mezclas", // ARCH-20260130-01: Mezclas del entonador
+  REPETIR_MEZCLA: "mezcla:repetir", // ARCH-20260130-01: Cargar receta de mezcla anterior
   OBTENER_INVENTARIO: "inventario:obtener",
   RESETEAR_INVENTARIO: "inventario:resetear",
   IMPORTAR_INVENTARIO_CSV: "inventario:importar-csv",
@@ -145,11 +152,17 @@ export const IPCInvokeChannels = {
   CONFIG_RESET: "config:reset",
 } as const
 
+// Roles del sistema
+export type UserRole = "SUPER_ADMIN" | "ADMIN" | "OPERADOR"
+
+// Tipo de mezcla
+export type TipoMezcla = "NUEVA" | "RETOQUE" | "AJUSTE_TONO"
+
 // Usuario autenticado
 export interface User {
   id: number
   username: string
-  role: "ADMIN" | "OPERADOR"
+  role: UserRole
   nombre: string
 }
 

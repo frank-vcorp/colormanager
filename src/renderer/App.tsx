@@ -15,35 +15,36 @@ import { PesoEvent, RecetaSayer } from "@shared/types"
 import { ToastProvider } from "./hooks/useToast" // FIX-20260127-03: extensión cambiada a .tsx
 import { ModalProvider } from "./components/ui/Modal"
 import { AuthProvider, useAuth } from "./context/AuthProvider"
-import { LoginView } from "./components/LoginView"
 import Toast from "./components/ui/Toast"
 import ScaleDisplay from "./components/ScaleDisplay"
 import HeaderBar from "./components/HeaderBar"
 import SessionController from "./components/SessionController"
 import HistoryView from "./components/HistoryView"
 import InventoryView from "./components/InventoryView"
+import MisMezclasView from "./components/MisMezclasView"
+import { AdminLoginModal } from "./components/AdminLoginModal"
+import { RegistroMezcla } from "@shared/types"
 
+/**
+ * AppContent: Controlador principal de vistas
+ * ARCH-20260130-01: Ya no requiere login, modo Entonador abierto
+ */
 function AppContent() {
-  const { user, loading } = useAuth()
+  const { loading } = useAuth()
 
   // Si está cargando, mostrar spinner simple
   if (loading) {
     return (
-      <div className="min-h-screen bg-cm-bg flex items-center justify-center">
+      <div className="h-screen bg-[#1e1e1e] flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-cm-text">Cargando...</p>
+          <p className="mt-4 text-[#cccccc]">Cargando ColorManager...</p>
         </div>
       </div>
     )
   }
 
-  // Si no hay usuario, mostrar login
-  if (!user) {
-    return <LoginView />
-  }
-
-  // Si hay usuario, mostrar la aplicación
+  // ARCH-20260130-01: Siempre mostrar la app (modo Entonador por defecto)
   return <AppMain />
 }
 
@@ -54,7 +55,8 @@ function AppMain() {
   const [recetaDetectada, setRecetaDetectada] = useState<RecetaSayer | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [sesionMezcla, setSesionMezcla] = useState(false)
-  const [vista, setVista] = useState<"home" | "mezcla" | "historial" | "inventario">("home") // Sistema de vistas
+  const [vista, setVista] = useState<"home" | "mezcla" | "historial" | "inventario" | "mis-mezclas">("home")
+  const [showAdminLogin, setShowAdminLogin] = useState(false) // Modal login Admin
 
   // Listeners para cambios de peso y recetas
   useEffect(() => {
@@ -108,9 +110,38 @@ function AppMain() {
     }
   }
 
+  // Repetir mezcla: cargar receta desde mezcla existente
+  const handleRepetirMezcla = async (mezcla: RegistroMezcla) => {
+    console.log("[App] Repetir mezcla:", mezcla.id)
+    // TODO: Cargar la receta correspondiente desde la mezcla
+    // Por ahora, volvemos a home y mostramos mensaje
+    alert(`Función en desarrollo: Repetir mezcla #${mezcla.recetaId}`)
+    setVista("home")
+  }
+
+  // Callback para HeaderBar: Admin
+  const handleAdminClick = () => {
+    setShowAdminLogin(true)
+  }
+
   return (
     <div className="h-screen bg-[#1e1e1e] flex flex-col overflow-hidden">
       <Toast />
+      
+      {/* Modal Login Admin */}
+      <AdminLoginModal 
+        isOpen={showAdminLogin}
+        onClose={() => setShowAdminLogin(false)}
+      />
+
+      {/* Vista: Mis Mezclas (Entonador) */}
+      {vista === "mis-mezclas" && (
+        <MisMezclasView 
+          onBack={() => setVista("home")} 
+          onRepetirMezcla={handleRepetirMezcla}
+        />
+      )}
+
       {/* Vista: Inventario */}
       {vista === "inventario" && (
         <InventoryView onBack={() => setVista("home")} />
@@ -137,6 +168,8 @@ function AppMain() {
             basculaConectada={basculaConectada}
             onHistorialClick={() => setVista("historial")}
             onInventarioClick={() => setVista("inventario")}
+            onMisMezclasClick={() => setVista("mis-mezclas")}
+            onAdminClick={handleAdminClick}
           />
 
           {/* Main area con sidebar */}

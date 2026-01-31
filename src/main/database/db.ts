@@ -147,6 +147,38 @@ export async function initializeDatabase(): Promise<void> {
       )
     `)
     
+    // ARCH-20260130-01: Crear tabla Mezcla para persistir historial de mezclas
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "Mezcla" (
+        "id" TEXT PRIMARY KEY,
+        "recetaId" TEXT NOT NULL,
+        "recetaNombre" TEXT NOT NULL,
+        "colorCode" TEXT,
+        "fecha" TEXT NOT NULL,
+        "horaInicio" TEXT NOT NULL,
+        "horaFin" TEXT NOT NULL,
+        "pesoTotal" REAL NOT NULL,
+        "pesoFinal" REAL NOT NULL,
+        "ingredientes" TEXT NOT NULL,
+        "estado" TEXT NOT NULL DEFAULT 'perfecto',
+        "diferencia" REAL NOT NULL DEFAULT 0,
+        "tolerancia" REAL NOT NULL DEFAULT 0.5,
+        "notas" TEXT,
+        "tipoMezcla" TEXT DEFAULT 'NUEVA',
+        "operadorId" INTEGER,
+        "operadorNombre" TEXT,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `)
+    
+    // Crear índices para Mezcla
+    await prisma.$executeRawUnsafe(`
+      CREATE INDEX IF NOT EXISTS "Mezcla_fecha_idx" ON "Mezcla"("fecha")
+    `)
+    await prisma.$executeRawUnsafe(`
+      CREATE INDEX IF NOT EXISTS "Mezcla_operadorId_idx" ON "Mezcla"("operadorId")
+    `)
+    
     console.log("[DB] ✅ Tablas de base de datos verificadas/creadas")
   } catch (error) {
     console.error("[DB] ❌ Error al inicializar tablas:", error)
