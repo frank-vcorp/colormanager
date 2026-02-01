@@ -14,6 +14,7 @@
     "dev:container": "concurrently -k \"pnpm run watch:main\" \"vite\" \"wait-on http://localhost:5173 && wait-on dist-electron/main/main.js && NODE_ENV=development ELECTRON_DISABLE_GPU=1 electron . --no-sandbox --disable-gpu --disable-dev-shm-usage\"",
     "dev:headless": "pnpm run build:main && concurrently -k \"pnpm run watch:main\" \"vite\"",
     "build": "pnpm run build:main && vite build && electron-builder",
+    "build:web": "vite build",
     "preview": "vite preview",
     "type-check": "tsc --noEmit"
   },
