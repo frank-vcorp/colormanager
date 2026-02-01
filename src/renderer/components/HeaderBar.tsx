@@ -7,6 +7,7 @@
  * @updated ARCH-20260130-01: Agregar botón Admin y Mis Mezclas
  */
 
+import { useState, useEffect } from "react"
 import { useAuth } from "../context/AuthProvider"
 import PrinterMonitor from "./PrinterMonitor"
 
@@ -26,6 +27,31 @@ export default function HeaderBar({
   onAdminClick
 }: HeaderBarProps) {
   const { user, isAdmin, logout } = useAuth()
+  const [mode, setMode] = useState<"DEMO" | "PRODUCTION">("DEMO")
+
+  useEffect(() => {
+    if (!window.colorManager) return
+
+    // 1. Obtener estado inicial
+    window.colorManager.invoke("config:get").then((res: any) => {
+      if (res?.success && res?.config) {
+        setMode(res.config.mode)
+      }
+    })
+
+    // 2. Escuchar cambios
+    const cleanup = window.colorManager.onConfigChanged((data) => {
+      if (data.newConfig) setMode(data.newConfig.mode)
+      else if (data.mode) setMode(data.mode as "DEMO" | "PRODUCTION")
+    })
+
+    return cleanup as () => void
+  }, [])
+
+  const toggleMode = async () => {
+    const newMode = mode === "DEMO" ? "PRODUCTION" : "DEMO"
+    await window.colorManager.invoke("config:setMode", newMode)
+  }
 
   return (
     <header className="bg-[#1e1e1e] border-b border-[#3c3c3c] px-3 py-1.5 flex items-center justify-between select-none">
@@ -86,6 +112,21 @@ export default function HeaderBar({
           <span className="text-[#6e6e6e]">Impresora</span>
           <span className="text-yellow-400">RDY</span>
         </div>
+
+        {/* Selector de Modo (Solo Admin) - FIX-20260201-05 */}
+        {isAdmin && (
+          <button
+            onClick={toggleMode}
+            className={`flex items-center gap-1.5 px-2 py-0.5 rounded cursor-pointer transition-colors ml-2 ${mode === "PRODUCTION"
+                ? "bg-red-900/30 border border-red-800 hover:bg-red-900/50"
+                : "bg-blue-900/30 border border-blue-800 hover:bg-blue-900/50"
+              }`}
+            title="Clic para cambiar modo"
+          >
+            <span className={`w-2 h-2 rounded-full ${mode === "PRODUCTION" ? "bg-red-500 animate-pulse" : "bg-blue-400"}`} />
+            <span className="font-bold tracking-wider">{mode === "PRODUCTION" ? "PROD" : "DEMO"}</span>
+          </button>
+        )}
 
         {/* Separador */}
         <div className="w-px h-4 bg-[#3c3c3c]" />
