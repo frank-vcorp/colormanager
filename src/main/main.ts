@@ -179,7 +179,7 @@ function createWindow() {
   sayerService.start()
 
   // Inicializar Servidor de Impresión Virtual (ARCH-20260130-03)
-  printerServer = new VirtualPrinterServer(mainWindow, {
+  printerServer = new VirtualPrinterServer(mainWindow!, {
     port: config.paths.printerPort,
     name: "ColorManager Printer"
   })
