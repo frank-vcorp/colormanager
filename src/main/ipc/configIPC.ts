@@ -5,8 +5,8 @@
  */
 
 import { ipcMain, BrowserWindow } from "electron"
-import { configService, AppConfig } from "../services/configService"
-import { IPCChannels, IPCInvokeChannels } from "../../shared/types"
+import { configService } from "../services/configService"
+import { IPCChannels, IPCInvokeChannels, AppConfig } from "../../shared/types"
 
 /**
  * Registrar todos los handlers de configuración
