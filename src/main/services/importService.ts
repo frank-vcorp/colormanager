@@ -5,6 +5,7 @@
  * ID Intervención: IMPL-20260127-10
  * Referencia: context/specs/SPEC-IMPORTADOR-SICAR.md
  * @updated IMPL-20260129-02: Agregar creación de Lotes con FIFO en importación
+ * @updated FIX-20260204-20: Conversión de botes SICAR a ml usando sufijo de presentación
  */
 
 import fs from "fs"
@@ -16,6 +17,58 @@ import { getPrismaClient } from "../database/db"
 import { ImportacionResultado } from "../../shared/types"
 import { consumirStockFIFO } from "../database/inventoryService"
 // FIX REFERENCE: FIX-20260127-04
+
+/**
+ * FIX-20260204-20: Mapeo de sufijos SICAR a capacidad en mililitros
+ * SICAR usa códigos con sufijo para indicar presentación:
+ * - .10 = 250ml
+ * - .20 = 500ml
+ * - .30 = 1L (1000ml)
+ * - .40 = 4L (4000ml)
+ * - .50 = 19L (19000ml)
+ * 
+ * El stock de SICAR viene en "botes" (unidades), NO en volumen.
+ * Debemos multiplicar: stock_botes × capacidad_ml = stock_total_ml
+ */
+const SICAR_PRESENTATION_ML: Record<string, number> = {
+  "10": 250,
+  "20": 500,
+  "30": 1000,
+  "40": 4000,
+  "50": 19000,
+}
+
+/**
+ * FIX-20260204-20: Extrae información de presentación de un código SICAR
+ * Ejemplo: "KP-0200.40" → { baseSku: "KP-0200", suffix: "40", capacityMl: 4000 }
+ * 
+ * @param clave Código SICAR (ej: "KP-0200.40")
+ * @returns Objeto con SKU base, sufijo y capacidad en ml (o null si no tiene sufijo)
+ */
+function parseSicarPresentation(clave: string): {
+  baseSku: string
+  suffix: string
+  capacityMl: number
+} | null {
+  // Buscar el patrón: cualquier código terminando en .XX (dos dígitos)
+  const match = clave.match(/^(.+)\.(\d{2})$/)
+  
+  if (!match) {
+    // No tiene sufijo de presentación
+    return null
+  }
+  
+  const [, baseSku, suffix] = match
+  const capacityMl = SICAR_PRESENTATION_ML[suffix]
+  
+  if (!capacityMl) {
+    // Sufijo desconocido, retornar null para tratarlo como valor directo
+    console.warn(`[ImportService] Sufijo de presentación desconocido: .${suffix} en ${clave}`)
+    return null
+  }
+  
+  return { baseSku, suffix, capacityMl }
+}
 
 /**
  * Interfaz para una fila del SICAR (normalizada)
@@ -251,6 +304,11 @@ function readExcel(filePath: string): SicarRow[] {
  * 1. Si nuevo stock > stock actual: Crear Lote con delta = (nuevo - actual)
  * 2. Si nuevo stock < stock actual: Consumir FIFO (actual - nuevo)
  * 3. Si se crea producto: Crear Lote con todo el stock
+ * 
+ * FIX-20260204-20: Conversión de unidades SICAR (botes) a ml
+ * - SICAR exporta stock en "botes" (unidades), NO en volumen
+ * - El sufijo del código indica la presentación (ej: .40 = 4L)
+ * - Cálculo: stock_botes × capacidad_ml = stock_total_ml
  */
 async function processRows(rows: SicarRow[]): Promise<ImportacionResultado> {
   const prisma = getPrismaClient()
@@ -272,7 +330,29 @@ async function processRows(rows: SicarRow[]): Promise<ImportacionResultado> {
         }
 
         try {
-          const nuevoStock = parseFloat(String(row.Existencia || 0))
+          // FIX-20260204-20: Convertir stock de botes a ml usando sufijo de presentación
+          const stockBotes = parseFloat(String(row.Existencia || 0))
+          const presentation = parseSicarPresentation(row.Clave)
+          
+          let nuevoStock: number
+          let unidadLog: string
+          
+          if (presentation) {
+            // Código con sufijo de presentación: multiplicar botes × capacidad
+            nuevoStock = stockBotes * presentation.capacityMl
+            unidadLog = `${stockBotes} botes × ${presentation.capacityMl}ml = ${nuevoStock}ml`
+            console.log(
+              `[ImportService] ${row.Clave}: Presentación .${presentation.suffix} (${presentation.capacityMl}ml) → ${unidadLog}`
+            )
+          } else {
+            // Sin sufijo reconocido: asumir que el valor ya está en ml/g
+            nuevoStock = stockBotes
+            unidadLog = `${nuevoStock}ml (sin conversión)`
+            console.log(
+              `[ImportService] ${row.Clave}: Sin sufijo de presentación, usando valor directo → ${unidadLog}`
+            )
+          }
+          
           const costo = row.Costo ? parseFloat(String(row.Costo)) : 0
           const hoy = new Date().toISOString().split('T')[0] // YYYYMMDD format
 
@@ -298,7 +378,7 @@ async function processRows(rows: SicarRow[]): Promise<ImportacionResultado> {
                 },
               })
               console.log(
-                `[ImportService] Ingreso detectado para ${row.Clave}: +${diferencia}g, Lote creado`
+                `[ImportService] Ingreso detectado para ${row.Clave}: +${diferencia}ml, Lote creado`
               )
             } else if (diferencia < 0) {
               // Salida: Consumir FIFO usando transacción local
@@ -306,7 +386,7 @@ async function processRows(rows: SicarRow[]): Promise<ImportacionResultado> {
               await consumirStockFIFO(existente.id, cantidadAConsumir, tx)
 
               console.log(
-                `[ImportService] Salida detectada para ${row.Clave}: -${cantidadAConsumir}g, FIFO consumido`
+                `[ImportService] Salida detectada para ${row.Clave}: -${cantidadAConsumir}ml, FIFO consumido`
               )
             }
 
@@ -350,7 +430,7 @@ async function processRows(rows: SicarRow[]): Promise<ImportacionResultado> {
             })
 
             console.log(
-              `[ImportService] Producto creado: ${row.Clave} con Lote Inicial (${nuevoStock}g)`
+              `[ImportService] Producto creado: ${row.Clave} con Lote Inicial (${nuevoStock}ml)`
             )
             resultado.creados++
           }
