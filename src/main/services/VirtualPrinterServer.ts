@@ -66,8 +66,8 @@ export class VirtualPrinterServer {
             })
         })
 
-        this.server.listen(this.port, "127.0.0.1", () => {
-            console.log(`[PrinterServer] "${this.name}" activo en 127.0.0.1:${this.port}`)
+        this.server.listen(this.port, "0.0.0.0", () => {
+            console.log(`[PrinterServer] ✅ "${this.name}" activo en 0.0.0.0:${this.port} (escuchando todas las interfaces)`)
             this.updateState("IDLE")
         })
 

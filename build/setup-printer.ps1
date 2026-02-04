@@ -47,6 +47,20 @@ function Install-ColorManagerPrinter {
     Write-Host "Configurando impresora ColorManager..." -ForegroundColor Cyan
     Write-Host "  Fecha: $(Get-Date)" -ForegroundColor Gray
     
+    # Agregar regla de firewall para permitir conexiones al puerto 9100
+    Write-Host "  Configurando firewall..." -ForegroundColor Gray
+    try {
+        $existingRule = Get-NetFirewallRule -DisplayName "ColorManager Printer" -ErrorAction SilentlyContinue
+        if (-not $existingRule) {
+            New-NetFirewallRule -DisplayName "ColorManager Printer" -Direction Inbound -Protocol TCP -LocalPort $portNumber -Action Allow -ErrorAction Stop | Out-Null
+            Write-Host "  [OK] Regla de firewall creada para puerto $portNumber" -ForegroundColor Green
+        } else {
+            Write-Host "  [OK] Regla de firewall ya existe" -ForegroundColor Green
+        }
+    } catch {
+        Write-Host "  [WARN] No se pudo configurar firewall: $_" -ForegroundColor Yellow
+    }
+    
     # Verificar servicio Print Spooler
     $spooler = Get-Service -Name Spooler -ErrorAction SilentlyContinue
     if (-not $spooler) {
@@ -79,8 +93,24 @@ function Install-ColorManagerPrinter {
     $portExists = Get-PrinterPort -Name $portName -ErrorAction SilentlyContinue
     if (-not $portExists) {
         try {
-            Add-PrinterPort -Name $portName -PrinterHostAddress $hostAddress -PortNumber $portNumber
-            Write-Host "  [OK] Puerto TCP/IP creado: $portName" -ForegroundColor Green
+            # Crear puerto TCP/IP con protocolo RAW (importante para recibir datos sin procesar)
+            # Usar WMI para configurar correctamente como RAW
+            $portArgs = @{
+                Name = $portName
+                PrinterHostAddress = $hostAddress
+                PortNumber = $portNumber
+            }
+            Add-PrinterPort @portArgs
+            
+            # Configurar como RAW usando WMI (no LPR)
+            $wmiPort = Get-WmiObject -Class Win32_TCPIPPrinterPort -Filter "Name='$portName'" -ErrorAction SilentlyContinue
+            if ($wmiPort) {
+                $wmiPort.Protocol = 1  # 1 = RAW, 2 = LPR
+                $wmiPort.Put() | Out-Null
+                Write-Host "  [OK] Puerto TCP/IP creado (RAW): $portName" -ForegroundColor Green
+            } else {
+                Write-Host "  [OK] Puerto TCP/IP creado: $portName" -ForegroundColor Green
+            }
         } catch {
             Write-Host "  [ERROR] No se pudo crear el puerto: $_" -ForegroundColor Red
             return
@@ -137,6 +167,14 @@ function Uninstall-ColorManagerPrinter {
         }
     } else {
         Write-Host "  [INFO] Puerto no existia: $portName" -ForegroundColor Gray
+    }
+    
+    # Remover regla de firewall
+    try {
+        Remove-NetFirewallRule -DisplayName "ColorManager Printer" -ErrorAction SilentlyContinue
+        Write-Host "  [OK] Regla de firewall removida" -ForegroundColor Green
+    } catch {
+        Write-Host "  [INFO] Regla de firewall no existia" -ForegroundColor Gray
     }
     
     Write-Host "Limpieza completada." -ForegroundColor Cyan
