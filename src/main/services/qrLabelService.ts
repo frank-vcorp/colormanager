@@ -264,23 +264,105 @@ async function printLabelViaCOM(etiqueta: EtiquetaData, comPort: string): Promis
 
 /**
  * Imprime etiqueta usando sistema de impresión de Electron
- * Usa ventana oculta para renderizar e imprimir
- * FIX-20260204-21: Mostrar diálogo de impresión para mejor compatibilidad
- */
-/**
- * Imprime etiqueta usando sistema de impresión de Electron
  * Usa ventana visible para renderizar e imprimir
  * FIX-20260204-21: Mostrar diálogo de impresión para mejor compatibilidad
  * FIX-20260204-22: Esperar carga completa de imagen QR antes de imprimir
+ * FIX-20260204-23: Escribir HTML a archivo temporal para mejor compatibilidad
  */
 async function printLabelViaElectron(etiqueta: EtiquetaData, _printerHint?: string): Promise<PrintResult> {
   try {
     const qrDataUrl = etiqueta.qrDataUrl || await generateQRDataURL(etiqueta.codigo)
     
-    // Crear ventana VISIBLE para que el usuario vea la vista previa
+    // FIX-20260204-23: Escribir HTML a archivo temporal (más compatible que data: URL)
+    const tempDir = require('os').tmpdir()
+    const tempFile = require('path').join(tempDir, `colormanager-label-${Date.now()}.html`)
+    
+    const labelHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Etiqueta ${etiqueta.codigo}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    @page { size: A5; margin: 10mm; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .label {
+      background: white;
+      padding: 25px;
+      border: 3px solid #333;
+      border-radius: 10px;
+      text-align: center;
+      max-width: 300px;
+    }
+    .qr-container {
+      background: white;
+      padding: 10px;
+      border: 1px solid #ddd;
+      display: inline-block;
+    }
+    .qr { width: 180px; height: 180px; display: block; }
+    .codigo {
+      font-size: 24pt;
+      font-weight: bold;
+      margin-top: 15px;
+      font-family: 'Courier New', monospace;
+    }
+    .nombre {
+      font-size: 14pt;
+      color: #333;
+      margin-top: 8px;
+    }
+    .sku {
+      font-size: 11pt;
+      color: #666;
+      margin-top: 5px;
+    }
+    .no-print {
+      margin-top: 30px;
+      padding: 15px;
+      background: #e8f5e9;
+      border-radius: 8px;
+      color: #2e7d32;
+    }
+    @media print {
+      .no-print { display: none; }
+      body { min-height: auto; padding: 0; }
+      .label { border: 2px solid #000; }
+    }
+  </style>
+</head>
+<body>
+  <div class="label">
+    <div class="qr-container">
+      <img class="qr" src="${qrDataUrl}" alt="QR Code">
+    </div>
+    <div class="codigo">${etiqueta.codigo}</div>
+    <div class="nombre">${etiqueta.nombre}</div>
+    <div class="sku">SKU: ${etiqueta.sku}</div>
+  </div>
+  <div class="no-print">
+    <strong>Vista previa de etiqueta</strong><br>
+    Use Ctrl+P o el botón de imprimir del diálogo
+  </div>
+</body>
+</html>`
+    
+    // Escribir archivo temporal
+    require('fs').writeFileSync(tempFile, labelHtml, 'utf-8')
+    console.log('[qrLabelService] HTML escrito a:', tempFile)
+    
+    // Crear ventana visible
     const printWindow = new BrowserWindow({
-      width: 400,
-      height: 450,
+      width: 450,
+      height: 550,
       show: true,
       title: `Imprimir Etiqueta: ${etiqueta.codigo}`,
       webPreferences: {
@@ -289,184 +371,53 @@ async function printLabelViaElectron(etiqueta: EtiquetaData, _printerHint?: stri
       }
     })
     
-    // FIX-20260204-22: HTML con script que notifica cuando la imagen QR está lista
-    // Usamos window.onload que espera a TODAS las imágenes
-    const labelHtml = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>Etiqueta ${etiqueta.codigo}</title>
-        <style>
-          @media print {
-            @page {
-              size: 74mm 105mm;  /* A7 - más compatible */
-              margin: 5mm;
-            }
-            body {
-              margin: 0;
-              padding: 0;
-            }
-          }
-          body {
-            margin: 20px;
-            font-family: 'Courier New', monospace;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            background: #f5f5f5;
-          }
-          .label-container {
-            background: white;
-            padding: 15px;
-            border: 2px dashed #ccc;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-          }
-          .qr {
-            width: 150px;
-            height: 150px;
-          }
-          .codigo {
-            font-size: 18pt;
-            font-weight: bold;
-            margin-top: 10px;
-            text-align: center;
-          }
-          .nombre {
-            font-size: 12pt;
-            color: #333;
-            margin-top: 5px;
-            text-align: center;
-            max-width: 250px;
-          }
-          .sku {
-            font-size: 10pt;
-            color: #666;
-            margin-top: 3px;
-          }
-          .instrucciones {
-            margin-top: 20px;
-            padding: 10px;
-            background: #e3f2fd;
-            border-radius: 5px;
-            font-size: 11pt;
-            color: #1565c0;
-          }
-          @media print {
-            .instrucciones { display: none; }
-            .label-container { border: none; }
-            body { background: white; min-height: auto; }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="label-container">
-          <img class="qr" id="qrImage" src="${qrDataUrl}" alt="QR">
-          <div class="codigo">${etiqueta.codigo}</div>
-          <div class="nombre">${etiqueta.nombre}</div>
-          <div class="sku">SKU: ${etiqueta.sku}</div>
-        </div>
-        <div class="instrucciones">
-          Presione Ctrl+P para imprimir o use el menú Archivo → Imprimir
-        </div>
-        <script>
-          // FIX-20260204-22: Señalizar cuando todo esté listo
-          window.contentReady = false;
-          window.onload = function() {
-            // Doble verificación: esperar a que la imagen esté decodificada
-            const qrImg = document.getElementById('qrImage');
-            if (qrImg.complete && qrImg.naturalHeight !== 0) {
-              window.contentReady = true;
-              console.log('QR loaded successfully');
-            } else {
-              qrImg.onload = function() {
-                window.contentReady = true;
-                console.log('QR loaded via onload');
-              };
-              qrImg.onerror = function() {
-                window.contentReady = true; // Continuar aunque falle
-                console.error('QR failed to load');
-              };
-            }
-          };
-        </script>
-      </body>
-      </html>
-    `
+    // Cargar desde archivo (más confiable que data: URL)
+    await printWindow.loadFile(tempFile)
     
-    await printWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(labelHtml)}`)
+    // Esperar renderizado completo
+    await new Promise(resolve => setTimeout(resolve, 1000))
     
-    // FIX-20260204-22: Esperar a que el contenido esté completamente renderizado
-    // Verificar que window.contentReady sea true, con timeout de seguridad
-    await new Promise<void>((resolve) => {
-      let attempts = 0
-      const maxAttempts = 50 // 5 segundos máximo
-      
-      const checkReady = async () => {
-        attempts++
-        try {
-          const ready = await printWindow.webContents.executeJavaScript('window.contentReady')
-          if (ready || attempts >= maxAttempts) {
-            // Agregar pequeño delay adicional para asegurar renderizado visual
-            setTimeout(resolve, 200)
-            return
-          }
-        } catch (e) {
-          // Si hay error, continuar
-          if (attempts >= maxAttempts) {
-            setTimeout(resolve, 200)
-            return
-          }
-        }
-        setTimeout(checkReady, 100)
-      }
-      
-      // Empezar a verificar después de un delay inicial
-      setTimeout(checkReady, 300)
-    })
+    console.log('[qrLabelService] Contenido cargado, mostrando diálogo de impresión...')
     
-    console.log('[qrLabelService] Contenido listo, iniciando impresión...')
-    
-    // FIX-20260204-21: Mostrar diálogo de impresión nativo
+    // Mostrar diálogo de impresión
     const printResult = await new Promise<boolean>((resolve) => {
       printWindow.webContents.print(
         {
-          silent: false,  // FIX: Mostrar diálogo
+          silent: false,
           printBackground: true,
-          // No especificar deviceName para que muestre selector
         },
         (success, failureReason) => {
           if (!success && failureReason) {
-            console.error('[qrLabelService] Error de impresión:', failureReason)
+            console.error('[qrLabelService] Error:', failureReason)
           }
           resolve(success)
         }
       )
     })
     
-    // Cerrar ventana después de un delay para que el usuario vea el resultado
+    // Limpiar archivo temporal
+    try {
+      require('fs').unlinkSync(tempFile)
+    } catch (e) {
+      // Ignorar error de limpieza
+    }
+    
+    // Cerrar ventana
     setTimeout(() => {
       if (!printWindow.isDestroyed()) {
         printWindow.close()
       }
-    }, 1000)
+    }, 500)
     
     if (printResult) {
-      // Marcar como impresa
       const prisma = getPrismaClient()
       await prisma.lote.update({
         where: { id: etiqueta.loteId },
         data: { etiquetaImpresa: true }
       })
-      
       return { success: true, printed: 1 }
     } else {
-      return { success: false, error: 'La impresión fue cancelada' }
+      return { success: false, error: 'Impresión cancelada' }
     }
     
   } catch (error) {
