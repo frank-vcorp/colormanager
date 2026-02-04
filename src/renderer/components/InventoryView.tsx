@@ -344,6 +344,23 @@ export default function InventoryView({ onBack }: Props) {
                 ? "✅ Sincronizado"
                 : "☁️ Sincronizar"}
           </button>
+
+          {/* ARCH-20260204-01: Botón para imprimir todas las etiquetas QR */}
+          <button
+            onClick={async () => {
+              const confirmacion = confirm("¿Imprimir etiquetas QR de todos los lotes pendientes?")
+              if (!confirmacion) return
+              const result = await window.colorManager.imprimirTodasEtiquetas()
+              if (result.success) {
+                alert(`✅ Se imprimieron ${result.printed} etiquetas`)
+              } else {
+                alert(`❌ Error: ${result.error}`)
+              }
+            }}
+            className="px-4 py-2 text-sm text-purple-600 bg-purple-50 border border-purple-200 rounded hover:bg-purple-100 transition-colors font-medium"
+          >
+            🏷️ Imprimir Etiquetas QR
+          </button>
           
           {isAdmin && (
             <button
@@ -391,16 +408,16 @@ export default function InventoryView({ onBack }: Props) {
         </div>
       )}
 
-      {/* Contenido */}
+      {/* Contenido - con scroll vertical */}
       <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         {cargando ? (
           <div className="p-12 text-center text-gray-500">Cargando datos...</div>
         ) : error ? (
           <div className="p-8 text-center text-red-500">{error}</div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-auto max-h-[calc(100vh-320px)]">
             <table className="w-full text-left border-collapse">
-              <thead>
+              <thead className="sticky top-0 z-10">
                 <tr className="bg-gray-100 border-b border-gray-200 text-gray-600 text-sm uppercase tracking-wider">
                   <th className="p-4 font-semibold">SKU / Código</th>
                   <th className="p-4 font-semibold">Nombre del Tinte</th>
