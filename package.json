@@ -88,7 +88,8 @@
         ]
       },
       "build/setup-printer.ps1",
-      "build/diagnose-printer.ps1"
+      "build/diagnose-printer.ps1",
+      "build/printer-bridge.ps1"
     ],
     "asarUnpack": [
       "**/libquery_engine*",
