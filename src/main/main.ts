@@ -16,7 +16,9 @@
 import { app, BrowserWindow, ipcMain, dialog } from "electron"
 import path from "path"
 import { MockScaleService } from "./hardware/mock-scale"
-import { SerialScaleService, IScaleService } from "./hardware/scale-interface"
+import { IScaleService } from "./hardware/scale-interface"
+import { DymoHIDScaleService } from "./hardware/dymo-hid-scale"
+import { MettlerToledoSerialService } from "./hardware/mettler-serial-scale"
 import { SayerService } from "./services/sayer-service"
 import { IPCChannels, IPCInvokeChannels, AjusteStockParams } from "../shared/types"
 // FIX REFERENCE: FIX-20260127-04 - Cambio de @shared/ a ruta relativa para compatibilidad tsc
@@ -74,23 +76,33 @@ function restartScaleService(mainWindow: BrowserWindow | null): IScaleService {
 
 /**
  * Inicializar el servicio de báscula según la configuración
+ * IMPL-20260204-01: Soporte para HID (Dymo USB), Serial (Mettler Toledo) y Mock
  */
 function initScaleService(mainWindow: BrowserWindow): IScaleService {
   const config = configService.getConfig()
   let service: IScaleService
 
-  if (config.mode === "DEMO") {
-    console.log("[Main] Inicializando MockScaleService (MODO DEMO)")
-    service = new MockScaleService(mainWindow)
-  } else {
-    console.log(
-      `[Main] Inicializando SerialScaleService (MODO PROD) - Puerto: ${config.hardware.scalePort}`
-    )
-    service = new SerialScaleService(
-      mainWindow,
-      config.hardware.scalePort,
-      config.hardware.baudRate
-    )
+  // Determinar tipo de báscula
+  const scaleType = config.hardware.scaleType || (config.mode === "DEMO" ? "MOCK" : "HID")
+
+  switch (scaleType) {
+    case "HID":
+      console.log("[Main] Inicializando DymoHIDScaleService (USB HID - Dymo)")
+      service = new DymoHIDScaleService(mainWindow)
+      break
+    case "SERIAL":
+      console.log(`[Main] Inicializando MettlerToledoSerialService - Puerto: ${config.hardware.scalePort}`)
+      service = new MettlerToledoSerialService(
+        mainWindow,
+        config.hardware.scalePort,
+        config.hardware.baudRate
+      )
+      break
+    case "MOCK":
+    default:
+      console.log("[Main] Inicializando MockScaleService (MODO DEMO)")
+      service = new MockScaleService(mainWindow)
+      break
   }
 
   return service

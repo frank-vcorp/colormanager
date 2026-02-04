@@ -14,11 +14,13 @@ import { AppConfig } from "../../shared/types"
 
 /**
  * Configuración por defecto
+ * IMPL-20260204-02: Modo PRODUCTION por defecto con báscula HID (Dymo USB)
  */
 const DEFAULT_CONFIG: AppConfig = {
-  mode: "DEMO",
+  mode: "PRODUCTION",
   hardware: {
-    scalePort: "COM3",
+    scaleType: "HID",
+    scalePort: "/dev/ttyUSB0",
     baudRate: 9600,
   },
   paths: {
