@@ -76,9 +76,14 @@ export class DymoHIDScaleService implements IScaleService {
     this.connect().then((success) => {
       if (success) {
         console.log("[USBScale] ✅ Conexión automática exitosa")
+        this.connected = true
       } else {
         console.log("[USBScale] ⚠️ Báscula HID no detectada - se reintentará al iniciar mezcla")
+        this.connected = false
       }
+    }).catch((err) => {
+      console.error("[USBScale] ❌ Error en conexión automática:", err)
+      this.connected = false
     })
   }
 

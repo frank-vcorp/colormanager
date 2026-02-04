@@ -88,15 +88,31 @@ function initScaleService(mainWindow: BrowserWindow): IScaleService {
   switch (scaleType) {
     case "HID":
       console.log("[Main] Inicializando DymoHIDScaleService (USB HID - Dymo)")
-      service = new DymoHIDScaleService(mainWindow)
+      try {
+        service = new DymoHIDScaleService(mainWindow)
+        // Verificar después de un momento si realmente conectó
+        setTimeout(() => {
+          if (!service.isConnected()) {
+            console.warn("[Main] ⚠️ Báscula HID no detectada - el indicador mostrará desconectado")
+          }
+        }, 2000)
+      } catch (e) {
+        console.error("[Main] ❌ Error al inicializar HID, usando Mock:", e)
+        service = new MockScaleService(mainWindow)
+      }
       break
     case "SERIAL":
       console.log(`[Main] Inicializando MettlerToledoSerialService - Puerto: ${config.hardware.scalePort}`)
-      service = new MettlerToledoSerialService(
-        mainWindow,
-        config.hardware.scalePort,
-        config.hardware.baudRate
-      )
+      try {
+        service = new MettlerToledoSerialService(
+          mainWindow,
+          config.hardware.scalePort,
+          config.hardware.baudRate
+        )
+      } catch (e) {
+        console.error("[Main] ❌ Error al inicializar Serial, usando Mock:", e)
+        service = new MockScaleService(mainWindow)
+      }
       break
     case "MOCK":
     default:
