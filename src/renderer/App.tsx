@@ -64,10 +64,27 @@ function AppMain() {
 
     window.colorManager.onPesoActualizado((evento: PesoEvent) => {
       setPesoActual(evento.peso)
+      // FIX-20260204-18: Si recibimos peso, la báscula está funcionando - limpiar error de báscula
+      setError((prevError) => {
+        if (prevError && (prevError.includes("báscula") || prevError.includes("HID"))) {
+          return null
+        }
+        return prevError
+      })
     })
 
     window.colorManager.onEstadoBascula((estado) => {
       setBasculaConectada(estado.conectada)
+      // FIX-20260204-18: Limpiar error de báscula cuando se reconecta
+      if (estado.conectada) {
+        setError((prevError) => {
+          if (prevError && (prevError.includes("báscula") || prevError.includes("HID"))) {
+            console.log("[App] Báscula reconectada, limpiando error")
+            return null
+          }
+          return prevError
+        })
+      }
     })
 
     window.colorManager.onRecetaDetectada((receta: RecetaSayer) => {

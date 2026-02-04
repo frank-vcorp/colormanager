@@ -92,6 +92,18 @@ export class DymoHIDScaleService implements IScaleService {
   }
 
   /**
+   * Emite estado de conexión al renderer
+   * FIX-20260204-18: Notificar al UI cuando la báscula se reconecta
+   */
+  private emitEstadoBascula(): void {
+    if (!this.window || this.window.isDestroyed()) return
+    this.window.webContents.send(IPCChannels.ESTADO_BASCULA, {
+      conectada: this.connected,
+      peso: this.currentWeight
+    })
+  }
+
+  /**
    * Detección en caliente: verifica periódicamente si se conectó/desconectó una báscula
    */
   private startHotPlugDetection(): void {
@@ -101,6 +113,8 @@ export class DymoHIDScaleService implements IScaleService {
         const success = await this.connect()
         if (success) {
           console.log("[USBScale] 🔌 Hot-plug: Báscula detectada y conectada")
+          // FIX-20260204-18: Notificar reconexión al UI
+          this.emitEstadoBascula()
         }
       } else if (this.device) {
         // Si está conectada, verificar que sigue respondiendo
@@ -111,6 +125,8 @@ export class DymoHIDScaleService implements IScaleService {
           console.log("[USBScale] 🔌 Hot-plug: Báscula desconectada")
           this.connected = false
           this.device = null
+          // FIX-20260204-18: Notificar desconexión al UI
+          this.emitEstadoBascula()
         }
       }
     }, 3000) // Verificar cada 3 segundos
