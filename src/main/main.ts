@@ -97,8 +97,9 @@ function initScaleService(mainWindow: BrowserWindow): IScaleService {
           }
         }, 2000)
       } catch (e) {
+        // FIX REFERENCE: FIX-20260204-06 - Pasar isFallback=true para que reporte desconectado
         console.error("[Main] ❌ Error al inicializar HID, usando Mock:", e)
-        service = new MockScaleService(mainWindow)
+        service = new MockScaleService(mainWindow, true)
       }
       break
     case "SERIAL":
@@ -110,8 +111,9 @@ function initScaleService(mainWindow: BrowserWindow): IScaleService {
           config.hardware.baudRate
         )
       } catch (e) {
+        // FIX REFERENCE: FIX-20260204-06 - Pasar isFallback=true para que reporte desconectado
         console.error("[Main] ❌ Error al inicializar Serial, usando Mock:", e)
-        service = new MockScaleService(mainWindow)
+        service = new MockScaleService(mainWindow, true)
       }
       break
     case "MOCK":
