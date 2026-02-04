@@ -226,11 +226,11 @@ export interface AjusteStockResponse {
   error?: string
 }
 // Configuración de aplicación (IMPL-20260129-01: Config Dinámica)
-// IMPL-20260204-01: Agregado scaleType para soporte HID/Serial/Mock
+// FIX-20260204-07: Eliminado MOCK - solo HID y SERIAL
 export interface AppConfig {
   mode: "DEMO" | "PRODUCTION"
   hardware: {
-    scaleType: "HID" | "SERIAL" | "MOCK" // Tipo de conexión de báscula
+    scaleType: "HID" | "SERIAL" // Tipo de conexión de báscula
     scalePort: string // ej: "COM3", "/dev/ttyUSB0" (solo para SERIAL)
     baudRate: number // ej: 9600 (solo para SERIAL)
   }

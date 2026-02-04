@@ -15,7 +15,6 @@
 
 import { app, BrowserWindow, ipcMain, dialog } from "electron"
 import path from "path"
-import { MockScaleService } from "./hardware/mock-scale"
 import { IScaleService } from "./hardware/scale-interface"
 import { DymoHIDScaleService } from "./hardware/dymo-hid-scale"
 import { MettlerToledoSerialService } from "./hardware/mettler-serial-scale"
@@ -43,7 +42,7 @@ let printerServer: VirtualPrinterServer | null = null
  * Reiniciar el servicio de báscula cuando cambia la configuración
  * FIX-20260129-01: Detener servicio actual, instanciar nuevo, iniciar
  */
-function restartScaleService(mainWindow: BrowserWindow | null): IScaleService {
+function restartScaleService(mainWindow: BrowserWindow | null): IScaleService | null {
   if (!mainWindow) {
     throw new Error("[Main] mainWindow no disponible para reiniciar servicio")
   }
@@ -76,54 +75,44 @@ function restartScaleService(mainWindow: BrowserWindow | null): IScaleService {
 
 /**
  * Inicializar el servicio de báscula según la configuración
- * IMPL-20260204-01: Soporte para HID (Dymo USB), Serial (Mettler Toledo) y Mock
+ * IMPL-20260204-01: Soporte para HID (Dymo USB) y Serial (Mettler Toledo)
+ * FIX-20260204-07: Eliminado MockScaleService - si falla, retorna null
  */
-function initScaleService(mainWindow: BrowserWindow): IScaleService {
+function initScaleService(mainWindow: BrowserWindow): IScaleService | null {
   const config = configService.getConfig()
-  let service: IScaleService
 
-  // Determinar tipo de báscula
-  const scaleType = config.hardware.scaleType || (config.mode === "DEMO" ? "MOCK" : "HID")
+  // Determinar tipo de báscula (HID por defecto)
+  const scaleType = config.hardware.scaleType || "HID"
 
   switch (scaleType) {
     case "HID":
       console.log("[Main] Inicializando DymoHIDScaleService (USB HID - Dymo)")
       try {
-        service = new DymoHIDScaleService(mainWindow)
-        // Verificar después de un momento si realmente conectó
-        setTimeout(() => {
-          if (!service.isConnected()) {
-            console.warn("[Main] ⚠️ Báscula HID no detectada - el indicador mostrará desconectado")
-          }
-        }, 2000)
+        const service = new DymoHIDScaleService(mainWindow)
+        return service
       } catch (e) {
-        // FIX REFERENCE: FIX-20260204-06 - Pasar isFallback=true para que reporte desconectado
-        console.error("[Main] ❌ Error al inicializar HID, usando Mock:", e)
-        service = new MockScaleService(mainWindow, true)
+        console.error("[Main] ❌ Error al inicializar báscula HID:", e)
+        return null
       }
-      break
+
     case "SERIAL":
       console.log(`[Main] Inicializando MettlerToledoSerialService - Puerto: ${config.hardware.scalePort}`)
       try {
-        service = new MettlerToledoSerialService(
+        const service = new MettlerToledoSerialService(
           mainWindow,
           config.hardware.scalePort,
           config.hardware.baudRate
         )
+        return service
       } catch (e) {
-        // FIX REFERENCE: FIX-20260204-06 - Pasar isFallback=true para que reporte desconectado
-        console.error("[Main] ❌ Error al inicializar Serial, usando Mock:", e)
-        service = new MockScaleService(mainWindow, true)
+        console.error("[Main] ❌ Error al inicializar báscula Serial:", e)
+        return null
       }
-      break
-    case "MOCK":
-    default:
-      console.log("[Main] Inicializando MockScaleService (MODO DEMO)")
-      service = new MockScaleService(mainWindow)
-      break
-  }
 
-  return service
+    default:
+      console.warn(`[Main] Tipo de báscula desconocido: ${scaleType}`)
+      return null
+  }
 }
 
 function createWindow() {
