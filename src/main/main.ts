@@ -468,9 +468,13 @@ ipcMain.handle(IPCInvokeChannels.MINIMIZAR_VENTANA, async () => {
 /**
  * INSTALL_PRINTER: Instala la impresora virtual ColorManager (IMPL-20260204-04)
  * Ejecuta el script PowerShell para crear puerto TCP y impresora
+ * FIX-20260204-08: Mejorar detección de ruta y logging de errores
  */
 ipcMain.handle(IPCInvokeChannels.INSTALL_PRINTER, async () => {
   console.log("[Main] Solicitud de instalación de impresora recibida")
+  console.log("[Main] Plataforma:", process.platform)
+  console.log("[Main] __dirname:", __dirname)
+  console.log("[Main] resourcesPath:", process.resourcesPath)
   
   // Solo funciona en Windows
   if (process.platform !== "win32") {
@@ -480,31 +484,56 @@ ipcMain.handle(IPCInvokeChannels.INSTALL_PRINTER, async () => {
   try {
     const { exec } = await import("child_process")
     const { promisify } = await import("util")
+    const fs = await import("fs")
     const execAsync = promisify(exec)
     
-    // Ruta al script PowerShell
-    const scriptPath = path.join(__dirname, "../../build/setup-printer.ps1")
+    // Buscar el script en múltiples ubicaciones
+    const possiblePaths = [
+      // Desarrollo
+      path.join(__dirname, "../../build/setup-printer.ps1"),
+      path.join(__dirname, "../../../build/setup-printer.ps1"),
+      // Producción (extraResources)
+      path.join(process.resourcesPath || "", "setup-printer.ps1"),
+      // Producción alternativa
+      path.join(app.getAppPath(), "build/setup-printer.ps1"),
+      path.join(app.getAppPath(), "../setup-printer.ps1"),
+    ]
     
-    // En producción, el script está en resources
-    const fs = await import("fs")
-    let finalScriptPath = scriptPath
-    if (!fs.existsSync(scriptPath)) {
-      finalScriptPath = path.join(process.resourcesPath || "", "setup-printer.ps1")
+    let finalScriptPath = ""
+    for (const p of possiblePaths) {
+      console.log(`[Main] Verificando: ${p}`)
+      if (fs.existsSync(p)) {
+        finalScriptPath = p
+        console.log(`[Main] ✓ Script encontrado: ${p}`)
+        break
+      }
     }
     
-    console.log(`[Main] Ejecutando script: ${finalScriptPath}`)
+    if (!finalScriptPath) {
+      const errorMsg = `Script no encontrado. Rutas probadas:\n${possiblePaths.join("\n")}`
+      console.error("[Main] ❌", errorMsg)
+      return { success: false, error: errorMsg }
+    }
     
-    // Ejecutar PowerShell con elevación de privilegios
-    const command = `powershell -ExecutionPolicy Bypass -File "${finalScriptPath}" -Action install`
-    const { stdout, stderr } = await execAsync(command)
+    // Ejecutar PowerShell con elevación de privilegios usando Start-Process
+    // Esto abrirá el UAC para solicitar permisos de administrador
+    const command = `powershell -ExecutionPolicy Bypass -Command "Start-Process powershell -ArgumentList '-ExecutionPolicy Bypass -File \\"${finalScriptPath.replace(/\\/g, "\\\\")}\\" -Action install' -Verb RunAs -Wait"`
     
-    console.log("[Main] Resultado instalación impresora:", stdout)
-    if (stderr) console.error("[Main] Errores:", stderr)
+    console.log(`[Main] Ejecutando: ${command}`)
     
-    return { success: true, output: stdout }
+    const { stdout, stderr } = await execAsync(command, { timeout: 60000 })
+    
+    console.log("[Main] stdout:", stdout)
+    if (stderr) console.log("[Main] stderr:", stderr)
+    
+    return { success: true, output: stdout || "Instalación completada (verifique la impresora en Windows)" }
   } catch (error: any) {
     console.error("[Main] Error al instalar impresora:", error)
-    return { success: false, error: error.message }
+    // Si el usuario cancela el UAC, devolvemos mensaje amigable
+    if (error.message?.includes("canceled") || error.code === 1223) {
+      return { success: false, error: "Instalación cancelada por el usuario" }
+    }
+    return { success: false, error: error.message || String(error) }
   }
 })
 
