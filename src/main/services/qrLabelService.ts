@@ -2,15 +2,23 @@
  * Servicio de Generación e Impresión de Etiquetas QR
  * 
  * ID Intervención: ARCH-20260204-01
+ * @updated IMPL-20260204-19: Soporte para impresora Niimbot B1 vía puerto COM
  * Ruta SPEC: context/specs/SPEC-ETIQUETAS-QR.md
  * 
  * Genera códigos QR para identificación única de lotes y permite
  * imprimirlos a impresora Niimbot B1 (USB/Bluetooth).
+ * 
+ * La impresora Niimbot B1 usa driver USB que crea puerto COM virtual.
+ * El driver está en: context/USB-Driver-Install-1.0.3.0/
  */
 
 import QRCode from 'qrcode'
 import { BrowserWindow } from 'electron'
 import { getPrismaClient } from '../database/db'
+import { exec } from 'child_process'
+import { promisify } from 'util'
+
+const execAsync = promisify(exec)
 
 // ============================================================================
 // TIPOS
@@ -28,6 +36,57 @@ export interface PrintResult {
   success: boolean
   error?: string
   printed?: number
+}
+
+export interface NiimbotConfig {
+  comPort?: string     // Puerto COM detectado (ej: "COM3")
+  baudRate: number     // Velocidad (default 115200)
+}
+
+// ============================================================================
+// DETECCIÓN DE IMPRESORA NIIMBOT
+// ============================================================================
+
+/**
+ * Detecta el puerto COM de la impresora Niimbot B1
+ * El driver USB crea un puerto serial virtual cuando se conecta
+ */
+export async function detectNiimbotPort(): Promise<string | null> {
+  if (process.platform !== 'win32') {
+    console.log('[qrLabelService] Detección COM solo disponible en Windows')
+    return null
+  }
+  
+  try {
+    // Buscar puertos COM con dispositivo USB-SERIAL CH340 (driver Niimbot)
+    const { stdout } = await execAsync(
+      'powershell -Command "Get-WmiObject Win32_PnPEntity | Where-Object { $_.Name -match \'CH340|USB-SERIAL|Niimbot\' } | ForEach-Object { if ($_.Name -match \'COM(\\d+)\') { Write-Output $Matches[0] } }"'
+    )
+    
+    const comPort = stdout.trim()
+    if (comPort && comPort.startsWith('COM')) {
+      console.log(`[qrLabelService] Niimbot detectada en ${comPort}`)
+      return comPort
+    }
+    
+    // Fallback: buscar cualquier puerto serial reciente
+    const { stdout: ports } = await execAsync(
+      'powershell -Command "[System.IO.Ports.SerialPort]::GetPortNames() | ForEach-Object { Write-Output $_ }"'
+    )
+    
+    const portList = ports.trim().split('\n').filter(p => p.startsWith('COM'))
+    if (portList.length > 0) {
+      // Tomar el último puerto (usualmente el más reciente)
+      const lastPort = portList[portList.length - 1].trim()
+      console.log(`[qrLabelService] Usando puerto serial: ${lastPort}`)
+      return lastPort
+    }
+    
+  } catch (error) {
+    console.error('[qrLabelService] Error detectando puerto COM:', error)
+  }
+  
+  return null
 }
 
 // ============================================================================
@@ -158,9 +217,56 @@ export async function getPendingLabels(): Promise<EtiquetaData[]> {
 
 /**
  * Imprime etiqueta a impresora del sistema
- * Usa ventana oculta de Electron para renderizar e imprimir
+ * Primero intenta usar el puerto COM de Niimbot (si está disponible)
+ * Si no, usa el sistema de impresión de Electron
  */
 export async function printLabel(etiqueta: EtiquetaData): Promise<PrintResult> {
+  try {
+    // En Windows, intentar detectar Niimbot por COM
+    if (process.platform === 'win32') {
+      const comPort = await detectNiimbotPort()
+      if (comPort) {
+        return await printLabelViaCOM(etiqueta, comPort)
+      }
+    }
+    
+    // Fallback: usar impresión tradicional de Electron
+    return await printLabelViaElectron(etiqueta)
+    
+  } catch (error) {
+    console.error('[qrLabelService] Error:', error)
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    }
+  }
+}
+
+/**
+ * Imprime etiqueta vía puerto COM serial (Niimbot B1)
+ * Nota: Por ahora usa la impresión de Electron con hint de impresora
+ * TODO: Implementar protocolo directo Niimbot cuando se documente
+ */
+async function printLabelViaCOM(etiqueta: EtiquetaData, comPort: string): Promise<PrintResult> {
+  try {
+    // La impresora Niimbot B1 tiene protocolo propietario
+    // Por ahora, usamos print via sistema buscando la impresora Niimbot
+    console.log(`[qrLabelService] Niimbot detectada en ${comPort}, usando impresión de sistema`)
+    
+    // Fallback a impresión via Electron buscando específicamente la Niimbot
+    return await printLabelViaElectron(etiqueta, 'Niimbot')
+    
+  } catch (error) {
+    console.error('[qrLabelService] Error COM:', error)
+    return { success: false, error: `Error puerto ${comPort}: ${error}` }
+  }
+}
+
+/**
+ * Imprime etiqueta usando sistema de impresión de Electron
+ * Usa ventana oculta para renderizar e imprimir
+ */
+async function printLabelViaElectron(etiqueta: EtiquetaData, printerHint?: string): Promise<PrintResult> {
   try {
     const qrDataUrl = etiqueta.qrDataUrl || await generateQRDataURL(etiqueta.codigo)
     
@@ -233,13 +339,24 @@ export async function printLabel(etiqueta: EtiquetaData): Promise<PrintResult> {
     // Obtener lista de impresoras
     const printers = await printWindow.webContents.getPrintersAsync()
     
-    // Buscar impresora Niimbot o usar la predeterminada
-    const niimbotPrinter = printers.find(p => 
-      p.name.toLowerCase().includes('niimbot') ||
-      p.name.toLowerCase().includes('label')
-    )
+    // Buscar impresora según hint o usar defaults
+    let targetPrinter = printers.find(p => {
+      const name = p.name.toLowerCase()
+      // Si hay hint, buscar por ese término
+      if (printerHint) {
+        return name.includes(printerHint.toLowerCase())
+      }
+      // Por defecto, buscar Niimbot o impresora de etiquetas
+      return name.includes('niimbot') || name.includes('label') || name.includes('b1')
+    })
     
-    const printerName = niimbotPrinter?.name || undefined
+    const printerName = targetPrinter?.name || undefined
+    
+    if (printerName) {
+      console.log(`[qrLabelService] Usando impresora: ${printerName}`)
+    } else {
+      console.log('[qrLabelService] Usando impresora predeterminada')
+    }
     
     // Imprimir
     const printResult = await new Promise<boolean>((resolve) => {

@@ -19,6 +19,8 @@ $serviceName = "ColorManagerPrinterService"
 $spoolDir = "$env:USERPROFILE\Documents\ColorManager\spool"
 $logDir = "$env:ProgramData\ColorManager"
 $logFile = "$logDir\setup.log"
+$niimbotDriverPath = "$PSScriptRoot\..\resources\drivers\USB-Driver-Installer-1.0.3.0.exe"
+$niimbotDriverAlt = "$PSScriptRoot\drivers\USB-Driver-Installer-1.0.3.0.exe"
 
 # Función de logging
 function Write-Log {
@@ -41,16 +43,18 @@ function Install-All {
     Write-Log "========================================" "Cyan"
     Write-Log ""
     Write-Log "Este proceso configurara:" "Gray"
-    Write-Log "  1. Reglas de firewall" "Gray"
-    Write-Log "  2. Impresora virtual TCP" "Gray"
-    Write-Log "  3. Servicio de recepcion" "Gray"
-    Write-Log "  4. Carpeta de spool" "Gray"
+    Write-Log "  1. Carpeta de spool" "Gray"
+    Write-Log "  2. Reglas de firewall" "Gray"
+    Write-Log "  3. Puerto TCP/IP" "Gray"
+    Write-Log "  4. Impresora virtual TCP" "Gray"
+    Write-Log "  5. Servicio de recepcion" "Gray"
+    Write-Log "  6. Driver USB Niimbot (etiquetas QR)" "Gray"
     Write-Log ""
     
     $success = $true
     
     # PASO 1: Crear carpeta de spool
-    Write-Log "[1/5] Creando carpeta de spool..." "White"
+    Write-Log "[1/6] Creando carpeta de spool..." "White"
     try {
         if (-not (Test-Path $spoolDir)) {
             New-Item -ItemType Directory -Path $spoolDir -Force | Out-Null
@@ -62,7 +66,7 @@ function Install-All {
     }
     
     # PASO 2: Configurar Firewall
-    Write-Log "[2/5] Configurando firewall..." "White"
+    Write-Log "[2/6] Configurando firewall..." "White"
     try {
         $ruleName = "ColorManager Printer Port"
         Remove-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
@@ -75,7 +79,7 @@ function Install-All {
     }
     
     # PASO 3: Crear Puerto TCP/IP
-    Write-Log "[3/5] Configurando puerto TCP/IP..." "White"
+    Write-Log "[3/6] Configurando puerto TCP/IP..." "White"
     try {
         # Verificar spooler
         $spooler = Get-Service -Name Spooler -ErrorAction SilentlyContinue
@@ -97,7 +101,7 @@ function Install-All {
     }
     
     # PASO 4: Crear Impresora
-    Write-Log "[4/5] Configurando impresora virtual..." "White"
+    Write-Log "[4/6] Configurando impresora virtual..." "White"
     try {
         # Eliminar impresora existente
         Remove-Printer -Name $printerName -ErrorAction SilentlyContinue
@@ -134,7 +138,7 @@ function Install-All {
     }
     
     # PASO 5: Crear Servicio/Tarea Programada
-    Write-Log "[5/5] Configurando servicio de recepcion..." "White"
+    Write-Log "[5/6] Configurando servicio de recepcion..." "White"
     try {
         # Crear script del servicio
         $serviceScript = "$logDir\printer-service.ps1"
@@ -246,6 +250,38 @@ try {
     } catch {
         Write-Log "  [ERROR] Servicio: $_" "Red"
         $success = $false
+    }
+    
+    # PASO 6: Instalar Driver USB Niimbot B1
+    Write-Log "[6/6] Instalando driver USB Niimbot B1..." "White"
+    try {
+        # Buscar driver en ubicaciones posibles
+        $driverExe = $null
+        if (Test-Path $niimbotDriverPath) {
+            $driverExe = $niimbotDriverPath
+        } elseif (Test-Path $niimbotDriverAlt) {
+            $driverExe = $niimbotDriverAlt
+        }
+        
+        if ($driverExe) {
+            # Ejecutar instalador silencioso
+            Write-Log "  Ejecutando: $driverExe" "Gray"
+            $process = Start-Process -FilePath $driverExe -ArgumentList "/S" -Wait -PassThru -ErrorAction Stop
+            
+            if ($process.ExitCode -eq 0) {
+                Write-Log "  [OK] Driver Niimbot instalado" "Green"
+            } else {
+                Write-Log "  [WARN] Driver Niimbot - codigo de salida: $($process.ExitCode)" "Yellow"
+            }
+        } else {
+            Write-Log "  [SKIP] Driver no encontrado en:" "Yellow"
+            Write-Log "         $niimbotDriverPath" "Gray"
+            Write-Log "         $niimbotDriverAlt" "Gray"
+            Write-Log "         Instale manualmente si necesita etiquetas QR" "Gray"
+        }
+    } catch {
+        Write-Log "  [WARN] Driver Niimbot: $_" "Yellow"
+        # No marcar como fallo - es opcional
     }
     
     # Resumen
