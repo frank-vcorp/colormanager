@@ -465,6 +465,49 @@ ipcMain.handle(IPCInvokeChannels.MINIMIZAR_VENTANA, async () => {
   return { success: false }
 })
 
+/**
+ * INSTALL_PRINTER: Instala la impresora virtual ColorManager (IMPL-20260204-04)
+ * Ejecuta el script PowerShell para crear puerto TCP y impresora
+ */
+ipcMain.handle(IPCInvokeChannels.INSTALL_PRINTER, async () => {
+  console.log("[Main] Solicitud de instalación de impresora recibida")
+  
+  // Solo funciona en Windows
+  if (process.platform !== "win32") {
+    return { success: false, error: "Solo disponible en Windows" }
+  }
+  
+  try {
+    const { exec } = await import("child_process")
+    const { promisify } = await import("util")
+    const execAsync = promisify(exec)
+    
+    // Ruta al script PowerShell
+    const scriptPath = path.join(__dirname, "../../build/setup-printer.ps1")
+    
+    // En producción, el script está en resources
+    const fs = await import("fs")
+    let finalScriptPath = scriptPath
+    if (!fs.existsSync(scriptPath)) {
+      finalScriptPath = path.join(process.resourcesPath || "", "setup-printer.ps1")
+    }
+    
+    console.log(`[Main] Ejecutando script: ${finalScriptPath}`)
+    
+    // Ejecutar PowerShell con elevación de privilegios
+    const command = `powershell -ExecutionPolicy Bypass -File "${finalScriptPath}" -Action install`
+    const { stdout, stderr } = await execAsync(command)
+    
+    console.log("[Main] Resultado instalación impresora:", stdout)
+    if (stderr) console.error("[Main] Errores:", stderr)
+    
+    return { success: true, output: stdout }
+  } catch (error: any) {
+    console.error("[Main] Error al instalar impresora:", error)
+    return { success: false, error: error.message }
+  }
+})
+
 // App lifecycle
 app.on("ready", createWindow)
 

@@ -74,6 +74,9 @@ contextBridge.exposeInMainWorld("colorManager", {
 
   minimizarVentana: () => ipcRenderer.invoke(IPCInvokeChannels.MINIMIZAR_VENTANA),
 
+  // IMPL-20260204-04: Instalar impresora virtual manualmente
+  instalarImpresora: () => ipcRenderer.invoke(IPCInvokeChannels.INSTALL_PRINTER),
+
   // IMPL-20260129-01: Configuración dinámica
   invoke: (channel: string, ...args: any[]) => ipcRenderer.invoke(channel, ...args),
 })

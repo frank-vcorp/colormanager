@@ -171,6 +171,8 @@ export const IPCInvokeChannels = {
   CONFIG_SET_MODE: "config:setMode",
   CONFIG_RESET: "config:reset",
   MINIMIZAR_VENTANA: "window:minimizar",
+  // IMPL-20260204-04: Instalar impresora virtual desde UI
+  INSTALL_PRINTER: "printer:install",
 } as const
 
 // Roles del sistema

@@ -45,6 +45,9 @@ declare global {
 
       minimizarVentana: () => Promise<void>
 
+      // IMPL-20260204-04: Instalar impresora virtual manualmente
+      instalarImpresora: () => Promise<{ success: boolean; error?: string; output?: string }>
+
       // IMPL-20260129-01: Métodos genéricos para IPC
       invoke: (channel: string, ...args: any[]) => Promise<any>
     }
