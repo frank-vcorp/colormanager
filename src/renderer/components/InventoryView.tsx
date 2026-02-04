@@ -452,7 +452,7 @@ export default function InventoryView({ onBack }: Props) {
                   <th className="p-4 font-semibold">SKU / Código</th>
                   <th className="p-4 font-semibold">Nombre del Tinte</th>
                   <th className="p-4 font-semibold text-center">Presentación</th>
-                  <th className="p-4 font-semibold text-right">Botes</th>
+                  <th className="p-4 font-semibold text-right">Unidades</th>
                   <th className="p-4 font-semibold text-right">Stock (ml)</th>
                   <th className="p-4 font-semibold text-center">Estado</th>
                   <th className="p-4 font-semibold text-center">Acciones</th>
