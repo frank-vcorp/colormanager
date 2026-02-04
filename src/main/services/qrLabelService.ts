@@ -265,108 +265,122 @@ async function printLabelViaCOM(etiqueta: EtiquetaData, comPort: string): Promis
 /**
  * Imprime etiqueta usando sistema de impresión de Electron
  * Usa ventana oculta para renderizar e imprimir
+ * FIX-20260204-21: Mostrar diálogo de impresión para mejor compatibilidad
  */
-async function printLabelViaElectron(etiqueta: EtiquetaData, printerHint?: string): Promise<PrintResult> {
+async function printLabelViaElectron(etiqueta: EtiquetaData, _printerHint?: string): Promise<PrintResult> {
   try {
     const qrDataUrl = etiqueta.qrDataUrl || await generateQRDataURL(etiqueta.codigo)
     
-    // Crear ventana oculta para impresión
+    // Crear ventana VISIBLE para que el usuario vea la vista previa
     const printWindow = new BrowserWindow({
       width: 400,
-      height: 300,
-      show: false,
+      height: 450,
+      show: true,  // FIX: Mostrar ventana
+      title: `Imprimir Etiqueta: ${etiqueta.codigo}`,
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true
       }
     })
     
-    // HTML de la etiqueta (40x30mm = ~150x113px a 96dpi)
+    // HTML de la etiqueta con tamaño A7 para mejor compatibilidad
     const labelHtml = `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="UTF-8">
+        <title>Etiqueta ${etiqueta.codigo}</title>
         <style>
-          @page {
-            size: 40mm 30mm;
-            margin: 0;
+          @media print {
+            @page {
+              size: 74mm 105mm;  /* A7 - más compatible */
+              margin: 5mm;
+            }
+            body {
+              margin: 0;
+              padding: 0;
+            }
           }
           body {
-            margin: 0;
-            padding: 2mm;
+            margin: 20px;
             font-family: 'Courier New', monospace;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            width: 40mm;
-            height: 30mm;
-            box-sizing: border-box;
+            min-height: 100vh;
+            background: #f5f5f5;
+          }
+          .label-container {
+            background: white;
+            padding: 15px;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
           }
           .qr {
-            width: 18mm;
-            height: 18mm;
+            width: 150px;
+            height: 150px;
           }
           .codigo {
-            font-size: 10pt;
+            font-size: 18pt;
             font-weight: bold;
-            margin-top: 1mm;
+            margin-top: 10px;
             text-align: center;
           }
           .nombre {
-            font-size: 6pt;
+            font-size: 12pt;
             color: #333;
-            margin-top: 0.5mm;
+            margin-top: 5px;
             text-align: center;
-            max-width: 36mm;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            max-width: 250px;
+          }
+          .sku {
+            font-size: 10pt;
+            color: #666;
+            margin-top: 3px;
+          }
+          .instrucciones {
+            margin-top: 20px;
+            padding: 10px;
+            background: #e3f2fd;
+            border-radius: 5px;
+            font-size: 11pt;
+            color: #1565c0;
+          }
+          @media print {
+            .instrucciones { display: none; }
+            .label-container { border: none; }
+            body { background: white; min-height: auto; }
           }
         </style>
       </head>
       <body>
-        <img class="qr" src="${qrDataUrl}" alt="QR">
-        <div class="codigo">${etiqueta.codigo}</div>
-        <div class="nombre">${etiqueta.nombre}</div>
+        <div class="label-container">
+          <img class="qr" src="${qrDataUrl}" alt="QR">
+          <div class="codigo">${etiqueta.codigo}</div>
+          <div class="nombre">${etiqueta.nombre}</div>
+          <div class="sku">SKU: ${etiqueta.sku}</div>
+        </div>
+        <div class="instrucciones">
+          Presione Ctrl+P para imprimir o use el menú Archivo → Imprimir
+        </div>
       </body>
       </html>
     `
     
     await printWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(labelHtml)}`)
     
-    // Obtener lista de impresoras
-    const printers = await printWindow.webContents.getPrintersAsync()
-    
-    // Buscar impresora según hint o usar defaults
-    let targetPrinter = printers.find(p => {
-      const name = p.name.toLowerCase()
-      // Si hay hint, buscar por ese término
-      if (printerHint) {
-        return name.includes(printerHint.toLowerCase())
-      }
-      // Por defecto, buscar Niimbot o impresora de etiquetas
-      return name.includes('niimbot') || name.includes('label') || name.includes('b1')
-    })
-    
-    const printerName = targetPrinter?.name || undefined
-    
-    if (printerName) {
-      console.log(`[qrLabelService] Usando impresora: ${printerName}`)
-    } else {
-      console.log('[qrLabelService] Usando impresora predeterminada')
-    }
-    
-    // Imprimir
+    // FIX-20260204-21: Mostrar diálogo de impresión nativo en vez de imprimir silenciosamente
+    // Esto permite al usuario elegir impresora y ajustar configuración
     const printResult = await new Promise<boolean>((resolve) => {
       printWindow.webContents.print(
         {
-          silent: true,
+          silent: false,  // FIX: Mostrar diálogo
           printBackground: true,
-          deviceName: printerName,
-          pageSize: { width: 40000, height: 30000 }, // micrómetros
-          margins: { marginType: 'none' }
+          // No especificar deviceName para que muestre selector
         },
         (success, failureReason) => {
           if (!success && failureReason) {
@@ -377,7 +391,12 @@ async function printLabelViaElectron(etiqueta: EtiquetaData, printerHint?: strin
       )
     })
     
-    printWindow.close()
+    // Cerrar ventana después de un delay para que el usuario vea el resultado
+    setTimeout(() => {
+      if (!printWindow.isDestroyed()) {
+        printWindow.close()
+      }
+    }, 1000)
     
     if (printResult) {
       // Marcar como impresa
@@ -389,7 +408,7 @@ async function printLabelViaElectron(etiqueta: EtiquetaData, printerHint?: strin
       
       return { success: true, printed: 1 }
     } else {
-      return { success: false, error: 'La impresión fue cancelada o falló' }
+      return { success: false, error: 'La impresión fue cancelada' }
     }
     
   } catch (error) {
