@@ -198,11 +198,14 @@ function createWindow() {
   sayerService.start()
 
   // Inicializar Servidor de Impresión Virtual (ARCH-20260130-03)
+  // FIX-20260204-10: Agregar logging detallado
+  console.log(`[Main] Iniciando VirtualPrinterServer en puerto ${config.paths.printerPort}`)
   printerServer = new VirtualPrinterServer(mainWindow!, {
     port: config.paths.printerPort,
     name: "ColorManager Printer"
   })
   printerServer.start()
+  console.log(`[Main] VirtualPrinterServer iniciado`)
 
   // IMPL-20260128-01: Registrar canales de autenticación
   registerAuthIPC()

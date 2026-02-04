@@ -4,6 +4,8 @@
  * Simula una impresora en red escuchando en un puerto (ej. 9100).
  * El software de Sayer se configura para imprimir en una impresora
  * "ColorManager Printer" conectada a 127.0.0.1:9100.
+ * 
+ * FIX-20260204-10: Escuchar en 127.0.0.1 en lugar de 0.0.0.0 para Windows
  */
 
 import net from "net"
@@ -24,6 +26,7 @@ export class VirtualPrinterServer {
     private name: string
     private buffer: string = ""
     private timeout: NodeJS.Timeout | null = null
+    private isListening: boolean = false
 
     // ARCH-20260130-04: Estados y Cola
     private state: PrinterState = "IDLE"
@@ -34,55 +37,92 @@ export class VirtualPrinterServer {
         this.mainWindow = mainWindow
         this.port = config.port
         this.name = config.name
+        console.log(`[PrinterServer] Constructor llamado - puerto: ${this.port}`)
     }
 
     /**
      * Inicia el servidor TCP
      */
     public start(): void {
+        console.log(`[PrinterServer] Iniciando servidor en puerto ${this.port}...`)
         this.stop()
 
-        this.server = net.createServer((socket) => {
-            console.log(`[PrinterServer] Conexión recibida desde ${socket.remoteAddress}`)
-            this.updateState("RECEIVING")
+        try {
+            this.server = net.createServer((socket) => {
+                const clientAddr = `${socket.remoteAddress}:${socket.remotePort}`
+                console.log(`[PrinterServer] ✅ CONEXIÓN RECIBIDA desde ${clientAddr}`)
+                this.updateState("RECEIVING")
 
-            socket.on("data", (data) => {
-                this.buffer += data.toString("latin1")
-                if (this.timeout) clearTimeout(this.timeout)
+                socket.on("data", (data) => {
+                    console.log(`[PrinterServer] Datos recibidos: ${data.length} bytes`)
+                    this.buffer += data.toString("latin1")
+                    if (this.timeout) clearTimeout(this.timeout)
 
-                this.timeout = setTimeout(() => {
+                    this.timeout = setTimeout(() => {
+                        this.processInboundPrint()
+                    }, 800)
+                })
+
+                socket.on("end", () => {
+                    console.log(`[PrinterServer] Socket cerrado por cliente ${clientAddr}`)
+                    if (this.timeout) clearTimeout(this.timeout)
                     this.processInboundPrint()
-                }, 800)
+                })
+
+                socket.on("error", (err) => {
+                    console.error("[PrinterServer] Error en socket:", err)
+                    this.updateState("ERROR")
+                })
             })
 
-            socket.on("end", () => {
-                if (this.timeout) clearTimeout(this.timeout)
-                this.processInboundPrint()
+            // FIX-20260204-10: Escuchar en 127.0.0.1 para compatibilidad con Windows
+            // La impresora TCP de Windows envía a 127.0.0.1, no a 0.0.0.0
+            this.server.listen(this.port, "127.0.0.1", () => {
+                this.isListening = true
+                console.log(`[PrinterServer] ✅✅✅ "${this.name}" ACTIVO en 127.0.0.1:${this.port}`)
+                console.log(`[PrinterServer] Servidor listo para recibir impresiones`)
+                this.updateState("IDLE")
             })
 
-            socket.on("error", (err) => {
-                console.error("[PrinterServer] Error en socket:", err)
+            this.server.on("error", (err: NodeJS.ErrnoException) => {
+                this.isListening = false
+                console.error(`[PrinterServer] ❌ ERROR AL INICIAR SERVIDOR:`, err.message)
+                
+                if (err.code === "EADDRINUSE") {
+                    console.error(`[PrinterServer] ❌ El puerto ${this.port} ya está en uso por otro proceso`)
+                    this.sendError(`Puerto ${this.port} ocupado. Cierre el proceso que lo usa e intente de nuevo.`)
+                } else if (err.code === "EACCES") {
+                    console.error(`[PrinterServer] ❌ Sin permisos para escuchar en puerto ${this.port}`)
+                    this.sendError(`Sin permisos para puerto ${this.port}. Ejecute como administrador.`)
+                } else {
+                    this.sendError(`Error en Impresora Virtual: ${err.message}`)
+                }
+                
                 this.updateState("ERROR")
             })
-        })
 
-        this.server.listen(this.port, "0.0.0.0", () => {
-            console.log(`[PrinterServer] ✅ "${this.name}" activo en 0.0.0.0:${this.port} (escuchando todas las interfaces)`)
-            this.updateState("IDLE")
-        })
+            this.server.on("close", () => {
+                this.isListening = false
+                console.log(`[PrinterServer] Servidor cerrado`)
+            })
 
-        this.server.on("error", (err) => {
-            console.error("[PrinterServer] Error en servidor:", err)
-            this.updateState("ERROR")
-            this.sendError(`Error en Impresora Virtual: ${err.message}`)
-        })
+        } catch (err: any) {
+            console.error(`[PrinterServer] ❌ Excepción al crear servidor:`, err)
+            this.sendError(`No se pudo crear servidor: ${err.message}`)
+        }
     }
 
     public stop(): void {
         if (this.server) {
+            console.log(`[PrinterServer] Deteniendo servidor...`)
             this.server.close()
             this.server = null
+            this.isListening = false
         }
+    }
+
+    public getIsListening(): boolean {
+        return this.isListening
     }
 
     private updateState(newState: PrinterState): void {
