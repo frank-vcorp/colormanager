@@ -50,6 +50,31 @@ declare global {
       // IMPL-20260204-05: Probar conexión de impresora
       probarImpresora: () => Promise<{ success: boolean; message?: string; error?: string }>
 
+      // ARCH-20260204-01: Etiquetas QR para inventario
+      obtenerEtiquetaQR: (loteId: string) => Promise<{ 
+        success: boolean
+        error?: string
+        data?: {
+          codigo: string
+          nombre: string
+          sku: string
+          loteId: string
+          qrDataUrl?: string
+        }
+      }>
+      imprimirEtiquetaQR: (loteId: string) => Promise<{ success: boolean; error?: string; printed?: number }>
+      imprimirTodasEtiquetas: () => Promise<{ success: boolean; error?: string; printed?: number }>
+      obtenerEtiquetasPendientes: () => Promise<{ 
+        success: boolean
+        error?: string
+        data?: Array<{
+          codigo: string
+          nombre: string
+          sku: string
+          loteId: string
+        }>
+      }>
+
       // IMPL-20260129-01: Métodos genéricos para IPC
       invoke: (channel: string, ...args: any[]) => Promise<any>
     }

@@ -79,6 +79,12 @@ contextBridge.exposeInMainWorld("colorManager", {
   // IMPL-20260204-05: Probar conexión de impresora
   probarImpresora: () => ipcRenderer.invoke(IPCInvokeChannels.TEST_PRINTER),
 
+  // ARCH-20260204-01: Etiquetas QR para inventario
+  obtenerEtiquetaQR: (loteId: string) => ipcRenderer.invoke(IPCInvokeChannels.QR_OBTENER_ETIQUETA, loteId),
+  imprimirEtiquetaQR: (loteId: string) => ipcRenderer.invoke(IPCInvokeChannels.QR_IMPRIMIR, loteId),
+  imprimirTodasEtiquetas: () => ipcRenderer.invoke(IPCInvokeChannels.QR_IMPRIMIR_TODAS),
+  obtenerEtiquetasPendientes: () => ipcRenderer.invoke(IPCInvokeChannels.QR_PENDING_LABELS),
+
   // IMPL-20260129-01: Configuración dinámica
   invoke: (channel: string, ...args: any[]) => ipcRenderer.invoke(channel, ...args),
 })

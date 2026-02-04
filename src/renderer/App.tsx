@@ -98,6 +98,22 @@ function AppMain() {
     }
   }
 
+  // FIX-20260204-17: Separar "cancelar" de "finalizar"
+  // Cancelar: volver a home sin minimizar
+  const handleCancelarMezcla = async () => {
+    try {
+      await window.colorManager.cancelarMezcla()
+      setSesionMezcla(false)
+      setMezclando(false)
+      setRecetaDetectada(null)
+      setVista("home")
+      // NO minimizar - el usuario canceló intencionalmente
+    } catch (error) {
+      console.error("Error cancelando mezcla:", error)
+    }
+  }
+
+  // Finalizar con éxito: guardar y minimizar
   const handleFinalizarMezcla = async () => {
     try {
       await window.colorManager.cancelarMezcla()
@@ -106,7 +122,7 @@ function AppMain() {
       setRecetaDetectada(null) // Limpiar receta
       setVista("home") // Volver a vista home
 
-      // ARCH-20260130-02: Auto-minimizar al finalizar mezcla
+      // ARCH-20260130-02: Auto-minimizar al finalizar mezcla exitosamente
       setTimeout(() => {
         window.colorManager.minimizarVentana()
       }, 500)
@@ -162,6 +178,7 @@ function AppMain() {
         <SessionController
           receta={recetaDetectada}
           onFinish={handleFinalizarMezcla}
+          onCancel={handleCancelarMezcla}
         />
       )}
 

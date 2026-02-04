@@ -139,7 +139,9 @@ exports.Prisma.LoteScalarFieldEnum = {
   cantidad: 'cantidad',
   fechaVencimiento: 'fechaVencimiento',
   estado: 'estado',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  codigoEtiqueta: 'codigoEtiqueta',
+  etiquetaImpresa: 'etiquetaImpresa'
 };
 
 exports.Prisma.MezclaScalarFieldEnum = {

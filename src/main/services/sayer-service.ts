@@ -49,7 +49,7 @@ export class SayerService {
     this.watcher = watch(this.spoolDir, {
       ignored: /(^|[/\\])\.|\.tmp$/,
       persistent: true,
-      ignoreInitial: false, // FIX-20260204-13: Procesar archivos existentes
+      ignoreInitial: true, // FIX-20260204-17: NO reprocesar archivos existentes al reiniciar
       awaitWriteFinish: {
         stabilityThreshold: this.debounceMs,
         pollInterval: 100,

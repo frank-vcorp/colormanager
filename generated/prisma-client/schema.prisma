@@ -38,11 +38,16 @@ model Lote {
   estado           String    @default("activo")
   createdAt        DateTime  @default(now())
 
+  // ARCH-20260204-01: Campos para etiquetas QR
+  codigoEtiqueta  String? @unique // "KT-1400-01" - Código único para QR
+  etiquetaImpresa Boolean @default(false) // Flag para tracking
+
   // Relación inversa (FIX REFERENCE: FIX-20260129-01)
   ingrediente Ingrediente @relation(fields: [ingredienteId], references: [id], onDelete: Cascade)
 
   @@index([estado])
   @@index([ingredienteId])
+  @@index([codigoEtiqueta]) // ARCH-20260204-01: Índice para búsquedas rápidas
 }
 
 model Mezcla {

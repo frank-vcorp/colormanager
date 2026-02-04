@@ -68,9 +68,11 @@ function normalizeHeaders(headers: string[]): FieldMap | null {
   )
 
   // Buscar campo de existencia (Existencia, existencia, stock, cantidad, etc.)
+  // FIX-20260204-17: Agregar 'exis' para formato de Sayer
   const existKey = headers.find((h) =>
     [
       "existencia",
+      "exis",
       "stock",
       "cantidad",
       "quantity",
@@ -154,6 +156,7 @@ async function readCSVWithHeaders(filePath: string): Promise<SicarRow[]> {
 
 /**
  * Lee un archivo Excel (.xls o .xlsx) y retorna las filas como array de objetos
+ * FIX-20260204-17: Soporta archivos con filas de encabezado (metadata) antes de los datos
  */
 function readExcel(filePath: string): SicarRow[] {
   const workbook = xlsx.readFile(filePath)
@@ -166,16 +169,62 @@ function readExcel(filePath: string): SicarRow[] {
 
   const sheet = workbook.Sheets[sheetName]
 
-  // Convertir a JSON preservando los headers originales
-  const rows = xlsx.utils.sheet_to_json(sheet, { defval: "" }) as any[]
+  // Convertir a array de arrays para detectar fila de encabezados
+  const allRows = xlsx.utils.sheet_to_json(sheet, { 
+    header: 1, // Array de arrays, no objetos
+    defval: "" 
+  }) as any[][]
+
+  if (allRows.length === 0) {
+    return []
+  }
+
+  // FIX-20260204-17: Buscar la fila que contiene los encabezados reales
+  // (Clave, Descripcion, etc.) - puede no ser la primera fila
+  let headerRowIndex = -1
+  for (let i = 0; i < Math.min(allRows.length, 10); i++) {
+    const row = allRows[i]
+    if (!row) continue
+    
+    // Verificar si esta fila tiene los headers esperados
+    const rowLower = row.map((cell: any) => String(cell || "").toLowerCase().trim())
+    const hasClaveColumn = rowLower.some(h => ["clave", "sku", "codigo"].includes(h))
+    const hasDescColumn = rowLower.some(h => ["descripcion", "descripción", "nombre"].includes(h))
+    
+    if (hasClaveColumn && hasDescColumn) {
+      headerRowIndex = i
+      console.log(`[ImportService] Encabezados encontrados en fila ${i + 1}`)
+      break
+    }
+  }
+
+  if (headerRowIndex === -1) {
+    throw new Error(
+      "No se encontraron columnas requeridas (Clave, Descripcion) en las primeras 10 filas del archivo"
+    )
+  }
+
+  // Extraer headers y datos
+  const headerRow = allRows[headerRowIndex]
+  const dataRows = allRows.slice(headerRowIndex + 1)
+
+  // Crear objetos con los headers
+  const rows = dataRows
+    .filter(row => row && row.some((cell: any) => cell !== "" && cell !== null))
+    .map(row => {
+      const obj: any = {}
+      headerRow.forEach((header: any, idx: number) => {
+        obj[String(header || `col${idx}`).trim()] = row[idx]
+      })
+      return obj
+    })
 
   if (rows.length === 0) {
     return []
   }
 
-  // Normalizar los headers de la primera fila para validar
-  const firstRow = rows[0]
-  const headers = Object.keys(firstRow)
+  // Normalizar los headers para validar
+  const headers = Object.keys(rows[0])
   const fieldMap = normalizeHeaders(headers)
 
   if (!fieldMap) {

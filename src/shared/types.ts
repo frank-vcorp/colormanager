@@ -182,6 +182,11 @@ export const IPCInvokeChannels = {
   INSTALL_PRINTER: "printer:install",
   // IMPL-20260204-05: Probar conexión de impresora
   TEST_PRINTER: "printer:test",
+  // ARCH-20260204-01: Etiquetas QR
+  QR_OBTENER_ETIQUETA: "qr:obtener-etiqueta",
+  QR_IMPRIMIR: "qr:imprimir",
+  QR_IMPRIMIR_TODAS: "qr:imprimir-todas",
+  QR_PENDING_LABELS: "qr:pending-labels",
 } as const
 
 // Roles del sistema

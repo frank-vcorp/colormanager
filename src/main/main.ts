@@ -393,16 +393,19 @@ ipcMain.handle(IPCInvokeChannels.OBTENER_INVENTARIO, async () => {
 
 /**
  * RESETEAR_INVENTARIO: Limpia la tabla y vuelve a sembrar con datos iniciales
+ * FIX-20260204-17: Devuelve array de productos actualizado
  */
 ipcMain.handle(IPCInvokeChannels.RESETEAR_INVENTARIO, async () => {
   try {
     console.log("[IPC] Solicitud: RESETEAR_INVENTARIO")
     await resetInventory()
+    // FIX-20260204-17: Devolver inventario actualizado
+    const productos = await getAllProducts()
     console.log("[IPC] Inventario reseteado exitosamente")
-    return { success: true }
+    return productos
   } catch (error) {
     console.error("[IPC] Error en RESETEAR_INVENTARIO:", error)
-    return { success: false, error: String(error) }
+    return []
   }
 })
 
@@ -765,6 +768,73 @@ TOTAL:                  2008.75 ml
     })
   } catch (error: any) {
     console.error("[Main] Error en prueba de impresora:", error)
+    return { success: false, error: error.message || String(error) }
+  }
+})
+
+// ============================================================================
+// ARCH-20260204-01: HANDLERS DE ETIQUETAS QR
+// ============================================================================
+
+import * as qrLabelService from "./services/qrLabelService"
+
+/**
+ * QR_OBTENER_ETIQUETA: Obtiene datos de etiqueta para un lote específico
+ */
+ipcMain.handle(IPCInvokeChannels.QR_OBTENER_ETIQUETA, async (_, loteId: string) => {
+  console.log("[Main] Obteniendo etiqueta QR para lote:", loteId)
+  try {
+    const data = await qrLabelService.getLabelData(loteId)
+    if (!data) {
+      return { success: false, error: "Lote no encontrado" }
+    }
+    return { success: true, data }
+  } catch (error: any) {
+    console.error("[Main] Error obteniendo etiqueta:", error)
+    return { success: false, error: error.message || String(error) }
+  }
+})
+
+/**
+ * QR_IMPRIMIR: Imprime etiqueta de un lote específico
+ */
+ipcMain.handle(IPCInvokeChannels.QR_IMPRIMIR, async (_, loteId: string) => {
+  console.log("[Main] Imprimiendo etiqueta QR para lote:", loteId)
+  try {
+    const data = await qrLabelService.getLabelData(loteId)
+    if (!data) {
+      return { success: false, error: "Lote no encontrado" }
+    }
+    return await qrLabelService.printLabel(data)
+  } catch (error: any) {
+    console.error("[Main] Error imprimiendo etiqueta:", error)
+    return { success: false, error: error.message || String(error) }
+  }
+})
+
+/**
+ * QR_IMPRIMIR_TODAS: Imprime todas las etiquetas pendientes
+ */
+ipcMain.handle(IPCInvokeChannels.QR_IMPRIMIR_TODAS, async () => {
+  console.log("[Main] Imprimiendo todas las etiquetas pendientes...")
+  try {
+    return await qrLabelService.printAllLabels()
+  } catch (error: any) {
+    console.error("[Main] Error imprimiendo etiquetas:", error)
+    return { success: false, error: error.message || String(error) }
+  }
+})
+
+/**
+ * QR_PENDING_LABELS: Obtiene lista de etiquetas pendientes de imprimir
+ */
+ipcMain.handle(IPCInvokeChannels.QR_PENDING_LABELS, async () => {
+  console.log("[Main] Obteniendo etiquetas pendientes...")
+  try {
+    const labels = await qrLabelService.getPendingLabels()
+    return { success: true, data: labels }
+  } catch (error: any) {
+    console.error("[Main] Error obteniendo etiquetas pendientes:", error)
     return { success: false, error: error.message || String(error) }
   }
 })

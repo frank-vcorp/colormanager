@@ -9,12 +9,14 @@
  * @updated IMPL-20260128-03: Agregar botón 🖨️ y Modal de impresión de etiquetas (Micro-Sprint 12)
  * @updated IMPL-20260128-01: Agregar protección de roles - solo ADMIN puede importar y ajustar
  * @updated IMPL-20260129-02: Agregar expansión de filas para ver Lotes Activos (Sprint 2.6 - FIFO)
+ * @updated ARCH-20260204-01: Agregar botón de etiqueta QR en sub-tabla de lotes
  */
 
 import React, { useState, useEffect } from "react"
 import { Producto, AjusteStockParams } from "@shared/types"
 import { ImportacionResultado } from "@shared/types"
 import { PrintPreview } from "./ui/LabelTemplate"
+import { QRLabelModal } from "./ui/QRLabelModal"
 import { useAuth } from "../context/AuthProvider"
 
 interface Props {
@@ -44,6 +46,12 @@ interface ModalImpresion {
   producto?: Producto
 }
 
+// ARCH-20260204-01: Estado para modal de etiqueta QR
+interface ModalQR {
+  abierto: boolean
+  loteId: string | null
+}
+
 export default function InventoryView({ onBack }: Props) {
   const { isAdmin } = useAuth()
   const [inventario, setInventario] = useState<Producto[]>([])
@@ -62,6 +70,11 @@ export default function InventoryView({ onBack }: Props) {
   })
   const [modalImpresion, setModalImpresion] = useState<ModalImpresion>({
     abierto: false,
+  })
+  // ARCH-20260204-01: Estado para modal de etiqueta QR
+  const [modalQR, setModalQR] = useState<ModalQR>({
+    abierto: false,
+    loteId: null,
   })
 
   useEffect(() => {
@@ -125,6 +138,21 @@ export default function InventoryView({ onBack }: Props) {
   const cerrarModalImpresion = () => {
     setModalImpresion({
       abierto: false,
+    })
+  }
+
+  // ARCH-20260204-01: Funciones para modal de etiqueta QR
+  const abrirModalQR = (loteId: string) => {
+    setModalQR({
+      abierto: true,
+      loteId,
+    })
+  }
+
+  const cerrarModalQR = () => {
+    setModalQR({
+      abierto: false,
+      loteId: null,
     })
   }
 
@@ -468,6 +496,7 @@ export default function InventoryView({ onBack }: Props) {
                                       <th className="p-2 text-right font-semibold text-gray-600">Cantidad (g)</th>
                                       <th className="p-2 text-center font-semibold text-gray-600">Estado</th>
                                       <th className="p-2 text-left font-semibold text-gray-600">Creado</th>
+                                      <th className="p-2 text-center font-semibold text-gray-600">Etiqueta</th>
                                     </tr>
                                   </thead>
                                   <tbody className="divide-y divide-gray-100">
@@ -489,6 +518,16 @@ export default function InventoryView({ onBack }: Props) {
                                           </td>
                                           <td className="p-2 text-gray-600 text-xs">
                                             {new Date(lote.createdAt).toLocaleDateString("es-MX")}
+                                          </td>
+                                          {/* ARCH-20260204-01: Botón de etiqueta QR */}
+                                          <td className="p-2 text-center">
+                                            <button
+                                              onClick={() => abrirModalQR(lote.id)}
+                                              className="px-2 py-1 text-xs bg-purple-100 text-purple-700 border border-purple-200 rounded hover:bg-purple-200 transition-colors font-medium"
+                                              title="Imprimir etiqueta QR"
+                                            >
+                                              🏷️ QR
+                                            </button>
                                           </td>
                                         </tr>
                                       )
@@ -620,6 +659,13 @@ export default function InventoryView({ onBack }: Props) {
           onPrint={imprimirEtiqueta}
         />
       )}
+
+      {/* ARCH-20260204-01: Modal de Etiqueta QR */}
+      <QRLabelModal
+        isOpen={modalQR.abierto}
+        loteId={modalQR.loteId}
+        onClose={cerrarModalQR}
+      />
     </div>
   )
 }

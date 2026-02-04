@@ -12,16 +12,11 @@ import { getPrismaClient } from "./db"
 import { randomUUID } from "crypto"
 
 /**
- * Datos iniciales de inventario (mismos que en mock-ipc.ts)
- * Estos se cargan si la tabla está vacía
+ * Datos iniciales de inventario
+ * FIX-20260204-17: Array vacío - el inventario real se importa desde Excel de Sayer
  */
 const INVENTARIO_INICIAL: Producto[] = [
-  { sku: "KT-1400", nombre: "Tinte Rojo Base", stockActual: 2000, unidad: "g" },
-  { sku: "KT-1100", nombre: "Tinte Amarillo Oscuro", stockActual: 2000, unidad: "g" },
-  { sku: "KT-1930", nombre: "Tinte Naranja", stockActual: 2000, unidad: "g" },
-  { sku: "KT-1420", nombre: "Tinte Blanco", stockActual: 2000, unidad: "g" },
-  { sku: "KT-1550", nombre: "Tinte Negro", stockActual: 2000, unidad: "g" },
-  { sku: "KT-1220", nombre: "Tinte Verde", stockActual: 2000, unidad: "g" },
+  // Sin datos de demostración - importar desde Excel
 ]
 
 /**

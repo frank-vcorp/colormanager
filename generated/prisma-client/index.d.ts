@@ -2297,6 +2297,8 @@ export namespace Prisma {
     fechaVencimiento: Date | null
     estado: string | null
     createdAt: Date | null
+    codigoEtiqueta: string | null
+    etiquetaImpresa: boolean | null
   }
 
   export type LoteMaxAggregateOutputType = {
@@ -2307,6 +2309,8 @@ export namespace Prisma {
     fechaVencimiento: Date | null
     estado: string | null
     createdAt: Date | null
+    codigoEtiqueta: string | null
+    etiquetaImpresa: boolean | null
   }
 
   export type LoteCountAggregateOutputType = {
@@ -2317,6 +2321,8 @@ export namespace Prisma {
     fechaVencimiento: number
     estado: number
     createdAt: number
+    codigoEtiqueta: number
+    etiquetaImpresa: number
     _all: number
   }
 
@@ -2337,6 +2343,8 @@ export namespace Prisma {
     fechaVencimiento?: true
     estado?: true
     createdAt?: true
+    codigoEtiqueta?: true
+    etiquetaImpresa?: true
   }
 
   export type LoteMaxAggregateInputType = {
@@ -2347,6 +2355,8 @@ export namespace Prisma {
     fechaVencimiento?: true
     estado?: true
     createdAt?: true
+    codigoEtiqueta?: true
+    etiquetaImpresa?: true
   }
 
   export type LoteCountAggregateInputType = {
@@ -2357,6 +2367,8 @@ export namespace Prisma {
     fechaVencimiento?: true
     estado?: true
     createdAt?: true
+    codigoEtiqueta?: true
+    etiquetaImpresa?: true
     _all?: true
   }
 
@@ -2454,6 +2466,8 @@ export namespace Prisma {
     fechaVencimiento: Date | null
     estado: string
     createdAt: Date
+    codigoEtiqueta: string | null
+    etiquetaImpresa: boolean
     _count: LoteCountAggregateOutputType | null
     _avg: LoteAvgAggregateOutputType | null
     _sum: LoteSumAggregateOutputType | null
@@ -2483,6 +2497,8 @@ export namespace Prisma {
     fechaVencimiento?: boolean
     estado?: boolean
     createdAt?: boolean
+    codigoEtiqueta?: boolean
+    etiquetaImpresa?: boolean
     ingrediente?: boolean | IngredienteDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["lote"]>
 
@@ -2494,6 +2510,8 @@ export namespace Prisma {
     fechaVencimiento?: boolean
     estado?: boolean
     createdAt?: boolean
+    codigoEtiqueta?: boolean
+    etiquetaImpresa?: boolean
     ingrediente?: boolean | IngredienteDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["lote"]>
 
@@ -2505,6 +2523,8 @@ export namespace Prisma {
     fechaVencimiento?: boolean
     estado?: boolean
     createdAt?: boolean
+    codigoEtiqueta?: boolean
+    etiquetaImpresa?: boolean
   }
 
   export type LoteInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2527,6 +2547,8 @@ export namespace Prisma {
       fechaVencimiento: Date | null
       estado: string
       createdAt: Date
+      codigoEtiqueta: string | null
+      etiquetaImpresa: boolean
     }, ExtArgs["result"]["lote"]>
     composites: {}
   }
@@ -2928,6 +2950,8 @@ export namespace Prisma {
     readonly fechaVencimiento: FieldRef<"Lote", 'DateTime'>
     readonly estado: FieldRef<"Lote", 'String'>
     readonly createdAt: FieldRef<"Lote", 'DateTime'>
+    readonly codigoEtiqueta: FieldRef<"Lote", 'String'>
+    readonly etiquetaImpresa: FieldRef<"Lote", 'Boolean'>
   }
     
 
@@ -6136,7 +6160,9 @@ export namespace Prisma {
     cantidad: 'cantidad',
     fechaVencimiento: 'fechaVencimiento',
     estado: 'estado',
-    createdAt: 'createdAt'
+    createdAt: 'createdAt',
+    codigoEtiqueta: 'codigoEtiqueta',
+    etiquetaImpresa: 'etiquetaImpresa'
   };
 
   export type LoteScalarFieldEnum = (typeof LoteScalarFieldEnum)[keyof typeof LoteScalarFieldEnum]
@@ -6230,16 +6256,16 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'Int'
+   * Reference to a field of type 'Boolean'
    */
-  export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
   /**
-   * Reference to a field of type 'Boolean'
+   * Reference to a field of type 'Int'
    */
-  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+  export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
     
   /**
    * Deep Input Types
@@ -6339,6 +6365,8 @@ export namespace Prisma {
     fechaVencimiento?: DateTimeNullableFilter<"Lote"> | Date | string | null
     estado?: StringFilter<"Lote"> | string
     createdAt?: DateTimeFilter<"Lote"> | Date | string
+    codigoEtiqueta?: StringNullableFilter<"Lote"> | string | null
+    etiquetaImpresa?: BoolFilter<"Lote"> | boolean
     ingrediente?: XOR<IngredienteRelationFilter, IngredienteWhereInput>
   }
 
@@ -6350,12 +6378,15 @@ export namespace Prisma {
     fechaVencimiento?: SortOrderInput | SortOrder
     estado?: SortOrder
     createdAt?: SortOrder
+    codigoEtiqueta?: SortOrderInput | SortOrder
+    etiquetaImpresa?: SortOrder
     ingrediente?: IngredienteOrderByWithRelationInput
   }
 
   export type LoteWhereUniqueInput = Prisma.AtLeast<{
     id?: string
     numeroLote?: string
+    codigoEtiqueta?: string
     AND?: LoteWhereInput | LoteWhereInput[]
     OR?: LoteWhereInput[]
     NOT?: LoteWhereInput | LoteWhereInput[]
@@ -6364,8 +6395,9 @@ export namespace Prisma {
     fechaVencimiento?: DateTimeNullableFilter<"Lote"> | Date | string | null
     estado?: StringFilter<"Lote"> | string
     createdAt?: DateTimeFilter<"Lote"> | Date | string
+    etiquetaImpresa?: BoolFilter<"Lote"> | boolean
     ingrediente?: XOR<IngredienteRelationFilter, IngredienteWhereInput>
-  }, "id" | "numeroLote">
+  }, "id" | "numeroLote" | "codigoEtiqueta">
 
   export type LoteOrderByWithAggregationInput = {
     id?: SortOrder
@@ -6375,6 +6407,8 @@ export namespace Prisma {
     fechaVencimiento?: SortOrderInput | SortOrder
     estado?: SortOrder
     createdAt?: SortOrder
+    codigoEtiqueta?: SortOrderInput | SortOrder
+    etiquetaImpresa?: SortOrder
     _count?: LoteCountOrderByAggregateInput
     _avg?: LoteAvgOrderByAggregateInput
     _max?: LoteMaxOrderByAggregateInput
@@ -6393,6 +6427,8 @@ export namespace Prisma {
     fechaVencimiento?: DateTimeNullableWithAggregatesFilter<"Lote"> | Date | string | null
     estado?: StringWithAggregatesFilter<"Lote"> | string
     createdAt?: DateTimeWithAggregatesFilter<"Lote"> | Date | string
+    codigoEtiqueta?: StringNullableWithAggregatesFilter<"Lote"> | string | null
+    etiquetaImpresa?: BoolWithAggregatesFilter<"Lote"> | boolean
   }
 
   export type MezclaWhereInput = {
@@ -6717,6 +6753,8 @@ export namespace Prisma {
     fechaVencimiento?: Date | string | null
     estado?: string
     createdAt?: Date | string
+    codigoEtiqueta?: string | null
+    etiquetaImpresa?: boolean
     ingrediente: IngredienteCreateNestedOneWithoutLotesInput
   }
 
@@ -6728,6 +6766,8 @@ export namespace Prisma {
     fechaVencimiento?: Date | string | null
     estado?: string
     createdAt?: Date | string
+    codigoEtiqueta?: string | null
+    etiquetaImpresa?: boolean
   }
 
   export type LoteUpdateInput = {
@@ -6737,6 +6777,8 @@ export namespace Prisma {
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     estado?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    codigoEtiqueta?: NullableStringFieldUpdateOperationsInput | string | null
+    etiquetaImpresa?: BoolFieldUpdateOperationsInput | boolean
     ingrediente?: IngredienteUpdateOneRequiredWithoutLotesNestedInput
   }
 
@@ -6748,6 +6790,8 @@ export namespace Prisma {
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     estado?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    codigoEtiqueta?: NullableStringFieldUpdateOperationsInput | string | null
+    etiquetaImpresa?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type LoteCreateManyInput = {
@@ -6758,6 +6802,8 @@ export namespace Prisma {
     fechaVencimiento?: Date | string | null
     estado?: string
     createdAt?: Date | string
+    codigoEtiqueta?: string | null
+    etiquetaImpresa?: boolean
   }
 
   export type LoteUpdateManyMutationInput = {
@@ -6767,6 +6813,8 @@ export namespace Prisma {
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     estado?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    codigoEtiqueta?: NullableStringFieldUpdateOperationsInput | string | null
+    etiquetaImpresa?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type LoteUncheckedUpdateManyInput = {
@@ -6777,6 +6825,8 @@ export namespace Prisma {
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     estado?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    codigoEtiqueta?: NullableStringFieldUpdateOperationsInput | string | null
+    etiquetaImpresa?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type MezclaCreateInput = {
@@ -7221,6 +7271,11 @@ export namespace Prisma {
     not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type IngredienteRelationFilter = {
     is?: IngredienteWhereInput
     isNot?: IngredienteWhereInput
@@ -7234,6 +7289,8 @@ export namespace Prisma {
     fechaVencimiento?: SortOrder
     estado?: SortOrder
     createdAt?: SortOrder
+    codigoEtiqueta?: SortOrder
+    etiquetaImpresa?: SortOrder
   }
 
   export type LoteAvgOrderByAggregateInput = {
@@ -7248,6 +7305,8 @@ export namespace Prisma {
     fechaVencimiento?: SortOrder
     estado?: SortOrder
     createdAt?: SortOrder
+    codigoEtiqueta?: SortOrder
+    etiquetaImpresa?: SortOrder
   }
 
   export type LoteMinOrderByAggregateInput = {
@@ -7258,6 +7317,8 @@ export namespace Prisma {
     fechaVencimiento?: SortOrder
     estado?: SortOrder
     createdAt?: SortOrder
+    codigoEtiqueta?: SortOrder
+    etiquetaImpresa?: SortOrder
   }
 
   export type LoteSumOrderByAggregateInput = {
@@ -7276,6 +7337,14 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedDateTimeNullableFilter<$PrismaModel>
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type MezclaCountOrderByAggregateInput = {
@@ -7377,11 +7446,6 @@ export namespace Prisma {
     not?: NestedIntFilter<$PrismaModel> | number
   }
 
-  export type BoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
-  }
-
   export type UserCountOrderByAggregateInput = {
     id?: SortOrder
     username?: SortOrder
@@ -7434,14 +7498,6 @@ export namespace Prisma {
     _sum?: NestedIntFilter<$PrismaModel>
     _min?: NestedIntFilter<$PrismaModel>
     _max?: NestedIntFilter<$PrismaModel>
-  }
-
-  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type LoteCreateNestedManyWithoutIngredienteInput = {
@@ -7516,16 +7572,16 @@ export namespace Prisma {
     set?: Date | string | null
   }
 
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
   export type IngredienteUpdateOneRequiredWithoutLotesNestedInput = {
     create?: XOR<IngredienteCreateWithoutLotesInput, IngredienteUncheckedCreateWithoutLotesInput>
     connectOrCreate?: IngredienteCreateOrConnectWithoutLotesInput
     upsert?: IngredienteUpsertWithoutLotesInput
     connect?: IngredienteWhereUniqueInput
     update?: XOR<XOR<IngredienteUpdateToOneWithWhereWithoutLotesInput, IngredienteUpdateWithoutLotesInput>, IngredienteUncheckedUpdateWithoutLotesInput>
-  }
-
-  export type BoolFieldUpdateOperationsInput = {
-    set?: boolean
   }
 
   export type IntFieldUpdateOperationsInput = {
@@ -7683,6 +7739,11 @@ export namespace Prisma {
     not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
     in?: Date[] | string[] | null
@@ -7697,9 +7758,12 @@ export namespace Prisma {
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
-  export type NestedBoolFilter<$PrismaModel = never> = {
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
@@ -7718,14 +7782,6 @@ export namespace Prisma {
     _max?: NestedIntFilter<$PrismaModel>
   }
 
-  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
-  }
-
   export type LoteCreateWithoutIngredienteInput = {
     id: string
     numeroLote: string
@@ -7733,6 +7789,8 @@ export namespace Prisma {
     fechaVencimiento?: Date | string | null
     estado?: string
     createdAt?: Date | string
+    codigoEtiqueta?: string | null
+    etiquetaImpresa?: boolean
   }
 
   export type LoteUncheckedCreateWithoutIngredienteInput = {
@@ -7742,6 +7800,8 @@ export namespace Prisma {
     fechaVencimiento?: Date | string | null
     estado?: string
     createdAt?: Date | string
+    codigoEtiqueta?: string | null
+    etiquetaImpresa?: boolean
   }
 
   export type LoteCreateOrConnectWithoutIngredienteInput = {
@@ -7780,6 +7840,8 @@ export namespace Prisma {
     fechaVencimiento?: DateTimeNullableFilter<"Lote"> | Date | string | null
     estado?: StringFilter<"Lote"> | string
     createdAt?: DateTimeFilter<"Lote"> | Date | string
+    codigoEtiqueta?: StringNullableFilter<"Lote"> | string | null
+    etiquetaImpresa?: BoolFilter<"Lote"> | boolean
   }
 
   export type IngredienteCreateWithoutLotesInput = {
@@ -7857,6 +7919,8 @@ export namespace Prisma {
     fechaVencimiento?: Date | string | null
     estado?: string
     createdAt?: Date | string
+    codigoEtiqueta?: string | null
+    etiquetaImpresa?: boolean
   }
 
   export type LoteUpdateWithoutIngredienteInput = {
@@ -7866,6 +7930,8 @@ export namespace Prisma {
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     estado?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    codigoEtiqueta?: NullableStringFieldUpdateOperationsInput | string | null
+    etiquetaImpresa?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type LoteUncheckedUpdateWithoutIngredienteInput = {
@@ -7875,6 +7941,8 @@ export namespace Prisma {
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     estado?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    codigoEtiqueta?: NullableStringFieldUpdateOperationsInput | string | null
+    etiquetaImpresa?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type LoteUncheckedUpdateManyWithoutIngredienteInput = {
@@ -7884,6 +7952,8 @@ export namespace Prisma {
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     estado?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    codigoEtiqueta?: NullableStringFieldUpdateOperationsInput | string | null
+    etiquetaImpresa?: BoolFieldUpdateOperationsInput | boolean
   }
 
 
