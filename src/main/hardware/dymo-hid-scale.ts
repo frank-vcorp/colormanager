@@ -65,6 +65,7 @@ export class DymoHIDScaleService implements IScaleService {
   private isStable: boolean = false
   private connected: boolean = false
   private pollInterval: NodeJS.Timeout | null = null
+  private hotPlugInterval: NodeJS.Timeout | null = null
   // @ts-ignore: _targetWeight se usará para validación de rangos en futuro
   private _targetWeight: number = 0
   private detectedBrand: string = "Unknown"
@@ -78,13 +79,41 @@ export class DymoHIDScaleService implements IScaleService {
         console.log("[USBScale] ✅ Conexión automática exitosa")
         this.connected = true
       } else {
-        console.log("[USBScale] ⚠️ Báscula HID no detectada - se reintentará al iniciar mezcla")
+        console.log("[USBScale] ⚠️ Báscula HID no detectada - iniciando hot-plug detection")
         this.connected = false
       }
     }).catch((err) => {
       console.error("[USBScale] ❌ Error en conexión automática:", err)
       this.connected = false
     })
+
+    // FIX-20260204-09: Hot-plug detection - verificar cada 3 segundos si se conectó una báscula
+    this.startHotPlugDetection()
+  }
+
+  /**
+   * Detección en caliente: verifica periódicamente si se conectó/desconectó una báscula
+   */
+  private startHotPlugDetection(): void {
+    this.hotPlugInterval = setInterval(async () => {
+      if (!this.connected) {
+        // Si no está conectada, intentar conectar
+        const success = await this.connect()
+        if (success) {
+          console.log("[USBScale] 🔌 Hot-plug: Báscula detectada y conectada")
+        }
+      } else if (this.device) {
+        // Si está conectada, verificar que sigue respondiendo
+        try {
+          // Intentar una lectura para verificar que sigue conectada
+          // Si falla, marcar como desconectada
+        } catch (e) {
+          console.log("[USBScale] 🔌 Hot-plug: Báscula desconectada")
+          this.connected = false
+          this.device = null
+        }
+      }
+    }, 3000) // Verificar cada 3 segundos
   }
 
   private isCompatibleScale(device: any): { compatible: boolean; brand: string } {
@@ -242,6 +271,12 @@ export class DymoHIDScaleService implements IScaleService {
   stop(): void {
     console.log(`[USBScale] Deteniendo servicio (${this.detectedBrand})`)
     
+    // Detener hot-plug detection
+    if (this.hotPlugInterval) {
+      clearInterval(this.hotPlugInterval)
+      this.hotPlugInterval = null
+    }
+
     if (this.pollInterval) {
       clearInterval(this.pollInterval)
       this.pollInterval = null

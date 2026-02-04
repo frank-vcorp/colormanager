@@ -55,7 +55,7 @@ export default function PrinterMonitor() {
                         {status.state === "PROCESSING" ? "⚙" : "🖨️"}
                     </span>
                     <div className="flex flex-col items-start">
-                        <span className="text-[10px] text-[#6e6e6e] uppercase font-bold leading-none">Impresora Virtual</span>
+                        <span className="text-[10px] text-[#6e6e6e] uppercase font-bold leading-none">Impresora ColorManager</span>
                         <span className="text-xs text-[#cccccc] font-medium">{getStateLabel()}</span>
                     </div>
                 </div>
