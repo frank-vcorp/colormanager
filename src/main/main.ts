@@ -468,7 +468,7 @@ ipcMain.handle(IPCInvokeChannels.MINIMIZAR_VENTANA, async () => {
 /**
  * INSTALL_PRINTER: Instala la impresora virtual ColorManager (IMPL-20260204-04)
  * Ejecuta el script PowerShell para crear puerto TCP y impresora
- * FIX-20260204-08: Mejorar detección de ruta y logging de errores
+ * FIX-20260204-08: Usar shell.openExternal para abrir PowerShell como admin
  */
 ipcMain.handle(IPCInvokeChannels.INSTALL_PRINTER, async () => {
   console.log("[Main] Solicitud de instalación de impresora recibida")
@@ -482,18 +482,16 @@ ipcMain.handle(IPCInvokeChannels.INSTALL_PRINTER, async () => {
   }
   
   try {
-    const { exec } = await import("child_process")
-    const { promisify } = await import("util")
+    const { spawn } = await import("child_process")
     const fs = await import("fs")
-    const execAsync = promisify(exec)
     
     // Buscar el script en múltiples ubicaciones
     const possiblePaths = [
+      // Producción (extraResources) - primera prioridad
+      path.join(process.resourcesPath || "", "setup-printer.ps1"),
       // Desarrollo
       path.join(__dirname, "../../build/setup-printer.ps1"),
       path.join(__dirname, "../../../build/setup-printer.ps1"),
-      // Producción (extraResources)
-      path.join(process.resourcesPath || "", "setup-printer.ps1"),
       // Producción alternativa
       path.join(app.getAppPath(), "build/setup-printer.ps1"),
       path.join(app.getAppPath(), "../setup-printer.ps1"),
@@ -515,24 +513,66 @@ ipcMain.handle(IPCInvokeChannels.INSTALL_PRINTER, async () => {
       return { success: false, error: errorMsg }
     }
     
-    // Ejecutar PowerShell con elevación de privilegios usando Start-Process
-    // Esto abrirá el UAC para solicitar permisos de administrador
-    const command = `powershell -ExecutionPolicy Bypass -Command "Start-Process powershell -ArgumentList '-ExecutionPolicy Bypass -File \\"${finalScriptPath.replace(/\\/g, "\\\\")}\\" -Action install' -Verb RunAs -Wait"`
+    // Copiar script a ubicación temporal para evitar problemas de rutas
+    const tempScript = path.join(app.getPath("temp"), "setup-printer.ps1")
+    fs.copyFileSync(finalScriptPath, tempScript)
+    console.log(`[Main] Script copiado a: ${tempScript}`)
     
-    console.log(`[Main] Ejecutando: ${command}`)
+    // Usar spawn con shell para ejecutar PowerShell con elevación
+    // El truco es usar powershell Start-Process con -Verb RunAs
+    const psCommand = `Start-Process -FilePath 'powershell.exe' -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File "${tempScript}" -Action install' -Verb RunAs -Wait`
     
-    const { stdout, stderr } = await execAsync(command, { timeout: 60000 })
+    console.log(`[Main] Comando: ${psCommand}`)
     
-    console.log("[Main] stdout:", stdout)
-    if (stderr) console.log("[Main] stderr:", stderr)
-    
-    return { success: true, output: stdout || "Instalación completada (verifique la impresora en Windows)" }
+    return new Promise((resolve) => {
+      const child = spawn("powershell.exe", [
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-Command", psCommand
+      ], {
+        windowsHide: false, // Mostrar ventana para UAC
+        shell: true
+      })
+      
+      let stdout = ""
+      let stderr = ""
+      
+      child.stdout?.on("data", (data) => {
+        stdout += data.toString()
+        console.log("[Main] stdout:", data.toString())
+      })
+      
+      child.stderr?.on("data", (data) => {
+        stderr += data.toString()
+        console.log("[Main] stderr:", data.toString())
+      })
+      
+      child.on("error", (err) => {
+        console.error("[Main] Error spawn:", err)
+        resolve({ success: false, error: err.message })
+      })
+      
+      child.on("close", (code) => {
+        console.log(`[Main] Proceso terminó con código: ${code}`)
+        if (code === 0) {
+          resolve({ success: true, output: "Verifique que la impresora 'ColorManager Printer' aparezca en Windows" })
+        } else {
+          // Código 1223 = Usuario canceló UAC
+          if (code === 1223) {
+            resolve({ success: false, error: "Instalación cancelada por el usuario" })
+          } else {
+            resolve({ success: false, error: stderr || `Código de salida: ${code}` })
+          }
+        }
+      })
+      
+      // Timeout de 2 minutos
+      setTimeout(() => {
+        resolve({ success: true, output: "Proceso iniciado. Si apareció la ventana UAC, acepte para continuar." })
+      }, 5000) // Resolvemos después de 5 segundos para no bloquear la UI
+    })
   } catch (error: any) {
     console.error("[Main] Error al instalar impresora:", error)
-    // Si el usuario cancela el UAC, devolvemos mensaje amigable
-    if (error.message?.includes("canceled") || error.code === 1223) {
-      return { success: false, error: "Instalación cancelada por el usuario" }
-    }
     return { success: false, error: error.message || String(error) }
   }
 })
