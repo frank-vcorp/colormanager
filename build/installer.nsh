@@ -1,63 +1,73 @@
 ; ColorManager NSIS Installer Script
-; Instala automáticamente la impresora virtual para recibir recetas de Sayer
+; Instala automaticamente la impresora virtual y servicio para recibir recetas de Sayer
 ; IMPL-20260204-03
-; FIX-20260204-08: Corregir ruta del script y usar ExecWait para mejor compatibilidad
+; FIX-20260204-14: Usar complete-setup.ps1 que configura todo automaticamente
 
 !macro customInstall
-  DetailPrint "Configurando impresora ColorManager..."
+  DetailPrint "=========================================="
+  DetailPrint "Configurando ColorManager Printer..."
+  DetailPrint "=========================================="
   
-  ; El script está en resources/ (extraResources de electron-builder)
-  ; Usamos ExecWait que espera a que termine y hereda los privilegios de admin del instalador
+  ; El script esta en resources/ (extraResources de electron-builder)
   SetOutPath "$INSTDIR\resources"
   
-  ; Copiar el script a un lugar accesible si no existe
-  IfFileExists "$INSTDIR\resources\setup-printer.ps1" RunScript CopyScript
+  ; Ejecutar el script de configuracion completa
+  DetailPrint "Ejecutando configuracion completa..."
   
-  CopyScript:
-    DetailPrint "Copiando script de impresora..."
-    ; El script ya debería estar ahí por extraResources
+  ; Usar nsExec para ejecutar PowerShell con los privilegios del instalador
+  nsExec::ExecToStack 'powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "$INSTDIR\resources\complete-setup.ps1" -Action install'
+  Pop $0 ; Return code
+  Pop $1 ; Output
+  
+  DetailPrint "Codigo retorno: $0"
+  
+  ; Si fallo con complete-setup, intentar con setup-printer como fallback
+  StrCmp $0 "0" InstallDone 0
+  StrCmp $0 "" InstallDone 0
+  
+  DetailPrint "Intentando configuracion basica..."
+  nsExec::ExecToStack 'powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "$INSTDIR\resources\setup-printer.ps1" -Action install'
+  Pop $0
+  Pop $1
+  DetailPrint "Codigo retorno (fallback): $0"
     
-  RunScript:
-    DetailPrint "Ejecutando instalación de impresora..."
-    ; Usar nsExec con privilegios heredados del instalador (que ya es admin)
-    nsExec::ExecToStack 'powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "$INSTDIR\resources\setup-printer.ps1" -Action install'
-    Pop $0 ; Return code
-    Pop $1 ; Output
-    DetailPrint "Código retorno: $0"
-    DetailPrint "Salida: $1"
-    
-    ; Si falló, intentar con la ruta alternativa
-    StrCmp $0 "0" InstallDone 0
-    StrCmp $0 "" InstallDone 0
-    
-    DetailPrint "Intentando ruta alternativa..."
-    nsExec::ExecToStack 'powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command "& {Set-Location \"$INSTDIR\resources\"; ./setup-printer.ps1 -Action install}"'
-    Pop $0
-    Pop $1
-    DetailPrint "Código retorno (alt): $0"
-    DetailPrint "Salida (alt): $1"
-    
-  InstallDone:
-    DetailPrint "Configuración de impresora completada"
+InstallDone:
+  DetailPrint "=========================================="
+  DetailPrint "Configuracion de impresora completada"
+  DetailPrint "=========================================="
 !macroend
 
 !macro customUnInstall
-  DetailPrint "Removiendo impresora ColorManager..."
+  DetailPrint "=========================================="
+  DetailPrint "Removiendo ColorManager Printer..."
+  DetailPrint "=========================================="
   
-  ; Ejecutar script de desinstalación si existe
+  ; Ejecutar script de desinstalacion completa
+  IfFileExists "$INSTDIR\resources\complete-setup.ps1" UninstallComplete UninstallBasic
+  
+UninstallComplete:
+  nsExec::ExecToStack 'powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "$INSTDIR\resources\complete-setup.ps1" -Action uninstall'
+  Pop $0
+  Pop $1
+  DetailPrint "Codigo retorno: $0"
+  Goto UninstallDone
+
+UninstallBasic:
+  ; Fallback al script basico
   IfFileExists "$INSTDIR\resources\setup-printer.ps1" UninstallPrinter SkipUninstall
   
-  UninstallPrinter:
-    nsExec::ExecToStack 'powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "$INSTDIR\resources\setup-printer.ps1" -Action uninstall'
-    Pop $0
-    Pop $1
-    DetailPrint "Código retorno: $0"
-    DetailPrint "Salida: $1"
-    Goto UninstallDone
+UninstallPrinter:
+  nsExec::ExecToStack 'powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "$INSTDIR\resources\setup-printer.ps1" -Action uninstall'
+  Pop $0
+  Pop $1
+  DetailPrint "Codigo retorno: $0"
+  Goto UninstallDone
     
-  SkipUninstall:
-    DetailPrint "Script de impresora no encontrado, saltando..."
+SkipUninstall:
+  DetailPrint "Scripts no encontrados, saltando..."
     
-  UninstallDone:
-    DetailPrint "Remoción de impresora completada"
+UninstallDone:
+  DetailPrint "=========================================="
+  DetailPrint "Remocion completada"
+  DetailPrint "=========================================="
 !macroend
