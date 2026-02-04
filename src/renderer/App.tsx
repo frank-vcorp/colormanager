@@ -248,7 +248,7 @@ function AppMain() {
                   ? "bg-green-900/30 text-green-400 border border-green-700/50"
                   : "bg-red-900/30 text-red-400 border border-red-700/50"
                 }`}>
-                {basculaConectada ? "● Báscula conectada (Simulación)" : "○ Báscula desconectada"}
+                {basculaConectada ? "● Báscula conectada" : "○ Báscula desconectada"}
               </div>
 
               {/* PESO GIGANTE - Elemento central */}
