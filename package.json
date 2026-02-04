@@ -29,7 +29,6 @@
     "electron-squirrel-startup": "^1.0.0",
     "electron-store": "8.2.0",
     "jsbarcode": "^3.12.3",
-    "node-hid": "^3.3.0",
     "react": "^19.0.0",
     "react-barcode": "^1.6.1",
     "react-dom": "^19.0.0",
@@ -37,6 +36,9 @@
     "uuid": "^10.0.0",
     "xlsx": "^0.18.5",
     "zustand": "^4.5.5"
+  },
+  "optionalDependencies": {
+    "node-hid": "^3.1.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",
@@ -104,6 +106,7 @@
     "linux": {
       "target": "AppImage",
       "category": "Office"
-    }
+    },
+    "npmRebuild": false
   }
 }

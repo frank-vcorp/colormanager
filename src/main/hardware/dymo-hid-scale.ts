@@ -95,7 +95,17 @@ export class DymoHIDScaleService implements IScaleService {
 
   async connect(): Promise<boolean> {
     try {
-      const HID = await import("node-hid")
+      // Import dinámico - puede fallar si node-hid no tiene binarios para esta plataforma
+      let HID: any
+      try {
+        HID = await import("node-hid")
+      } catch (importError) {
+        console.warn("[USBScale] ⚠️ node-hid no disponible (binarios nativos no compilados)")
+        console.warn("[USBScale]    Esto es normal en CI/build. Use modo MOCK o SERIAL.")
+        this.emitError("node-hid no disponible. Configure tipo de báscula como SERIAL o MOCK.")
+        return false
+      }
+      
       const devices = HID.devices()
       console.log(`[USBScale] Dispositivos HID encontrados: ${devices.length}`)
       
@@ -111,7 +121,7 @@ export class DymoHIDScaleService implements IScaleService {
 
       if (!scaleDevice) {
         console.error("[USBScale] ❌ No se encontró báscula compatible")
-        devices.forEach(d => {
+        devices.forEach((d: any) => {
           console.log(`  - ${d.manufacturer || '?'} ${d.product || '?'} (VID:0x${d.vendorId?.toString(16)} PID:0x${d.productId?.toString(16)})`)
         })
         return false
