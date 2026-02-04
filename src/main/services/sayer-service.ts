@@ -3,6 +3,7 @@
  * Detecta archivos de impresión del sistema Sayer, los parsea y envía al Renderer
  *
  * ID Intervención: IMPL-20260127-02
+ * @updated FIX-20260204-13: Agregar logging detallado y mejorar detección
  */
 
 import fs from "fs"
@@ -29,6 +30,7 @@ export class SayerService {
     this.mainWindow = mainWindow
     this.spoolDir = config.spoolDir
     this.debounceMs = config.debounceMs
+    console.log(`[SayerService] Constructor - spoolDir: ${this.spoolDir}`)
   }
 
   /**
@@ -38,29 +40,44 @@ export class SayerService {
     // Crear carpeta si no existe
     if (!fs.existsSync(this.spoolDir)) {
       fs.mkdirSync(this.spoolDir, { recursive: true })
-      console.log(`[SayerService] Creada carpeta: ${this.spoolDir}`)
+      console.log(`[SayerService] ✅ Creada carpeta: ${this.spoolDir}`)
     }
 
-    // Iniciar watcher
+    console.log(`[SayerService] Iniciando watcher en: ${this.spoolDir}`)
+
+    // Iniciar watcher con opciones más permisivas para Windows
     this.watcher = watch(this.spoolDir, {
       ignored: /(^|[/\\])\.|\.tmp$/,
+      persistent: true,
+      ignoreInitial: false, // FIX-20260204-13: Procesar archivos existentes
       awaitWriteFinish: {
         stabilityThreshold: this.debounceMs,
         pollInterval: 100,
       },
+      usePolling: process.platform === "win32", // FIX-20260204-13: Usar polling en Windows
+      interval: 500,
     })
 
     this.watcher.on("add", (filePath: string) => {
-      console.log(`[SayerService] Archivo detectado: ${filePath}`)
+      console.log(`[SayerService] 📄 Archivo detectado: ${filePath}`)
+      this.handleFileAdd(filePath)
+    })
+
+    this.watcher.on("change", (filePath: string) => {
+      console.log(`[SayerService] 📝 Archivo modificado: ${filePath}`)
       this.handleFileAdd(filePath)
     })
 
     this.watcher.on("error", (error: any) => {
-      console.error(`[SayerService] Error en watcher:`, error)
+      console.error(`[SayerService] ❌ Error en watcher:`, error)
       this.sendError(`Error en Sayer Watcher: ${error.message}`)
     })
 
-    console.log(`[SayerService] Iniciado - monitoreando: ${this.spoolDir}`)
+    this.watcher.on("ready", () => {
+      console.log(`[SayerService] ✅ Watcher listo - monitoreando: ${this.spoolDir}`)
+    })
+
+    console.log(`[SayerService] Watcher configurado`)
   }
 
   /**
@@ -109,17 +126,27 @@ export class SayerService {
    */
   private async processFile(filePath: string): Promise<void> {
     try {
+      console.log(`[SayerService] 📖 Leyendo archivo: ${filePath}`)
       const content = await fs.promises.readFile(filePath, "latin1")
-      console.log(`[SayerService] Leyendo archivo (Latin1): ${filePath}`)
+      console.log(`[SayerService] Contenido (${content.length} bytes):`)
+      console.log(`[SayerService] --- INICIO ---`)
+      console.log(content.substring(0, 500))
+      console.log(`[SayerService] --- FIN (truncado) ---`)
 
       const receta = SayerParser.parse(content)
 
       if (receta) {
-        console.log(`[SayerService] Receta detectada vía archivo:`, receta.numero)
+        console.log(`[SayerService] ✅ Receta detectada: ${receta.numero}`)
+        console.log(`[SayerService] Capas: ${receta.capas.length}`)
+        receta.capas.forEach((capa, i) => {
+          console.log(`[SayerService]   Capa ${i + 1}: ${capa.nombre} - ${capa.ingredientes.length} ingredientes`)
+        })
         this.sendRecetaToRenderer(receta)
+      } else {
+        console.log(`[SayerService] ⚠️ Archivo no contiene receta válida`)
       }
     } catch (error: any) {
-      console.error(`[SayerService] Error procesando archivo:`, error)
+      console.error(`[SayerService] ❌ Error procesando archivo:`, error)
     }
   }
 

@@ -19,6 +19,7 @@ export interface RecetaSayer {
     ingredientes: {
       orden: number // 1
       sku: string // "KT-1400"
+      descripcion?: string // "MOUSE USB" - FIX-20260204-13
       pesoMeta: number // 323.0
     }[]
   }[]
@@ -28,6 +29,12 @@ export interface RecetaSayer {
     sayerCode?: string // "CH-123"
     coatingType?: string
     primer?: string
+    // FIX-20260204-13: Campos adicionales para formato FORMULA DE COLOR
+    cliente?: string
+    vehiculo?: string
+    nombreColor?: string
+    fecha?: string
+    notas?: string
   }
 }
 
