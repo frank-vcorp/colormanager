@@ -279,15 +279,16 @@ function createWindow() {
     }
 
     // ARCH-20260130-03: Reiniciar servidor de impresión si cambia el puerto
-    if (event.oldConfig.paths.printerPort !== event.newConfig.paths.printerPort) {
-      console.log(`[Main] Cambio en puerto de impresora: ${event.newConfig.paths.printerPort}`)
-      if (printerServer) printerServer.stop()
-      printerServer = new VirtualPrinterServer(mainWindow!, {
-        port: event.newConfig.paths.printerPort,
-        name: "ColorManager Printer"
-      })
-      printerServer.start()
-    }
+    // FIX-20260204-16: DESHABILITADO - usamos servicio PowerShell externo
+    // if (event.oldConfig.paths.printerPort !== event.newConfig.paths.printerPort) {
+    //   console.log(`[Main] Cambio en puerto de impresora: ${event.newConfig.paths.printerPort}`)
+    //   if (printerServer) printerServer.stop()
+    //   printerServer = new VirtualPrinterServer(mainWindow!, {
+    //     port: event.newConfig.paths.printerPort,
+    //     name: "ColorManager Printer"
+    //   })
+    //   printerServer.start()
+    // }
   })
 
   // Inicializar Sayer Service usando ruta de la configuración
@@ -298,15 +299,18 @@ function createWindow() {
   })
   sayerService.start()
 
-  // Inicializar Servidor de Impresión Virtual (ARCH-20260130-03)
-  // FIX-20260204-10: Agregar logging detallado
-  console.log(`[Main] Iniciando VirtualPrinterServer en puerto ${config.paths.printerPort}`)
-  printerServer = new VirtualPrinterServer(mainWindow!, {
-    port: config.paths.printerPort,
-    name: "ColorManager Printer"
-  })
-  printerServer.start()
-  console.log(`[Main] VirtualPrinterServer iniciado`)
+  // FIX-20260204-16: VirtualPrinterServer DESHABILITADO en Windows
+  // En Windows usamos el servicio PowerShell (ColorManagerPrinterService) que:
+  // 1. Escucha en TCP 9100
+  // 2. Guarda archivos en Documents/ColorManager/spool
+  // 3. SayerService (arriba) detecta los archivos y los procesa
+  // Esto evita conflicto de puertos entre Electron y el servicio PowerShell
+  console.log(`[Main] VirtualPrinterServer DESHABILITADO - usando servicio PowerShell externo`)
+  // printerServer = new VirtualPrinterServer(mainWindow!, {
+  //   port: config.paths.printerPort,
+  //   name: "ColorManager Printer"
+  // })
+  // printerServer.start()
 
   // IMPL-20260128-01: Registrar canales de autenticación
   registerAuthIPC()

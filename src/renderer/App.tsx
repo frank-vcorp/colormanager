@@ -228,7 +228,7 @@ function AppMain() {
                 ) : (
                   <div className="text-center py-8">
                     <p className="text-[#6e6e6e] text-xs">Esperando receta...</p>
-                    <p className="text-[#4e4e4e] text-[10px] mt-1">Coloque archivo .sayer en la carpeta</p>
+                    <p className="text-[#4e4e4e] text-[10px] mt-1">Imprima desde Sayer a "ColorManager Printer"</p>
                   </div>
                 )}
               </div>
