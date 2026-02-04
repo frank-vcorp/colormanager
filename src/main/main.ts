@@ -577,6 +577,90 @@ ipcMain.handle(IPCInvokeChannels.INSTALL_PRINTER, async () => {
   }
 })
 
+/**
+ * TEST_PRINTER: Envía una receta de prueba al servidor de impresión virtual
+ * IMPL-20260204-05: Prueba que el servidor TCP esté escuchando correctamente
+ */
+ipcMain.handle(IPCInvokeChannels.TEST_PRINTER, async () => {
+  console.log("[Main] Probando conexión de impresora virtual...")
+  
+  const config = configService.getConfig()
+  const port = config.paths.printerPort || 9100
+  
+  try {
+    const net = await import("net")
+    
+    return new Promise((resolve) => {
+      const client = new net.Socket()
+      let connected = false
+      
+      client.setTimeout(3000)
+      
+      client.connect(port, "127.0.0.1", () => {
+        connected = true
+        console.log("[Main] ✓ Conexión TCP exitosa al puerto", port)
+        
+        // Enviar receta de prueba
+        const testReceta = `
+========================================
+SISTEMA SAYER - RECETA DE PRUEBA
+========================================
+Fecha: ${new Date().toLocaleString()}
+Cliente: ColorManager Test
+Orden: TEST-${Date.now()}
+
+Código: BASE-WHITE-001
+Color: BLANCO BRILLANTE
+
+Componentes:
+----------------------------------------
+1. BASE BLANCA          2000.00 ml
+2. PIGMENTO AZUL           5.50 ml
+3. PIGMENTO AMARILLO       3.25 ml
+----------------------------------------
+TOTAL:                  2008.75 ml
+
+========================================
+** RECETA DE PRUEBA - NO PRODUCCIÓN **
+========================================
+`
+        client.write(testReceta)
+        client.end()
+        
+        resolve({ 
+          success: true, 
+          message: `Conexión exitosa al puerto ${port}. Se envió receta de prueba.` 
+        })
+      })
+      
+      client.on("timeout", () => {
+        console.log("[Main] ✗ Timeout conectando al puerto", port)
+        client.destroy()
+        if (!connected) {
+          resolve({ 
+            success: false, 
+            error: `Timeout: El servidor no responde en el puerto ${port}. ¿Está ColorManager ejecutándose?` 
+          })
+        }
+      })
+      
+      client.on("error", (err: NodeJS.ErrnoException) => {
+        console.log("[Main] ✗ Error de conexión:", err.message)
+        if (!connected) {
+          let errorMsg = `No se pudo conectar al puerto ${port}`
+          if (err.code === "ECONNREFUSED") {
+            errorMsg = `Puerto ${port} rechazó la conexión. El servidor TCP no está escuchando.`
+          }
+          resolve({ success: false, error: errorMsg })
+        }
+      })
+    })
+  } catch (error: any) {
+    console.error("[Main] Error en prueba de impresora:", error)
+    return { success: false, error: error.message || String(error) }
+  }
+})
+
 // App lifecycle
 app.on("ready", createWindow)
 

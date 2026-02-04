@@ -4,6 +4,7 @@
  * 
  * ID Intervención: ARCH-20260130-04
  * @updated IMPL-20260204-04: Agregar botón para instalar impresora manualmente
+ * @updated IMPL-20260204-05: Agregar botón para probar conexión TCP
  */
 
 import { useState, useEffect } from "react"
@@ -14,7 +15,8 @@ export default function PrinterMonitor() {
     const [queue, setQueue] = useState<PrintJob[]>([])
     const [expanded, setExpanded] = useState(false)
     const [installing, setInstalling] = useState(false)
-    const [installResult, setInstallResult] = useState<{ success?: boolean; message?: string } | null>(null)
+    const [testing, setTesting] = useState(false)
+    const [actionResult, setActionResult] = useState<{ success?: boolean; message?: string } | null>(null)
 
     useEffect(() => {
         if (!window.colorManager) return
@@ -48,24 +50,47 @@ export default function PrinterMonitor() {
 
     const handleInstallPrinter = async () => {
         if (!window.colorManager?.instalarImpresora) {
-            setInstallResult({ success: false, message: "Función no disponible" })
+            setActionResult({ success: false, message: "Función no disponible" })
             return
         }
         
         setInstalling(true)
-        setInstallResult(null)
+        setActionResult(null)
         
         try {
             const result = await window.colorManager.instalarImpresora()
             if (result.success) {
-                setInstallResult({ success: true, message: "Impresora instalada correctamente" })
+                setActionResult({ success: true, message: "Impresora instalada. Revise panel de impresoras de Windows." })
             } else {
-                setInstallResult({ success: false, message: result.error || "Error desconocido" })
+                setActionResult({ success: false, message: result.error || "Error desconocido" })
             }
         } catch (err: any) {
-            setInstallResult({ success: false, message: err.message })
+            setActionResult({ success: false, message: err.message })
         } finally {
             setInstalling(false)
+        }
+    }
+
+    const handleTestPrinter = async () => {
+        if (!window.colorManager?.probarImpresora) {
+            setActionResult({ success: false, message: "Función no disponible" })
+            return
+        }
+        
+        setTesting(true)
+        setActionResult(null)
+        
+        try {
+            const result = await window.colorManager.probarImpresora()
+            if (result.success) {
+                setActionResult({ success: true, message: result.message || "Conexión exitosa" })
+            } else {
+                setActionResult({ success: false, message: result.error || "Error de conexión" })
+            }
+        } catch (err: any) {
+            setActionResult({ success: false, message: err.message })
+        } finally {
+            setTesting(false)
         }
     }
 
@@ -135,19 +160,28 @@ export default function PrinterMonitor() {
                     </div>
 
                     <div className="bg-[#2a2a2a] p-2 border-t border-[#3c3c3c]">
-                        <div className="flex items-center justify-between gap-2">
-                            <p className="text-[9px] text-[#555555]">Escuchando en 0.0.0.0:9100</p>
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                            <p className="text-[9px] text-[#555555]">Escuchando en 127.0.0.1:9100</p>
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={handleTestPrinter}
+                                disabled={testing || installing}
+                                className="flex-1 text-[9px] px-2 py-1.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white rounded transition-colors"
+                            >
+                                {testing ? "Probando..." : "✓ Probar Conexión"}
+                            </button>
                             <button
                                 onClick={handleInstallPrinter}
-                                disabled={installing}
-                                className="text-[9px] px-2 py-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white rounded transition-colors"
+                                disabled={installing || testing}
+                                className="flex-1 text-[9px] px-2 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white rounded transition-colors"
                             >
                                 {installing ? "Instalando..." : "🖨️ Instalar Impresora"}
                             </button>
                         </div>
-                        {installResult && (
-                            <p className={`text-[9px] mt-1 ${installResult.success ? "text-green-500" : "text-red-500"}`}>
-                                {installResult.message}
+                        {actionResult && (
+                            <p className={`text-[9px] mt-2 p-1 rounded ${actionResult.success ? "text-green-400 bg-green-900/30" : "text-red-400 bg-red-900/30"}`}>
+                                {actionResult.message}
                             </p>
                         )}
                     </div>

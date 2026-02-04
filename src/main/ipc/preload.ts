@@ -76,6 +76,8 @@ contextBridge.exposeInMainWorld("colorManager", {
 
   // IMPL-20260204-04: Instalar impresora virtual manualmente
   instalarImpresora: () => ipcRenderer.invoke(IPCInvokeChannels.INSTALL_PRINTER),
+  // IMPL-20260204-05: Probar conexión de impresora
+  probarImpresora: () => ipcRenderer.invoke(IPCInvokeChannels.TEST_PRINTER),
 
   // IMPL-20260129-01: Configuración dinámica
   invoke: (channel: string, ...args: any[]) => ipcRenderer.invoke(channel, ...args),

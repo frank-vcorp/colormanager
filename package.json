@@ -87,7 +87,8 @@
           "**/*"
         ]
       },
-      "build/setup-printer.ps1"
+      "build/setup-printer.ps1",
+      "build/diagnose-printer.ps1"
     ],
     "asarUnpack": [
       "**/libquery_engine*",

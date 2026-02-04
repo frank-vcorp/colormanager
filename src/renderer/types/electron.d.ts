@@ -47,6 +47,8 @@ declare global {
 
       // IMPL-20260204-04: Instalar impresora virtual manualmente
       instalarImpresora: () => Promise<{ success: boolean; error?: string; output?: string }>
+      // IMPL-20260204-05: Probar conexión de impresora
+      probarImpresora: () => Promise<{ success: boolean; message?: string; error?: string }>
 
       // IMPL-20260129-01: Métodos genéricos para IPC
       invoke: (channel: string, ...args: any[]) => Promise<any>

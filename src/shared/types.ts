@@ -173,6 +173,8 @@ export const IPCInvokeChannels = {
   MINIMIZAR_VENTANA: "window:minimizar",
   // IMPL-20260204-04: Instalar impresora virtual desde UI
   INSTALL_PRINTER: "printer:install",
+  // IMPL-20260204-05: Probar conexión de impresora
+  TEST_PRINTER: "printer:test",
 } as const
 
 // Roles del sistema
