@@ -267,6 +267,12 @@ async function printLabelViaCOM(etiqueta: EtiquetaData, comPort: string): Promis
  * Usa ventana oculta para renderizar e imprimir
  * FIX-20260204-21: Mostrar diálogo de impresión para mejor compatibilidad
  */
+/**
+ * Imprime etiqueta usando sistema de impresión de Electron
+ * Usa ventana visible para renderizar e imprimir
+ * FIX-20260204-21: Mostrar diálogo de impresión para mejor compatibilidad
+ * FIX-20260204-22: Esperar carga completa de imagen QR antes de imprimir
+ */
 async function printLabelViaElectron(etiqueta: EtiquetaData, _printerHint?: string): Promise<PrintResult> {
   try {
     const qrDataUrl = etiqueta.qrDataUrl || await generateQRDataURL(etiqueta.codigo)
@@ -275,7 +281,7 @@ async function printLabelViaElectron(etiqueta: EtiquetaData, _printerHint?: stri
     const printWindow = new BrowserWindow({
       width: 400,
       height: 450,
-      show: true,  // FIX: Mostrar ventana
+      show: true,
       title: `Imprimir Etiqueta: ${etiqueta.codigo}`,
       webPreferences: {
         nodeIntegration: false,
@@ -283,7 +289,8 @@ async function printLabelViaElectron(etiqueta: EtiquetaData, _printerHint?: stri
       }
     })
     
-    // HTML de la etiqueta con tamaño A7 para mejor compatibilidad
+    // FIX-20260204-22: HTML con script que notifica cuando la imagen QR está lista
+    // Usamos window.onload que espera a TODAS las imágenes
     const labelHtml = `
       <!DOCTYPE html>
       <html>
@@ -359,7 +366,7 @@ async function printLabelViaElectron(etiqueta: EtiquetaData, _printerHint?: stri
       </head>
       <body>
         <div class="label-container">
-          <img class="qr" src="${qrDataUrl}" alt="QR">
+          <img class="qr" id="qrImage" src="${qrDataUrl}" alt="QR">
           <div class="codigo">${etiqueta.codigo}</div>
           <div class="nombre">${etiqueta.nombre}</div>
           <div class="sku">SKU: ${etiqueta.sku}</div>
@@ -367,14 +374,65 @@ async function printLabelViaElectron(etiqueta: EtiquetaData, _printerHint?: stri
         <div class="instrucciones">
           Presione Ctrl+P para imprimir o use el menú Archivo → Imprimir
         </div>
+        <script>
+          // FIX-20260204-22: Señalizar cuando todo esté listo
+          window.contentReady = false;
+          window.onload = function() {
+            // Doble verificación: esperar a que la imagen esté decodificada
+            const qrImg = document.getElementById('qrImage');
+            if (qrImg.complete && qrImg.naturalHeight !== 0) {
+              window.contentReady = true;
+              console.log('QR loaded successfully');
+            } else {
+              qrImg.onload = function() {
+                window.contentReady = true;
+                console.log('QR loaded via onload');
+              };
+              qrImg.onerror = function() {
+                window.contentReady = true; // Continuar aunque falle
+                console.error('QR failed to load');
+              };
+            }
+          };
+        </script>
       </body>
       </html>
     `
     
     await printWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(labelHtml)}`)
     
-    // FIX-20260204-21: Mostrar diálogo de impresión nativo en vez de imprimir silenciosamente
-    // Esto permite al usuario elegir impresora y ajustar configuración
+    // FIX-20260204-22: Esperar a que el contenido esté completamente renderizado
+    // Verificar que window.contentReady sea true, con timeout de seguridad
+    await new Promise<void>((resolve) => {
+      let attempts = 0
+      const maxAttempts = 50 // 5 segundos máximo
+      
+      const checkReady = async () => {
+        attempts++
+        try {
+          const ready = await printWindow.webContents.executeJavaScript('window.contentReady')
+          if (ready || attempts >= maxAttempts) {
+            // Agregar pequeño delay adicional para asegurar renderizado visual
+            setTimeout(resolve, 200)
+            return
+          }
+        } catch (e) {
+          // Si hay error, continuar
+          if (attempts >= maxAttempts) {
+            setTimeout(resolve, 200)
+            return
+          }
+        }
+        setTimeout(checkReady, 100)
+      }
+      
+      // Empezar a verificar después de un delay inicial
+      setTimeout(checkReady, 300)
+    })
+    
+    console.log('[qrLabelService] Contenido listo, iniciando impresión...')
+    
+    // FIX-20260204-21: Mostrar diálogo de impresión nativo
     const printResult = await new Promise<boolean>((resolve) => {
       printWindow.webContents.print(
         {
