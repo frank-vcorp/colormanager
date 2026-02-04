@@ -223,7 +223,7 @@ function createWindow() {
   setInterval(() => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send(IPCChannels.ESTADO_BASCULA, {
-        conectada: true, // Simulado siempre conectado
+        conectada: scaleService?.isConnected() ?? false,
         peso: scaleService?.getCurrentWeight() || 0,
       })
     }

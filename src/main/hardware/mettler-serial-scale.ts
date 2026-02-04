@@ -36,6 +36,14 @@ export class MettlerToledoSerialService implements IScaleService {
     this.portPath = portPath
     this.baudRate = baudRate
     console.log(`[MettlerSerial] Puerto: ${portPath}, BaudRate: ${baudRate}`)
+    // Intentar conexión automática al instanciar
+    this.connect().then((success) => {
+      if (success) {
+        console.log("[MettlerSerial] ✅ Conexión automática exitosa")
+      } else {
+        console.log("[MettlerSerial] ⚠️ Puerto serial no disponible - se reintentará al iniciar mezcla")
+      }
+    })
   }
 
   async connect(): Promise<boolean> {
