@@ -9,12 +9,15 @@
  * @updated IMPL-20260128-02: Agregar handler AJUSTAR_STOCK para Micro-Sprint 11 (Ajustes de Inventario)
  * @updated IMPL-20260129-01: Integrar ConfigService para Modo Demo/Prod dinámico
  * @updated FIX-20260129-01: Suscribirse a cambios de configuración para reiniciar servicio de báscula
+ * @updated FIX-20260204-15: Auto-instalar impresora y servicio al primer inicio
  * Respaldo: context/interconsultas/DICTAMEN_FIX-20260127-04.md
  * @see Checkpoints/IMPL-20260128-01-ElectronEnContenedor.md
  */
 
 import { app, BrowserWindow, ipcMain, dialog } from "electron"
 import path from "path"
+import fs from "fs"
+import { spawn } from "child_process"
 import { IScaleService } from "./hardware/scale-interface"
 import { DymoHIDScaleService } from "./hardware/dymo-hid-scale"
 import { MettlerToledoSerialService } from "./hardware/mettler-serial-scale"
@@ -37,6 +40,104 @@ let mainWindow: BrowserWindow | null = null
 let scaleService: IScaleService | null = null
 let sayerService: SayerService | null = null
 let printerServer: VirtualPrinterServer | null = null
+
+/**
+ * FIX-20260204-15: Auto-configurar impresora al primer inicio en Windows
+ * Ejecuta complete-setup.ps1 si la impresora no está instalada
+ */
+async function autoSetupPrinter(): Promise<void> {
+  // Solo en Windows
+  if (process.platform !== "win32") {
+    console.log("[Main] Auto-setup: No es Windows, saltando")
+    return
+  }
+
+  // Verificar si ya se ejecutó la configuración
+  const configPath = path.join(app.getPath("userData"), "printer-configured.flag")
+  if (fs.existsSync(configPath)) {
+    console.log("[Main] Auto-setup: Ya configurado previamente")
+    return
+  }
+
+  console.log("[Main] Auto-setup: Verificando configuración de impresora...")
+
+  // Buscar el script de configuración
+  const possiblePaths = [
+    path.join(process.resourcesPath || "", "complete-setup.ps1"),
+    path.join(__dirname, "../../build/complete-setup.ps1"),
+    path.join(__dirname, "../../../build/complete-setup.ps1"),
+    path.join(app.getAppPath(), "build/complete-setup.ps1"),
+  ]
+
+  let scriptPath = ""
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      scriptPath = p
+      console.log(`[Main] Auto-setup: Script encontrado en ${p}`)
+      break
+    }
+  }
+
+  if (!scriptPath) {
+    console.log("[Main] Auto-setup: Script no encontrado, saltando")
+    return
+  }
+
+  console.log("[Main] Auto-setup: Ejecutando configuración automática...")
+
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const child = spawn("powershell.exe", [
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-WindowStyle", "Hidden",
+        "-File", scriptPath,
+        "-Action", "install"
+      ], {
+        windowsHide: true,
+        stdio: ["ignore", "pipe", "pipe"]
+      })
+
+      let stdout = ""
+      let stderr = ""
+
+      child.stdout?.on("data", (data) => {
+        stdout += data.toString()
+      })
+
+      child.stderr?.on("data", (data) => {
+        stderr += data.toString()
+      })
+
+      child.on("error", (err) => {
+        console.error("[Main] Auto-setup: Error spawn:", err)
+        reject(err)
+      })
+
+      child.on("close", (code) => {
+        console.log(`[Main] Auto-setup: Proceso terminó con código ${code}`)
+        if (stdout) console.log("[Main] Auto-setup stdout:", stdout.substring(0, 500))
+        if (stderr) console.log("[Main] Auto-setup stderr:", stderr.substring(0, 500))
+        
+        // Marcar como configurado aunque haya errores (para no reintentar)
+        fs.writeFileSync(configPath, new Date().toISOString())
+        
+        resolve()
+      })
+
+      // Timeout de 60 segundos
+      setTimeout(() => {
+        console.log("[Main] Auto-setup: Timeout, continuando...")
+        fs.writeFileSync(configPath, new Date().toISOString())
+        resolve()
+      }, 60000)
+    })
+
+    console.log("[Main] Auto-setup: Configuración completada")
+  } catch (err) {
+    console.error("[Main] Auto-setup: Error:", err)
+  }
+}
 
 /**
  * Reiniciar el servicio de báscula cuando cambia la configuración
@@ -665,7 +766,14 @@ TOTAL:                  2008.75 ml
 })
 
 // App lifecycle
-app.on("ready", createWindow)
+// FIX-20260204-15: Ejecutar auto-setup antes de crear la ventana
+app.on("ready", async () => {
+  // Auto-configurar impresora en Windows (solo primer inicio)
+  await autoSetupPrinter()
+  
+  // Crear la ventana principal
+  createWindow()
+})
 
 app.on("window-all-closed", () => {
   // Cerrar conexión a Prisma antes de salir
