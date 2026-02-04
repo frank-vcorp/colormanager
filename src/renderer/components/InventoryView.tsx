@@ -19,6 +19,36 @@ import { PrintPreview } from "./ui/LabelTemplate"
 import { QRLabelModal } from "./ui/QRLabelModal"
 import { useAuth } from "../context/AuthProvider"
 
+/**
+ * FIX-20260204-20: Mapeo de sufijos SICAR a presentación
+ * El stock viene en ml, pero queremos mostrar cuántos botes equivale
+ */
+const SICAR_PRESENTATION: Record<string, { label: string; ml: number }> = {
+  "10": { label: "250ml", ml: 250 },
+  "20": { label: "500ml", ml: 500 },
+  "30": { label: "1L", ml: 1000 },
+  "40": { label: "4L", ml: 4000 },
+  "50": { label: "19L", ml: 19000 },
+}
+
+/**
+ * FIX-20260204-20: Extrae info de presentación de un SKU SICAR
+ * @returns { presentacion: "4L", botes: 2 } o null si no tiene sufijo
+ */
+function getPresentacionInfo(sku: string, stockMl: number): { presentacion: string; botes: number } | null {
+  const match = sku.match(/\.(\d{2})$/)
+  if (!match) return null
+  
+  const suffix = match[1]
+  const pres = SICAR_PRESENTATION[suffix]
+  if (!pres) return null
+  
+  return {
+    presentacion: pres.label,
+    botes: Math.round((stockMl / pres.ml) * 10) / 10, // Redondear a 1 decimal
+  }
+}
+
 interface Props {
   onBack: () => void
 }
@@ -421,7 +451,9 @@ export default function InventoryView({ onBack }: Props) {
                 <tr className="bg-gray-100 border-b border-gray-200 text-gray-600 text-sm uppercase tracking-wider">
                   <th className="p-4 font-semibold">SKU / Código</th>
                   <th className="p-4 font-semibold">Nombre del Tinte</th>
-                  <th className="p-4 font-semibold text-right">Stock Disponible</th>
+                  <th className="p-4 font-semibold text-center">Presentación</th>
+                  <th className="p-4 font-semibold text-right">Botes</th>
+                  <th className="p-4 font-semibold text-right">Stock (ml)</th>
                   <th className="p-4 font-semibold text-center">Estado</th>
                   <th className="p-4 font-semibold text-center">Acciones</th>
                 </tr>
@@ -443,6 +475,9 @@ export default function InventoryView({ onBack }: Props) {
 
                   const isExpanded = expandedRow === prod.sku
                   const hasLotes = prod.lotes && prod.lotes.length > 0
+                  
+                  // FIX-20260204-20: Obtener info de presentación
+                  const presInfo = getPresentacionInfo(prod.sku, prod.stockActual)
 
                   return (
                     <React.Fragment key={prod.sku}>
@@ -464,8 +499,24 @@ export default function InventoryView({ onBack }: Props) {
                           {prod.sku}
                         </td>
                         <td className="p-4 text-gray-800 font-medium">{prod.nombre}</td>
+                        <td className="p-4 text-center">
+                          {presInfo ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 text-xs font-medium">
+                              {presInfo.presentacion}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-xs">—</span>
+                          )}
+                        </td>
                         <td className="p-4 text-right font-mono font-bold text-lg">
-                          {prod.stockActual.toFixed(1)} <span className="text-gray-400 text-sm font-normal">g</span>
+                          {presInfo ? (
+                            <>{presInfo.botes}</>  
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          )}
+                        </td>
+                        <td className="p-4 text-right font-mono text-sm text-gray-600">
+                          {prod.stockActual.toFixed(0)} <span className="text-gray-400 text-xs">ml</span>
                         </td>
                         <td className="p-4 text-center">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>
