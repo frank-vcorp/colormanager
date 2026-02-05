@@ -7,7 +7,7 @@
  * @see /src/shared/types.ts para interfaces compartidas
  */
 
-import { PesoEvent, RecetaSayer, RegistroMezcla, Producto, ImportacionResultado, SyncResponse, AjusteStockParams, AjusteStockResponse, AuthResponse, AppConfig, PrinterStatus, PrintJob } from "@shared/types"
+import { PesoEvent, RecetaSayer, RegistroMezcla, Producto, ImportacionResultado, SyncResponse, AjusteStockParams, AjusteStockResponse, AuthResponse, AppConfig, PrinterStatus, PrintJob, PrinterInfo, PrintOptions } from "@shared/types"
 
 declare global {
   interface Window {
@@ -44,6 +44,10 @@ declare global {
       checkAuth: () => Promise<AuthResponse>
 
       minimizarVentana: () => Promise<void>
+
+      // FIX-20260205-01: Métodos de impresión
+      getPrinters: () => Promise<{ success: boolean; data?: PrinterInfo[]; error?: string }>
+      printLabel: (options: PrintOptions) => Promise<{ success: boolean; error?: string }>
 
       // IMPL-20260129-01: Métodos genéricos para IPC
       invoke: (channel: string, ...args: any[]) => Promise<any>

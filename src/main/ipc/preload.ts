@@ -11,7 +11,7 @@
  */
 
 import { contextBridge, ipcRenderer } from "electron"
-import { IPCChannels, IPCInvokeChannels, PesoEvent, RecetaSayer, AjusteStockParams, AppConfig, PrinterStatus, PrintJob } from "../../shared/types"
+import { IPCChannels, IPCInvokeChannels, PesoEvent, RecetaSayer, AjusteStockParams, AppConfig, PrinterStatus, PrintJob, PrintOptions } from "../../shared/types"
 // FIX REFERENCE: FIX-20260127-04
 
 // Exponer solo lo necesario via ContextBridge
@@ -73,6 +73,10 @@ contextBridge.exposeInMainWorld("colorManager", {
   checkAuth: () => ipcRenderer.invoke(IPCInvokeChannels.AUTH_CHECK),
 
   minimizarVentana: () => ipcRenderer.invoke(IPCInvokeChannels.MINIMIZAR_VENTANA),
+
+  // FIX-20260205-01: Métodos de impresión
+  getPrinters: () => ipcRenderer.invoke(IPCInvokeChannels.GET_PRINTERS),
+  printLabel: (options: PrintOptions) => ipcRenderer.invoke(IPCInvokeChannels.PRINT_LABEL, options),
 
   // IMPL-20260129-01: Configuración dinámica
   invoke: (channel: string, ...args: any[]) => ipcRenderer.invoke(channel, ...args),

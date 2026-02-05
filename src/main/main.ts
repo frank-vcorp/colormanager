@@ -31,6 +31,8 @@ import { VirtualPrinterServer } from "./services/VirtualPrinterServer"
 // IMPL-20260129-01: Importar ConfigService y configIPC
 import { configService } from "./services/configService"
 import { registerConfigIPC } from "./ipc/configIPC"
+// FIX-20260205-01: Importar PrintingIPC
+import { registerPrintingIPC } from "./ipc/printingIPC"
 
 let mainWindow: BrowserWindow | null = null
 let scaleService: IScaleService | null = null
@@ -190,6 +192,9 @@ function createWindow() {
 
   // IMPL-20260129-01: Registrar canales de configuración
   registerConfigIPC(mainWindow)
+
+  // FIX-20260205-01: Registrar canales de impresión física
+  registerPrintingIPC(mainWindow)
 
   // FIX-20260130-02: Inicializar base de datos (crear tablas si no existen)
   initializeDatabase()

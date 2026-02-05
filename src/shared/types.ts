@@ -115,6 +115,7 @@ export const IPCChannels = {
   CONFIG_CHANGED: "config:changed",
   PRINTER_STATUS: "printer:status",   // ARCH-20260130-04
   PRINTER_QUEUE: "printer:queue",     // ARCH-20260130-04
+  PRINT_ERROR: "printer:error",       // FIX-20260205-01
 } as const
 
 // Lote (Partida) de Ingrediente - IMPL-20260129-01
@@ -171,6 +172,9 @@ export const IPCInvokeChannels = {
   CONFIG_SET_MODE: "config:setMode",
   CONFIG_RESET: "config:reset",
   MINIMIZAR_VENTANA: "window:minimizar",
+  // FIX-20260205-01: Canales de Impresión Física
+  GET_PRINTERS: "printer:get-list",
+  PRINT_LABEL: "printer:print-label",
 } as const
 
 // Roles del sistema
@@ -236,4 +240,21 @@ export interface AppConfig {
     sayerSpoolDir: string // Ruta absoluta a carpeta de recetas
     printerPort: number // Puerto para impresora virtual (ej. 9100)
   }
+}
+
+// Información de Impresora (Electron) - FIX-20260205-01
+export interface PrinterInfo {
+  name: string
+  displayName: string
+  description: string
+  status: number
+  isDefault: boolean
+  options: any
+}
+
+// Opciones de Impresión
+export interface PrintOptions {
+  printerName?: string // Si no se especifica, usa default
+  silent?: boolean
+  copies?: number
 }

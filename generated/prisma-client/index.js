@@ -176,7 +176,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/workspaces/colormanager/generated/prisma-client",
+      "value": "/root/antigravity-projects/Colormanager/colormanager/generated/prisma-client",
       "fromEnvVar": null
     },
     "config": {
@@ -202,12 +202,11 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/workspaces/colormanager/prisma/schema.prisma",
+    "sourceFilePath": "/root/antigravity-projects/Colormanager/colormanager/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": "../../.env",
-    "schemaEnvPath": "../../.env"
+    "rootEnvPath": null
   },
   "relativePath": "../../prisma",
   "clientVersion": "5.22.0",
