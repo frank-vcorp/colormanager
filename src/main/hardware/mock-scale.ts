@@ -17,9 +17,15 @@ export class MockScaleService implements IScaleService {
   private targetWeight = 0
   private interval: NodeJS.Timeout | null = null
   private mainWindow: BrowserWindow | null = null
+  // FIX REFERENCE: FIX-20260204-06 - Flag para distinguir fallback de modo DEMO intencional
+  private isFallback: boolean = false
 
-  constructor(mainWindow: BrowserWindow) {
+  constructor(mainWindow: BrowserWindow, isFallback: boolean = false) {
     this.mainWindow = mainWindow
+    this.isFallback = isFallback
+    if (isFallback) {
+      console.log("[MockScale] ⚠️ Iniciado como fallback - reportará desconectado")
+    }
   }
 
   /**
@@ -68,10 +74,13 @@ export class MockScaleService implements IScaleService {
   }
 
   /**
-   * Verifica si está conectado (siempre true en Mock)
+   * Verifica si está conectado
+   * FIX REFERENCE: FIX-20260204-06 - Retorna false si es fallback (HID/Serial falló)
    */
   isConnected(): boolean {
-    return true
+    // Si es fallback (fallo de HID/Serial), reportar desconectado honestamente
+    // Si es modo DEMO intencional, reportar conectado para demostración
+    return !this.isFallback
   }
 
   /**

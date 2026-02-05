@@ -2,27 +2,44 @@
  * ConfigService: Gestión de configuración dinámica (DEMO vs PROD) usando electron-store
  * ID Intervención: IMPL-20260129-01
  * @updated FIX-20260129-01: Agregar EventEmitter para reinicio dinámico de servicio de báscula
+ * @updated FIX-20260204-11: Usar carpeta Documents para el spool en Windows
  * Respaldo: context/SPEC-CONFIG-DINAMICA.md
  */
 
 import Store from "electron-store"
 import path from "path"
 import { app } from "electron"
+import os from "os"
 import { EventEmitter } from "events"
 import { AppConfig } from "../../shared/types"
 
+/**
+ * Obtiene la ruta del spool según el sistema operativo
+ * FIX-20260204-11: En Windows usa Documents/ColorManager/spool
+ */
+function getDefaultSpoolDir(): string {
+  if (process.platform === "win32") {
+    // En Windows, usar la carpeta Documentos del usuario
+    const documentsPath = path.join(os.homedir(), "Documents")
+    return path.join(documentsPath, "ColorManager", "spool")
+  }
+  // En Linux/Mac, usar carpeta local
+  return path.join(process.cwd(), "sayer_spool")
+}
 
 /**
  * Configuración por defecto
+ * IMPL-20260204-02: Modo PRODUCTION por defecto con báscula HID (Dymo USB)
  */
 const DEFAULT_CONFIG: AppConfig = {
-  mode: "DEMO",
+  mode: "PRODUCTION",
   hardware: {
-    scalePort: "COM3",
+    scaleType: "HID",
+    scalePort: "/dev/ttyUSB0",
     baudRate: 9600,
   },
   paths: {
-    sayerSpoolDir: path.join(process.cwd(), "sayer_spool"),
+    sayerSpoolDir: getDefaultSpoolDir(),
     printerPort: 9100,
   },
 }

@@ -9,14 +9,18 @@
  * @updated IMPL-20260128-02: Agregar handler AJUSTAR_STOCK para Micro-Sprint 11 (Ajustes de Inventario)
  * @updated IMPL-20260129-01: Integrar ConfigService para Modo Demo/Prod dinámico
  * @updated FIX-20260129-01: Suscribirse a cambios de configuración para reiniciar servicio de báscula
+ * @updated FIX-20260204-15: Auto-instalar impresora y servicio al primer inicio
  * Respaldo: context/interconsultas/DICTAMEN_FIX-20260127-04.md
  * @see Checkpoints/IMPL-20260128-01-ElectronEnContenedor.md
  */
 
 import { app, BrowserWindow, ipcMain, dialog } from "electron"
 import path from "path"
-import { MockScaleService } from "./hardware/mock-scale"
-import { SerialScaleService, IScaleService } from "./hardware/scale-interface"
+import fs from "fs"
+import { spawn } from "child_process"
+import { IScaleService } from "./hardware/scale-interface"
+import { DymoHIDScaleService } from "./hardware/dymo-hid-scale"
+import { MettlerToledoSerialService } from "./hardware/mettler-serial-scale"
 import { SayerService } from "./services/sayer-service"
 import { IPCChannels, IPCInvokeChannels, AjusteStockParams } from "../shared/types"
 // FIX REFERENCE: FIX-20260127-04 - Cambio de @shared/ a ruta relativa para compatibilidad tsc
@@ -40,10 +44,108 @@ let sayerService: SayerService | null = null
 let printerServer: VirtualPrinterServer | null = null
 
 /**
+ * FIX-20260204-15: Auto-configurar impresora al primer inicio en Windows
+ * Ejecuta complete-setup.ps1 si la impresora no está instalada
+ */
+async function autoSetupPrinter(): Promise<void> {
+  // Solo en Windows
+  if (process.platform !== "win32") {
+    console.log("[Main] Auto-setup: No es Windows, saltando")
+    return
+  }
+
+  // Verificar si ya se ejecutó la configuración
+  const configPath = path.join(app.getPath("userData"), "printer-configured.flag")
+  if (fs.existsSync(configPath)) {
+    console.log("[Main] Auto-setup: Ya configurado previamente")
+    return
+  }
+
+  console.log("[Main] Auto-setup: Verificando configuración de impresora...")
+
+  // Buscar el script de configuración
+  const possiblePaths = [
+    path.join(process.resourcesPath || "", "complete-setup.ps1"),
+    path.join(__dirname, "../../build/complete-setup.ps1"),
+    path.join(__dirname, "../../../build/complete-setup.ps1"),
+    path.join(app.getAppPath(), "build/complete-setup.ps1"),
+  ]
+
+  let scriptPath = ""
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      scriptPath = p
+      console.log(`[Main] Auto-setup: Script encontrado en ${p}`)
+      break
+    }
+  }
+
+  if (!scriptPath) {
+    console.log("[Main] Auto-setup: Script no encontrado, saltando")
+    return
+  }
+
+  console.log("[Main] Auto-setup: Ejecutando configuración automática...")
+
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const child = spawn("powershell.exe", [
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-WindowStyle", "Hidden",
+        "-File", scriptPath,
+        "-Action", "install"
+      ], {
+        windowsHide: true,
+        stdio: ["ignore", "pipe", "pipe"]
+      })
+
+      let stdout = ""
+      let stderr = ""
+
+      child.stdout?.on("data", (data) => {
+        stdout += data.toString()
+      })
+
+      child.stderr?.on("data", (data) => {
+        stderr += data.toString()
+      })
+
+      child.on("error", (err) => {
+        console.error("[Main] Auto-setup: Error spawn:", err)
+        reject(err)
+      })
+
+      child.on("close", (code) => {
+        console.log(`[Main] Auto-setup: Proceso terminó con código ${code}`)
+        if (stdout) console.log("[Main] Auto-setup stdout:", stdout.substring(0, 500))
+        if (stderr) console.log("[Main] Auto-setup stderr:", stderr.substring(0, 500))
+        
+        // Marcar como configurado aunque haya errores (para no reintentar)
+        fs.writeFileSync(configPath, new Date().toISOString())
+        
+        resolve()
+      })
+
+      // Timeout de 60 segundos
+      setTimeout(() => {
+        console.log("[Main] Auto-setup: Timeout, continuando...")
+        fs.writeFileSync(configPath, new Date().toISOString())
+        resolve()
+      }, 60000)
+    })
+
+    console.log("[Main] Auto-setup: Configuración completada")
+  } catch (err) {
+    console.error("[Main] Auto-setup: Error:", err)
+  }
+}
+
+/**
  * Reiniciar el servicio de báscula cuando cambia la configuración
  * FIX-20260129-01: Detener servicio actual, instanciar nuevo, iniciar
  */
-function restartScaleService(mainWindow: BrowserWindow | null): IScaleService {
+function restartScaleService(mainWindow: BrowserWindow | null): IScaleService | null {
   if (!mainWindow) {
     throw new Error("[Main] mainWindow no disponible para reiniciar servicio")
   }
@@ -76,26 +178,44 @@ function restartScaleService(mainWindow: BrowserWindow | null): IScaleService {
 
 /**
  * Inicializar el servicio de báscula según la configuración
+ * IMPL-20260204-01: Soporte para HID (Dymo USB) y Serial (Mettler Toledo)
+ * FIX-20260204-07: Eliminado MockScaleService - si falla, retorna null
  */
-function initScaleService(mainWindow: BrowserWindow): IScaleService {
+function initScaleService(mainWindow: BrowserWindow): IScaleService | null {
   const config = configService.getConfig()
-  let service: IScaleService
 
-  if (config.mode === "DEMO") {
-    console.log("[Main] Inicializando MockScaleService (MODO DEMO)")
-    service = new MockScaleService(mainWindow)
-  } else {
-    console.log(
-      `[Main] Inicializando SerialScaleService (MODO PROD) - Puerto: ${config.hardware.scalePort}`
-    )
-    service = new SerialScaleService(
-      mainWindow,
-      config.hardware.scalePort,
-      config.hardware.baudRate
-    )
+  // Determinar tipo de báscula (HID por defecto)
+  const scaleType = config.hardware.scaleType || "HID"
+
+  switch (scaleType) {
+    case "HID":
+      console.log("[Main] Inicializando DymoHIDScaleService (USB HID - Dymo)")
+      try {
+        const service = new DymoHIDScaleService(mainWindow)
+        return service
+      } catch (e) {
+        console.error("[Main] ❌ Error al inicializar báscula HID:", e)
+        return null
+      }
+
+    case "SERIAL":
+      console.log(`[Main] Inicializando MettlerToledoSerialService - Puerto: ${config.hardware.scalePort}`)
+      try {
+        const service = new MettlerToledoSerialService(
+          mainWindow,
+          config.hardware.scalePort,
+          config.hardware.baudRate
+        )
+        return service
+      } catch (e) {
+        console.error("[Main] ❌ Error al inicializar báscula Serial:", e)
+        return null
+      }
+
+    default:
+      console.warn(`[Main] Tipo de báscula desconocido: ${scaleType}`)
+      return null
   }
-
-  return service
 }
 
 function createWindow() {
@@ -161,15 +281,16 @@ function createWindow() {
     }
 
     // ARCH-20260130-03: Reiniciar servidor de impresión si cambia el puerto
-    if (event.oldConfig.paths.printerPort !== event.newConfig.paths.printerPort) {
-      console.log(`[Main] Cambio en puerto de impresora: ${event.newConfig.paths.printerPort}`)
-      if (printerServer) printerServer.stop()
-      printerServer = new VirtualPrinterServer(mainWindow!, {
-        port: event.newConfig.paths.printerPort,
-        name: "ColorManager Printer"
-      })
-      printerServer.start()
-    }
+    // FIX-20260204-16: DESHABILITADO - usamos servicio PowerShell externo
+    // if (event.oldConfig.paths.printerPort !== event.newConfig.paths.printerPort) {
+    //   console.log(`[Main] Cambio en puerto de impresora: ${event.newConfig.paths.printerPort}`)
+    //   if (printerServer) printerServer.stop()
+    //   printerServer = new VirtualPrinterServer(mainWindow!, {
+    //     port: event.newConfig.paths.printerPort,
+    //     name: "ColorManager Printer"
+    //   })
+    //   printerServer.start()
+    // }
   })
 
   // Inicializar Sayer Service usando ruta de la configuración
@@ -180,12 +301,18 @@ function createWindow() {
   })
   sayerService.start()
 
-  // Inicializar Servidor de Impresión Virtual (ARCH-20260130-03)
-  printerServer = new VirtualPrinterServer(mainWindow!, {
-    port: config.paths.printerPort,
-    name: "ColorManager Printer"
-  })
-  printerServer.start()
+  // FIX-20260204-16: VirtualPrinterServer DESHABILITADO en Windows
+  // En Windows usamos el servicio PowerShell (ColorManagerPrinterService) que:
+  // 1. Escucha en TCP 9100
+  // 2. Guarda archivos en Documents/ColorManager/spool
+  // 3. SayerService (arriba) detecta los archivos y los procesa
+  // Esto evita conflicto de puertos entre Electron y el servicio PowerShell
+  console.log(`[Main] VirtualPrinterServer DESHABILITADO - usando servicio PowerShell externo`)
+  // printerServer = new VirtualPrinterServer(mainWindow!, {
+  //   port: config.paths.printerPort,
+  //   name: "ColorManager Printer"
+  // })
+  // printerServer.start()
 
   // IMPL-20260128-01: Registrar canales de autenticación
   registerAuthIPC()
@@ -216,7 +343,7 @@ function createWindow() {
   setInterval(() => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send(IPCChannels.ESTADO_BASCULA, {
-        conectada: true, // Simulado siempre conectado
+        conectada: scaleService?.isConnected() ?? false,
         peso: scaleService?.getCurrentWeight() || 0,
       })
     }
@@ -271,16 +398,19 @@ ipcMain.handle(IPCInvokeChannels.OBTENER_INVENTARIO, async () => {
 
 /**
  * RESETEAR_INVENTARIO: Limpia la tabla y vuelve a sembrar con datos iniciales
+ * FIX-20260204-17: Devuelve array de productos actualizado
  */
 ipcMain.handle(IPCInvokeChannels.RESETEAR_INVENTARIO, async () => {
   try {
     console.log("[IPC] Solicitud: RESETEAR_INVENTARIO")
     await resetInventory()
+    // FIX-20260204-17: Devolver inventario actualizado
+    const productos = await getAllProducts()
     console.log("[IPC] Inventario reseteado exitosamente")
-    return { success: true }
+    return productos
   } catch (error) {
     console.error("[IPC] Error en RESETEAR_INVENTARIO:", error)
-    return { success: false, error: String(error) }
+    return []
   }
 })
 
@@ -451,8 +581,278 @@ ipcMain.handle(IPCInvokeChannels.MINIMIZAR_VENTANA, async () => {
   return { success: false }
 })
 
+/**
+ * INSTALL_PRINTER: Instala la impresora virtual ColorManager (IMPL-20260204-04)
+ * Ejecuta el script PowerShell para crear puerto TCP y impresora
+ * FIX-20260204-08: Usar shell.openExternal para abrir PowerShell como admin
+ */
+ipcMain.handle(IPCInvokeChannels.INSTALL_PRINTER, async () => {
+  console.log("[Main] Solicitud de instalación de impresora recibida")
+  console.log("[Main] Plataforma:", process.platform)
+  console.log("[Main] __dirname:", __dirname)
+  console.log("[Main] resourcesPath:", process.resourcesPath)
+  
+  // Solo funciona en Windows
+  if (process.platform !== "win32") {
+    return { success: false, error: "Solo disponible en Windows" }
+  }
+  
+  try {
+    const { spawn } = await import("child_process")
+    const fs = await import("fs")
+    
+    // Buscar el script en múltiples ubicaciones
+    const possiblePaths = [
+      // Producción (extraResources) - primera prioridad
+      path.join(process.resourcesPath || "", "setup-printer.ps1"),
+      // Desarrollo
+      path.join(__dirname, "../../build/setup-printer.ps1"),
+      path.join(__dirname, "../../../build/setup-printer.ps1"),
+      // Producción alternativa
+      path.join(app.getAppPath(), "build/setup-printer.ps1"),
+      path.join(app.getAppPath(), "../setup-printer.ps1"),
+    ]
+    
+    let finalScriptPath = ""
+    for (const p of possiblePaths) {
+      console.log(`[Main] Verificando: ${p}`)
+      if (fs.existsSync(p)) {
+        finalScriptPath = p
+        console.log(`[Main] ✓ Script encontrado: ${p}`)
+        break
+      }
+    }
+    
+    if (!finalScriptPath) {
+      const errorMsg = `Script no encontrado. Rutas probadas:\n${possiblePaths.join("\n")}`
+      console.error("[Main] ❌", errorMsg)
+      return { success: false, error: errorMsg }
+    }
+    
+    // Copiar script a ubicación temporal para evitar problemas de rutas
+    const tempScript = path.join(app.getPath("temp"), "setup-printer.ps1")
+    fs.copyFileSync(finalScriptPath, tempScript)
+    console.log(`[Main] Script copiado a: ${tempScript}`)
+    
+    // Usar spawn con shell para ejecutar PowerShell con elevación
+    // El truco es usar powershell Start-Process con -Verb RunAs
+    const psCommand = `Start-Process -FilePath 'powershell.exe' -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File "${tempScript}" -Action install' -Verb RunAs -Wait`
+    
+    console.log(`[Main] Comando: ${psCommand}`)
+    
+    return new Promise((resolve) => {
+      const child = spawn("powershell.exe", [
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-Command", psCommand
+      ], {
+        windowsHide: false, // Mostrar ventana para UAC
+        shell: true
+      })
+      
+      let stdout = ""
+      let stderr = ""
+      
+      child.stdout?.on("data", (data) => {
+        stdout += data.toString()
+        console.log("[Main] stdout:", data.toString())
+      })
+      
+      child.stderr?.on("data", (data) => {
+        stderr += data.toString()
+        console.log("[Main] stderr:", data.toString())
+      })
+      
+      child.on("error", (err) => {
+        console.error("[Main] Error spawn:", err)
+        resolve({ success: false, error: err.message })
+      })
+      
+      child.on("close", (code) => {
+        console.log(`[Main] Proceso terminó con código: ${code}`)
+        if (code === 0) {
+          resolve({ success: true, output: "Verifique que la impresora 'ColorManager Printer' aparezca en Windows" })
+        } else {
+          // Código 1223 = Usuario canceló UAC
+          if (code === 1223) {
+            resolve({ success: false, error: "Instalación cancelada por el usuario" })
+          } else {
+            resolve({ success: false, error: stderr || `Código de salida: ${code}` })
+          }
+        }
+      })
+      
+      // Timeout de 2 minutos
+      setTimeout(() => {
+        resolve({ success: true, output: "Proceso iniciado. Si apareció la ventana UAC, acepte para continuar." })
+      }, 5000) // Resolvemos después de 5 segundos para no bloquear la UI
+    })
+  } catch (error: any) {
+    console.error("[Main] Error al instalar impresora:", error)
+    return { success: false, error: error.message || String(error) }
+  }
+})
+
+/**
+ * TEST_PRINTER: Envía una receta de prueba al servidor de impresión virtual
+ * IMPL-20260204-05: Prueba que el servidor TCP esté escuchando correctamente
+ */
+ipcMain.handle(IPCInvokeChannels.TEST_PRINTER, async () => {
+  console.log("[Main] Probando conexión de impresora virtual...")
+  
+  const config = configService.getConfig()
+  const port = config.paths.printerPort || 9100
+  
+  try {
+    const net = await import("net")
+    
+    return new Promise((resolve) => {
+      const client = new net.Socket()
+      let connected = false
+      
+      client.setTimeout(3000)
+      
+      client.connect(port, "127.0.0.1", () => {
+        connected = true
+        console.log("[Main] ✓ Conexión TCP exitosa al puerto", port)
+        
+        // Enviar receta de prueba
+        const testReceta = `
+========================================
+SISTEMA SAYER - RECETA DE PRUEBA
+========================================
+Fecha: ${new Date().toLocaleString()}
+Cliente: ColorManager Test
+Orden: TEST-${Date.now()}
+
+Código: BASE-WHITE-001
+Color: BLANCO BRILLANTE
+
+Componentes:
+----------------------------------------
+1. BASE BLANCA          2000.00 ml
+2. PIGMENTO AZUL           5.50 ml
+3. PIGMENTO AMARILLO       3.25 ml
+----------------------------------------
+TOTAL:                  2008.75 ml
+
+========================================
+** RECETA DE PRUEBA - NO PRODUCCIÓN **
+========================================
+`
+        client.write(testReceta)
+        client.end()
+        
+        resolve({ 
+          success: true, 
+          message: `Conexión exitosa al puerto ${port}. Se envió receta de prueba.` 
+        })
+      })
+      
+      client.on("timeout", () => {
+        console.log("[Main] ✗ Timeout conectando al puerto", port)
+        client.destroy()
+        if (!connected) {
+          resolve({ 
+            success: false, 
+            error: `Timeout: El servidor no responde en el puerto ${port}. ¿Está ColorManager ejecutándose?` 
+          })
+        }
+      })
+      
+      client.on("error", (err: NodeJS.ErrnoException) => {
+        console.log("[Main] ✗ Error de conexión:", err.message)
+        if (!connected) {
+          let errorMsg = `No se pudo conectar al puerto ${port}`
+          if (err.code === "ECONNREFUSED") {
+            errorMsg = `Puerto ${port} rechazó la conexión. El servidor TCP no está escuchando.`
+          }
+          resolve({ success: false, error: errorMsg })
+        }
+      })
+    })
+  } catch (error: any) {
+    console.error("[Main] Error en prueba de impresora:", error)
+    return { success: false, error: error.message || String(error) }
+  }
+})
+
+// ============================================================================
+// ARCH-20260204-01: HANDLERS DE ETIQUETAS QR
+// ============================================================================
+
+import * as qrLabelService from "./services/qrLabelService"
+
+/**
+ * QR_OBTENER_ETIQUETA: Obtiene datos de etiqueta para un lote específico
+ */
+ipcMain.handle(IPCInvokeChannels.QR_OBTENER_ETIQUETA, async (_, loteId: string) => {
+  console.log("[Main] Obteniendo etiqueta QR para lote:", loteId)
+  try {
+    const data = await qrLabelService.getLabelData(loteId)
+    if (!data) {
+      return { success: false, error: "Lote no encontrado" }
+    }
+    return { success: true, data }
+  } catch (error: any) {
+    console.error("[Main] Error obteniendo etiqueta:", error)
+    return { success: false, error: error.message || String(error) }
+  }
+})
+
+/**
+ * QR_IMPRIMIR: Imprime etiqueta de un lote específico
+ */
+ipcMain.handle(IPCInvokeChannels.QR_IMPRIMIR, async (_, loteId: string) => {
+  console.log("[Main] Imprimiendo etiqueta QR para lote:", loteId)
+  try {
+    const data = await qrLabelService.getLabelData(loteId)
+    if (!data) {
+      return { success: false, error: "Lote no encontrado" }
+    }
+    return await qrLabelService.printLabel(data)
+  } catch (error: any) {
+    console.error("[Main] Error imprimiendo etiqueta:", error)
+    return { success: false, error: error.message || String(error) }
+  }
+})
+
+/**
+ * QR_IMPRIMIR_TODAS: Imprime todas las etiquetas pendientes
+ */
+ipcMain.handle(IPCInvokeChannels.QR_IMPRIMIR_TODAS, async () => {
+  console.log("[Main] Imprimiendo todas las etiquetas pendientes...")
+  try {
+    return await qrLabelService.printAllLabels()
+  } catch (error: any) {
+    console.error("[Main] Error imprimiendo etiquetas:", error)
+    return { success: false, error: error.message || String(error) }
+  }
+})
+
+/**
+ * QR_PENDING_LABELS: Obtiene lista de etiquetas pendientes de imprimir
+ */
+ipcMain.handle(IPCInvokeChannels.QR_PENDING_LABELS, async () => {
+  console.log("[Main] Obteniendo etiquetas pendientes...")
+  try {
+    const labels = await qrLabelService.getPendingLabels()
+    return { success: true, data: labels }
+  } catch (error: any) {
+    console.error("[Main] Error obteniendo etiquetas pendientes:", error)
+    return { success: false, error: error.message || String(error) }
+  }
+})
+
 // App lifecycle
-app.on("ready", createWindow)
+// FIX-20260204-15: Ejecutar auto-setup antes de crear la ventana
+app.on("ready", async () => {
+  // Auto-configurar impresora en Windows (solo primer inicio)
+  await autoSetupPrinter()
+  
+  // Crear la ventana principal
+  createWindow()
+})
 
 app.on("window-all-closed", () => {
   // Cerrar conexión a Prisma antes de salir

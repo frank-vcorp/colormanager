@@ -64,10 +64,27 @@ function AppMain() {
 
     window.colorManager.onPesoActualizado((evento: PesoEvent) => {
       setPesoActual(evento.peso)
+      // FIX-20260204-18: Si recibimos peso, la báscula está funcionando - limpiar error de báscula
+      setError((prevError) => {
+        if (prevError && (prevError.includes("báscula") || prevError.includes("HID"))) {
+          return null
+        }
+        return prevError
+      })
     })
 
     window.colorManager.onEstadoBascula((estado) => {
       setBasculaConectada(estado.conectada)
+      // FIX-20260204-18: Limpiar error de báscula cuando se reconecta
+      if (estado.conectada) {
+        setError((prevError) => {
+          if (prevError && (prevError.includes("báscula") || prevError.includes("HID"))) {
+            console.log("[App] Báscula reconectada, limpiando error")
+            return null
+          }
+          return prevError
+        })
+      }
     })
 
     window.colorManager.onRecetaDetectada((receta: RecetaSayer) => {
@@ -98,6 +115,22 @@ function AppMain() {
     }
   }
 
+  // FIX-20260204-17: Separar "cancelar" de "finalizar"
+  // Cancelar: volver a home sin minimizar
+  const handleCancelarMezcla = async () => {
+    try {
+      await window.colorManager.cancelarMezcla()
+      setSesionMezcla(false)
+      setMezclando(false)
+      setRecetaDetectada(null)
+      setVista("home")
+      // NO minimizar - el usuario canceló intencionalmente
+    } catch (error) {
+      console.error("Error cancelando mezcla:", error)
+    }
+  }
+
+  // Finalizar con éxito: guardar y minimizar
   const handleFinalizarMezcla = async () => {
     try {
       await window.colorManager.cancelarMezcla()
@@ -106,7 +139,7 @@ function AppMain() {
       setRecetaDetectada(null) // Limpiar receta
       setVista("home") // Volver a vista home
 
-      // ARCH-20260130-02: Auto-minimizar al finalizar mezcla
+      // ARCH-20260130-02: Auto-minimizar al finalizar mezcla exitosamente
       setTimeout(() => {
         window.colorManager.minimizarVentana()
       }, 500)
@@ -162,6 +195,7 @@ function AppMain() {
         <SessionController
           receta={recetaDetectada}
           onFinish={handleFinalizarMezcla}
+          onCancel={handleCancelarMezcla}
         />
       )}
 
@@ -228,7 +262,7 @@ function AppMain() {
                 ) : (
                   <div className="text-center py-8">
                     <p className="text-[#6e6e6e] text-xs">Esperando receta...</p>
-                    <p className="text-[#4e4e4e] text-[10px] mt-1">Coloque archivo .sayer en la carpeta</p>
+                    <p className="text-[#4e4e4e] text-[10px] mt-1">Imprima desde Sayer a "ColorManager Printer"</p>
                   </div>
                 )}
               </div>
@@ -248,7 +282,7 @@ function AppMain() {
                   ? "bg-green-900/30 text-green-400 border border-green-700/50"
                   : "bg-red-900/30 text-red-400 border border-red-700/50"
                 }`}>
-                {basculaConectada ? "● Báscula conectada (Simulación)" : "○ Báscula desconectada"}
+                {basculaConectada ? "● Báscula conectada" : "○ Báscula desconectada"}
               </div>
 
               {/* PESO GIGANTE - Elemento central */}

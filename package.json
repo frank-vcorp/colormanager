@@ -20,14 +20,17 @@
   },
   "dependencies": {
     "@prisma/client": "^5.21.1",
+    "@serialport/parser-readline": "^13.0.0",
     "@tanstack/react-query": "^5.51.21",
     "@types/jsbarcode": "^3.11.4",
+    "@types/qrcode": "^1.5.6",
     "bcryptjs": "^3.0.3",
     "chokidar": "^5.0.0",
     "csv-parse": "^6.1.0",
     "electron-squirrel-startup": "^1.0.0",
     "electron-store": "8.2.0",
     "jsbarcode": "^3.12.3",
+    "qrcode": "^1.5.4",
     "react": "^19.0.0",
     "react-barcode": "^1.6.1",
     "react-dom": "^19.0.0",
@@ -35,6 +38,9 @@
     "uuid": "^10.0.0",
     "xlsx": "^0.18.5",
     "zustand": "^4.5.5"
+  },
+  "optionalDependencies": {
+    "node-hid": "^3.1.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",
@@ -52,7 +58,7 @@
     "electron-is-dev": "^3.0.1",
     "postcss": "^8.4.39",
     "prisma": "^5.21.1",
-    "serialport": "^9.2.8",
+    "serialport": "^13.0.0",
     "tailwindcss": "^3.4.3",
     "typescript": "^5.4.5",
     "vite": "^5.2.11",
@@ -82,7 +88,13 @@
         "filter": [
           "**/*"
         ]
-      }
+      },
+      "build/complete-setup.ps1",
+      "build/setup-printer.ps1",
+      "build/diagnose-printer.ps1",
+      "build/printer-bridge.ps1",
+      "build/setup-firewall.ps1",
+      "build/install-service.ps1"
     ],
     "asarUnpack": [
       "**/libquery_engine*",
@@ -93,15 +105,32 @@
       "main": "dist-electron/main/main.js"
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "build/icon.ico",
+      "requestedExecutionLevel": "requireAdministrator"
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": true,
+      "include": "build/installer.nsh",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerSidebar": "build/installerSidebar.bmp",
+      "uninstallerSidebar": "build/installerSidebar.bmp",
+      "installerHeader": "build/installerHeader.bmp",
+      "installerHeaderIcon": "build/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "ColorManager",
+      "license": "LICENSE",
+      "runAfterFinish": true
     },
     "linux": {
       "target": "AppImage",
-      "category": "Office"
-    }
+      "category": "Office",
+      "icon": "build/logo.png"
+    },
+    "npmRebuild": false
   }
 }

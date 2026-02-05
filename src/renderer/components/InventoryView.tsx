@@ -9,13 +9,45 @@
  * @updated IMPL-20260128-03: Agregar botón 🖨️ y Modal de impresión de etiquetas (Micro-Sprint 12)
  * @updated IMPL-20260128-01: Agregar protección de roles - solo ADMIN puede importar y ajustar
  * @updated IMPL-20260129-02: Agregar expansión de filas para ver Lotes Activos (Sprint 2.6 - FIFO)
+ * @updated ARCH-20260204-01: Agregar botón de etiqueta QR en sub-tabla de lotes
  */
 
 import React, { useState, useEffect } from "react"
 import { Producto, AjusteStockParams } from "@shared/types"
 import { ImportacionResultado } from "@shared/types"
 import { PrintPreview } from "./ui/LabelTemplate"
+import { QRLabelModal } from "./ui/QRLabelModal"
 import { useAuth } from "../context/AuthProvider"
+
+/**
+ * FIX-20260204-20: Mapeo de sufijos SICAR a presentación
+ * El stock viene en ml, pero queremos mostrar cuántos botes equivale
+ */
+const SICAR_PRESENTATION: Record<string, { label: string; ml: number }> = {
+  "10": { label: "250ml", ml: 250 },
+  "20": { label: "500ml", ml: 500 },
+  "30": { label: "1L", ml: 1000 },
+  "40": { label: "4L", ml: 4000 },
+  "50": { label: "19L", ml: 19000 },
+}
+
+/**
+ * FIX-20260204-20: Extrae info de presentación de un SKU SICAR
+ * @returns { presentacion: "4L", botes: 2 } o null si no tiene sufijo
+ */
+function getPresentacionInfo(sku: string, stockMl: number): { presentacion: string; botes: number } | null {
+  const match = sku.match(/\.(\d{2})$/)
+  if (!match) return null
+  
+  const suffix = match[1]
+  const pres = SICAR_PRESENTATION[suffix]
+  if (!pres) return null
+  
+  return {
+    presentacion: pres.label,
+    botes: Math.round((stockMl / pres.ml) * 10) / 10, // Redondear a 1 decimal
+  }
+}
 
 interface Props {
   onBack: () => void
@@ -44,6 +76,12 @@ interface ModalImpresion {
   producto?: Producto
 }
 
+// ARCH-20260204-01: Estado para modal de etiqueta QR
+interface ModalQR {
+  abierto: boolean
+  loteId: string | null
+}
+
 export default function InventoryView({ onBack }: Props) {
   const { isAdmin } = useAuth()
   const [inventario, setInventario] = useState<Producto[]>([])
@@ -62,6 +100,11 @@ export default function InventoryView({ onBack }: Props) {
   })
   const [modalImpresion, setModalImpresion] = useState<ModalImpresion>({
     abierto: false,
+  })
+  // ARCH-20260204-01: Estado para modal de etiqueta QR
+  const [modalQR, setModalQR] = useState<ModalQR>({
+    abierto: false,
+    loteId: null,
   })
 
   useEffect(() => {
@@ -125,6 +168,21 @@ export default function InventoryView({ onBack }: Props) {
   const cerrarModalImpresion = () => {
     setModalImpresion({
       abierto: false,
+    })
+  }
+
+  // ARCH-20260204-01: Funciones para modal de etiqueta QR
+  const abrirModalQR = (loteId: string) => {
+    setModalQR({
+      abierto: true,
+      loteId,
+    })
+  }
+
+  const cerrarModalQR = () => {
+    setModalQR({
+      abierto: false,
+      loteId: null,
     })
   }
 
@@ -316,6 +374,23 @@ export default function InventoryView({ onBack }: Props) {
                 ? "✅ Sincronizado"
                 : "☁️ Sincronizar"}
           </button>
+
+          {/* ARCH-20260204-01: Botón para imprimir todas las etiquetas QR */}
+          <button
+            onClick={async () => {
+              const confirmacion = confirm("¿Imprimir etiquetas QR de todos los lotes pendientes?")
+              if (!confirmacion) return
+              const result = await window.colorManager.imprimirTodasEtiquetas()
+              if (result.success) {
+                alert(`✅ Se imprimieron ${result.printed} etiquetas`)
+              } else {
+                alert(`❌ Error: ${result.error}`)
+              }
+            }}
+            className="px-4 py-2 text-sm text-purple-600 bg-purple-50 border border-purple-200 rounded hover:bg-purple-100 transition-colors font-medium"
+          >
+            🏷️ Imprimir Etiquetas QR
+          </button>
           
           {isAdmin && (
             <button
@@ -363,20 +438,22 @@ export default function InventoryView({ onBack }: Props) {
         </div>
       )}
 
-      {/* Contenido */}
+      {/* Contenido - con scroll vertical */}
       <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         {cargando ? (
           <div className="p-12 text-center text-gray-500">Cargando datos...</div>
         ) : error ? (
           <div className="p-8 text-center text-red-500">{error}</div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-auto max-h-[calc(100vh-320px)]">
             <table className="w-full text-left border-collapse">
-              <thead>
+              <thead className="sticky top-0 z-10">
                 <tr className="bg-gray-100 border-b border-gray-200 text-gray-600 text-sm uppercase tracking-wider">
                   <th className="p-4 font-semibold">SKU / Código</th>
                   <th className="p-4 font-semibold">Nombre del Tinte</th>
-                  <th className="p-4 font-semibold text-right">Stock Disponible</th>
+                  <th className="p-4 font-semibold text-center">Presentación</th>
+                  <th className="p-4 font-semibold text-right">Unidades</th>
+                  <th className="p-4 font-semibold text-right">Stock (ml)</th>
                   <th className="p-4 font-semibold text-center">Estado</th>
                   <th className="p-4 font-semibold text-center">Acciones</th>
                 </tr>
@@ -398,6 +475,9 @@ export default function InventoryView({ onBack }: Props) {
 
                   const isExpanded = expandedRow === prod.sku
                   const hasLotes = prod.lotes && prod.lotes.length > 0
+                  
+                  // FIX-20260204-20: Obtener info de presentación
+                  const presInfo = getPresentacionInfo(prod.sku, prod.stockActual)
 
                   return (
                     <React.Fragment key={prod.sku}>
@@ -419,8 +499,24 @@ export default function InventoryView({ onBack }: Props) {
                           {prod.sku}
                         </td>
                         <td className="p-4 text-gray-800 font-medium">{prod.nombre}</td>
+                        <td className="p-4 text-center">
+                          {presInfo ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 text-xs font-medium">
+                              {presInfo.presentacion}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-xs">—</span>
+                          )}
+                        </td>
                         <td className="p-4 text-right font-mono font-bold text-lg">
-                          {prod.stockActual.toFixed(1)} <span className="text-gray-400 text-sm font-normal">g</span>
+                          {presInfo ? (
+                            <>{presInfo.botes}</>  
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          )}
+                        </td>
+                        <td className="p-4 text-right font-mono text-sm text-gray-600">
+                          {prod.stockActual.toFixed(0)} <span className="text-gray-400 text-xs">ml</span>
                         </td>
                         <td className="p-4 text-center">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>
@@ -468,6 +564,7 @@ export default function InventoryView({ onBack }: Props) {
                                       <th className="p-2 text-right font-semibold text-gray-600">Cantidad (g)</th>
                                       <th className="p-2 text-center font-semibold text-gray-600">Estado</th>
                                       <th className="p-2 text-left font-semibold text-gray-600">Creado</th>
+                                      <th className="p-2 text-center font-semibold text-gray-600">Etiqueta</th>
                                     </tr>
                                   </thead>
                                   <tbody className="divide-y divide-gray-100">
@@ -489,6 +586,16 @@ export default function InventoryView({ onBack }: Props) {
                                           </td>
                                           <td className="p-2 text-gray-600 text-xs">
                                             {new Date(lote.createdAt).toLocaleDateString("es-MX")}
+                                          </td>
+                                          {/* ARCH-20260204-01: Botón de etiqueta QR */}
+                                          <td className="p-2 text-center">
+                                            <button
+                                              onClick={() => abrirModalQR(lote.id)}
+                                              className="px-2 py-1 text-xs bg-purple-100 text-purple-700 border border-purple-200 rounded hover:bg-purple-200 transition-colors font-medium"
+                                              title="Imprimir etiqueta QR"
+                                            >
+                                              🏷️ QR
+                                            </button>
                                           </td>
                                         </tr>
                                       )
@@ -620,6 +727,13 @@ export default function InventoryView({ onBack }: Props) {
           onPrint={imprimirEtiqueta}
         />
       )}
+
+      {/* ARCH-20260204-01: Modal de Etiqueta QR */}
+      <QRLabelModal
+        isOpen={modalQR.abierto}
+        loteId={modalQR.loteId}
+        onClose={cerrarModalQR}
+      />
     </div>
   )
 }

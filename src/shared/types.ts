@@ -19,6 +19,7 @@ export interface RecetaSayer {
     ingredientes: {
       orden: number // 1
       sku: string // "KT-1400"
+      descripcion?: string // "MOUSE USB" - FIX-20260204-13
       pesoMeta: number // 323.0
     }[]
   }[]
@@ -28,6 +29,12 @@ export interface RecetaSayer {
     sayerCode?: string // "CH-123"
     coatingType?: string
     primer?: string
+    // FIX-20260204-13: Campos adicionales para formato FORMULA DE COLOR
+    cliente?: string
+    vehiculo?: string
+    nombreColor?: string
+    fecha?: string
+    notas?: string
   }
 }
 
@@ -172,9 +179,20 @@ export const IPCInvokeChannels = {
   CONFIG_SET_MODE: "config:setMode",
   CONFIG_RESET: "config:reset",
   MINIMIZAR_VENTANA: "window:minimizar",
+
   // FIX-20260205-01: Canales de Impresión Física
   GET_PRINTERS: "printer:get-list",
   PRINT_LABEL: "printer:print-label",
+
+  // IMPL-20260204-04: Instalar impresora virtual desde UI
+  INSTALL_PRINTER: "printer:install",
+  // IMPL-20260204-05: Probar conexión de impresora
+  TEST_PRINTER: "printer:test",
+  // ARCH-20260204-01: Etiquetas QR
+  QR_OBTENER_ETIQUETA: "qr:obtener-etiqueta",
+  QR_IMPRIMIR: "qr:imprimir",
+  QR_IMPRIMIR_TODAS: "qr:imprimir-todas",
+  QR_PENDING_LABELS: "qr:pending-labels",
 } as const
 
 // Roles del sistema
@@ -230,11 +248,13 @@ export interface AjusteStockResponse {
   error?: string
 }
 // Configuración de aplicación (IMPL-20260129-01: Config Dinámica)
+// FIX-20260204-07: Eliminado MOCK - solo HID y SERIAL
 export interface AppConfig {
   mode: "DEMO" | "PRODUCTION"
   hardware: {
-    scalePort: string // ej: "COM3", "/dev/ttyUSB0"
-    baudRate: number // ej: 9600
+    scaleType: "HID" | "SERIAL" // Tipo de conexión de báscula
+    scalePort: string // ej: "COM3", "/dev/ttyUSB0" (solo para SERIAL)
+    baudRate: number // ej: 9600 (solo para SERIAL)
   }
   paths: {
     sayerSpoolDir: string // Ruta absoluta a carpeta de recetas

@@ -19,6 +19,7 @@ import HeaderBar from "./HeaderBar"
 interface SessionControllerProps {
   receta: RecetaSayer
   onFinish: () => void
+  onCancel?: () => void  // FIX-20260204-17: Callback separado para cancelar
 }
 
 /**
@@ -26,7 +27,7 @@ interface SessionControllerProps {
  * Muestra el ingrediente actual y facilita la navegación entre ingredientes
  * IMPL-20260127-06: Valida SKU antes de permitir pesaje
  */
-export default function SessionController({ receta, onFinish }: SessionControllerProps) {
+export default function SessionController({ receta, onFinish, onCancel }: SessionControllerProps) {
   const { peso, estable } = useBascula()
   const { success, error: showError } = useToast()
   const [ingredienteActualIdx, setIngredienteActualIdx] = useState(0)
@@ -77,24 +78,38 @@ export default function SessionController({ receta, onFinish }: SessionControlle
     }, 100)
   }, [ingredienteActualIdx])
 
+  // ARCH-20260204-01: Extrae SKU base de código de etiqueta
+  // "KT-1400-01" → "KT-1400", "KT-1400" → "KT-1400"
+  const extractBaseSKU = (codigo: string): string => {
+    return codigo.replace(/-\d{2}$/, '')
+  }
+
   // IMPL-20260127-06: Validar SKU al presionar ENTER
+  // ARCH-20260204-01: Ahora acepta códigos con sufijo de bote (-01, -02, etc.)
   const handleValidarSKU = () => {
     const inputTrimmed = inputValue.trim()
-    const skuEsperado = ingredienteActual.codigo.trim()
+    const skuEsperado = ingredienteActual.codigo.trim().toUpperCase()
+    
+    // Extraer SKU base del código escaneado (ignora sufijo -## si existe)
+    const skuEscaneado = extractBaseSKU(inputTrimmed).toUpperCase()
 
-    // Comparación case-insensitive
-    if (inputTrimmed.toUpperCase() === skuEsperado.toUpperCase()) {
+    // Comparación case-insensitive del SKU base
+    if (skuEscaneado === skuEsperado) {
       setSkuVerificado(true)
       setInputValue("")
-      success(`✓ SKU ${skuEsperado} validado correctamente`, 2000)
-      console.log(`[SessionController] SKU validado: ${skuEsperado}`)
+      // Mostrar código completo escaneado para trazabilidad
+      const msg = inputTrimmed.toUpperCase() !== skuEsperado 
+        ? `✓ Bote ${inputTrimmed.toUpperCase()} validado (SKU: ${skuEsperado})`
+        : `✓ SKU ${skuEsperado} validado correctamente`
+      success(msg, 2000)
+      console.log(`[SessionController] SKU validado: ${skuEsperado}, Escaneado: ${inputTrimmed}`)
     } else {
       showError(
-        `✗ SKU incorrecto. Esperado: ${skuEsperado}. Escaneado: ${inputTrimmed}`,
+        `✗ SKU incorrecto. Esperado: ${skuEsperado}. Escaneado: ${skuEscaneado}`,
         3000
       )
       setInputValue("")
-      console.warn(`[SessionController] SKU inválido. Esperado: ${skuEsperado}, Recibido: ${inputTrimmed}`)
+      console.warn(`[SessionController] SKU inválido. Esperado: ${skuEsperado}, Recibido: ${skuEscaneado}`)
     }
   }
 
@@ -360,7 +375,7 @@ export default function SessionController({ receta, onFinish }: SessionControlle
 
         {/* Botón Cancelar */}
         <button
-          onClick={onFinish}
+          onClick={onCancel || onFinish}
           className="px-8 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
         >
           Cancelar Mezcla
