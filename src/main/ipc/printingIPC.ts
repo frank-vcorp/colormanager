@@ -6,8 +6,8 @@
  * Reemplaza window.print() con una implementación robusta controlada por Electron
  */
 
-import { ipcMain, BrowserWindow, WebContents } from "electron"
-import { IPCChannels, IPCInvokeChannels, PrintOptions, PrinterInfo } from "../../shared/types"
+import { ipcMain, BrowserWindow } from "electron"
+import { IPCInvokeChannels, PrintOptions, PrinterInfo } from "../../shared/types"
 
 /**
  * Registrar handlers de impresión
@@ -31,8 +31,8 @@ export function registerPrintingIPC(mainWindow?: BrowserWindow) {
                 name: p.name,
                 displayName: p.displayName,
                 description: p.description,
-                status: p.status,
-                isDefault: p.isDefault,
+                status: (p as any).status || 0, // Castear a any por posible discrepancia de tipos
+                isDefault: (p as any).isDefault || false,
                 options: p.options
             }))
 
