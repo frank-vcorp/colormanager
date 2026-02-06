@@ -78,30 +78,17 @@ export default function PrintLabelView() {
                 for (let i = 0; i < quantity; i++) {
                     const serialSuffix = printSerials ? `.${(i + 1).toString().padStart(2, '0')}` : ""
 
-                    // Clonar datos base y modificar si hay serial
-                    const labelProduct = { ...data.product }
-                    const labelLote = data.lote ? { ...data.lote } : undefined
-
-                    if (printSerials) {
-                        // Inyectar serial en SKU o Lote
-                        if (labelLote) {
-                            labelLote.numero = `${labelLote.numero}${serialSuffix}`
-                        } else {
-                            labelProduct.sku = `${labelProduct.sku}${serialSuffix}`
-                        }
-                    }
-
                     labels.push(
                         <div key={i} style={{
                             position: 'relative',
                             width: '50mm',
                             height: '30mm',
-                            // Forzar salto de página después de cada etiqueta, excepto la última
                             pageBreakAfter: i < quantity - 1 ? 'always' : 'auto'
                         }}>
                             <LabelTemplate
-                                product={labelProduct}
-                                lote={labelLote}
+                                product={data.product}
+                                lote={data.lote}
+                                visualSuffix={serialSuffix}
                                 isOpen={true}
                                 onClose={() => { }}
                                 onPrint={() => { }}

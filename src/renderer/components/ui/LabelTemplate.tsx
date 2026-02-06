@@ -10,28 +10,23 @@ interface Props {
     numero: string
     fecha?: string
   }
+  // FIX-20260206-03: Sufijo visual para trazabilidad (ej: .01) separado del código de barras
+  visualSuffix?: string
   isOpen: boolean
   onClose: () => void
   onPrint: () => void
 }
 
-/**
- * Plantilla ajustada para Niimbot D11/D110/B21
- * Dimensiones típicas: 50mm x 30mm (aprox 1.9" x 1.1")
- * Ajustamos CSS a medidas físicas para evitar problemas de escala
- */
-export const LabelTemplate: React.FC<Props> = ({ product, lote }) => {
+export const LabelTemplate: React.FC<Props> = ({ product, lote, visualSuffix }) => {
   return (
     <div
       className="bg-white text-black flex flex-col items-center justify-between p-1 overflow-hidden font-sans print-content"
       style={{
         width: "50mm",
         height: "30mm",
-        // Borde solo visible en pantalla, no impreso
         boxSizing: "border-box"
       }}
     >
-      {/* Estilo inline para borde en pantalla solamente */}
       <style>{`
         .print-content {
            border: 1px solid black;
@@ -42,7 +37,7 @@ export const LabelTemplate: React.FC<Props> = ({ product, lote }) => {
           }
         }
       `}</style>
-      {/* Encabezado: Nombre del Producto */}
+
       <h2
         className="text-center font-bold leading-none mb-0.5 w-full text-ellipsis overflow-hidden whitespace-nowrap"
         style={{ fontSize: "3.5mm" }}
@@ -50,14 +45,14 @@ export const LabelTemplate: React.FC<Props> = ({ product, lote }) => {
         {product.nombre}
       </h2>
 
-      {/* Cuerpo: Código de Barras y Lote */}
       <div className="flex-1 flex flex-col items-center justify-center w-full">
         <div className="w-[95%] overflow-hidden flex justify-center">
+          {/* El código de barras SIEMPRE usa el SKU base para facilitar validación */}
           <Barcode
             value={product.sku}
-            width={1.2}        // Barras más finas
-            height={30}        // Menor altura
-            fontSize={9}       // Texto SKU más pequeño
+            width={1.2}
+            height={30}
+            fontSize={9}
             marginBottom={1}
             marginTop={1}
             displayValue={true}
@@ -65,7 +60,6 @@ export const LabelTemplate: React.FC<Props> = ({ product, lote }) => {
         </div>
       </div>
 
-      {/* Pie: Fecha y Lote/Bote */}
       <div className="w-full flex justify-between items-end border-t border-black pt-0.5 mt-0.5">
         <span style={{ fontSize: "2.5mm" }}>
           {new Date().toLocaleDateString("es-MX", { day: '2-digit', month: '2-digit', year: '2-digit' })}
@@ -73,10 +67,13 @@ export const LabelTemplate: React.FC<Props> = ({ product, lote }) => {
 
         {lote ? (
           <span className="font-bold flex items-center" style={{ fontSize: "2.8mm", paddingRight: "3mm" }}>
-            Lte. {lote.numero}
+            Lte. {lote.numero}{visualSuffix}
           </span>
         ) : (
-          <span style={{ fontSize: "2.5mm", paddingRight: "3mm" }}>SKU: {product.sku}</span>
+          <span style={{ fontSize: "2.5mm", paddingRight: "3mm" }}>
+            {/* Si no hay lote, mostramos SKU + Suffix como trazabilidad visual */}
+            SKU: {product.sku}{visualSuffix}
+          </span>
         )}
       </div>
     </div>
