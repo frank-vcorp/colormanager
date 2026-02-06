@@ -370,18 +370,20 @@ async function processRows(rows: SicarRow[]): Promise<ImportacionResultado> {
             const diferencia = nuevoStock - stockActual
 
             if (diferencia > 0) {
-              // Ingreso: Crear Lote con el delta
+              // Ingreso: Crear Lote con el delta y número secuencial
+              const numeroLote = await getNextLotNumber(existente.id, tx)
+
               await tx.lote.create({
                 data: {
                   id: randomUUID(),
                   ingredienteId: existente.id,
-                  numeroLote: `SICAR-IMPORT-${hoy}-${row.Clave}`,
+                  numeroLote,
                   cantidad: diferencia,
                   estado: "activo",
                 },
               })
               console.log(
-                `[ImportService] Ingreso detectado para ${row.Clave}: +${diferencia}ml, Lote creado`
+                `[ImportService] Ingreso detectado para ${row.Clave}: +${diferencia}ml, Lote creado: ${numeroLote}`
               )
             } else if (diferencia < 0) {
               // Salida: Consumir FIFO usando transacción local
@@ -426,7 +428,7 @@ async function processRows(rows: SicarRow[]): Promise<ImportacionResultado> {
               data: {
                 id: randomUUID(),
                 ingredienteId: nuevoIngredienteId,
-                numeroLote: `SICAR-IMPORT-${hoy}-${row.Clave}`,
+                numeroLote: "001", // Lote inicial secuencial
                 cantidad: nuevoStock,
                 estado: nuevoStock > 0 ? "activo" : "agotado",
               },
