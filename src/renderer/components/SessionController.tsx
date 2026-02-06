@@ -1,8 +1,7 @@
 /**
- * SessionController Component
+ * SessionController Component (Refactorizado)
  * Orquesta el flujo de mezcla con una receta
- * Mantiene estado del ingrediente actual y facilita navegación entre ingredientes
- * Captura y guarda registro de mezcla finalizada
+ * UI delegada a subcomponentes: MixSummary, ManualAdjustmentPanel, SessionClosureForm
  * 
  * Estilo: Industrial limpio, tipografía grande (pantalla táctil/taller)
  * IMPL-20260127-06: Validación SKU para prevenir mezcla de ingrediente incorrecto
@@ -14,50 +13,46 @@ import { RecetaSayer, IngredienteReceta, RegistroMezcla } from "@shared/types"
 import { useBascula } from "../hooks/useBascula"
 import { useToast } from "../hooks/useToast"
 import SmartScale from "./SmartScale"
-import { User, Car, FileText, Save, Check, Printer } from "lucide-react"
 import HeaderBar from "./HeaderBar"
+import MixSummary from "./MixSummary"
+import ManualAdjustmentPanel from "./ManualAdjustmentPanel"
+import SessionClosureForm from "./SessionClosureForm"
 
 interface SessionControllerProps {
   receta: RecetaSayer
   onFinish: () => void
-  onCancel?: () => void  // FIX-20260204-17: Callback separado para cancelar
+  onCancel?: () => void
 }
 
-/**
- * Componente que controla la sesión de mezcla
- * Muestra el ingrediente actual y facilita la navegación entre ingredientes
- * IMPL-20260127-06: Valida SKU antes de permitir pesaje
- */
 export default function SessionController({ receta, onFinish, onCancel }: SessionControllerProps) {
   const { peso, estable } = useBascula()
   const { success, error: showError } = useToast()
+
+  // Estado de Sesión
   const [ingredienteActualIdx, setIngredienteActualIdx] = useState(0)
   const [basculaConectada] = useState(true)
   const [pesosRegistrados, setPesosRegistrados] = useState<number[]>([]) // Pesos por ingrediente
   const [horaInicio] = useState(new Date().toISOString())
   const [guardando, setGuardando] = useState(false)
-
   const [fase, setFase] = useState<"mezcla" | "resumen" | "ajuste" | "cierre">("mezcla")
+
+  // Estado de Validación
   const [skuVerificado, setSkuVerificado] = useState(false)
   const [inputValue, setInputValue] = useState("")
-
-  // Metadatos de Cierre (IMPL-20260206-01)
-  const [cliente, setCliente] = useState("")
-  const [vehiculo, setVehiculo] = useState("")
-  const [notas, setNotas] = useState("")
-  const [guardarReceta, setGuardarReceta] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Estado para ajuste manual inteligente (REQ-20260206-SmartAdjust)
+  // Estado de Ajustes Manuales
   const [ajustes, setAjustes] = useState<{ codigo: string; peso: number; timestamp: string }[]>([])
   const [ajusteStep, setAjusteStep] = useState<"escanear" | "pesar">("escanear")
   const [ajusteSkuActual, setAjusteSkuActual] = useState("")
 
-  // Obtener lista de todos los ingredientes de la receta
+  // --- Lógica de Negocio ---
+
+  // Mapear ingredientes
   const ingredientes: IngredienteReceta[] = receta.capas.flatMap((capa) =>
     capa.ingredientes.map((ing) => ({
       codigo: ing.sku,
-      nombre: ing.sku, // Por ahora usamos SKU como nombre
+      nombre: ing.sku,
       pesoTarget: ing.pesoMeta,
       orden: ing.orden,
     }))
@@ -68,80 +63,58 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
   const pesoAcumulado = ingredientes
     .slice(0, ingredienteActualIdx)
     .reduce((sum, ing) => sum + ing.pesoTarget, 0)
+  const pesoFinalCalculado = pesosRegistrados.reduce((a, b) => a + b, 0) + ajustes.reduce((sum, aj) => sum + aj.peso, 0)
 
-  // Al montar, iniciar la mezcla
+  // Iniciar Mezcla
   useEffect(() => {
-    if (!window.colorManager) {
-      console.error("[SessionController] window.colorManager no disponible")
-      return
+    if (window.colorManager) {
+      console.log("[SessionController] Iniciando mezcla...")
+      window.colorManager.iniciarMezcla("RECETA-" + receta.numero)
     }
-
-    console.log("[SessionController] Iniciando mezcla...")
-    window.colorManager.iniciarMezcla("RECETA-" + receta.numero)
   }, [receta.numero])
 
-  // IMPL-20260127-06: Al cambiar de ingrediente, resetear validación y auto-enfocar input
+  // Reset al cambiar ingrediente
   useEffect(() => {
     setSkuVerificado(false)
     setInputValue("")
-    // Auto-enfocar el input de escaneo
     setTimeout(() => {
       inputRef.current?.focus()
     }, 100)
-  }, [ingredienteActualIdx, fase, ajusteStep]) // Re-focus también al cambiar fase o paso de ajuste
+  }, [ingredienteActualIdx, fase])
 
-  // ARCH-20260204-01: Extrae SKU base de código de etiqueta
-  // "KT-1400-01" → "KT-1400", "KT-1400" → "KT-1400"
-  const extractBaseSKU = (codigo: string): string => {
-    return codigo.replace(/[.-]\d{2}$/, '')
-  }
+  // Helpers
+  const extractBaseSKU = (codigo: string): string => codigo.replace(/[.-]\d{2}$/, '')
 
-  // IMPL-20260127-06: Validar SKU al presionar ENTER
-  // ARCH-20260204-01: Ahora acepta códigos con sufijo de bote (-01, -02, etc.)
-  const handleValidarSKU = () => {
-    const inputTrimmed = inputValue.trim()
+  // Handlers
+  const handleValidarSKU = (overrideInput?: string) => {
+    const inputToValidate = overrideInput || inputValue
+    const inputTrimmed = inputToValidate.trim()
+    const skuEsperado = ingredienteActual.codigo.trim().toUpperCase()
+    const skuEscaneado = extractBaseSKU(inputTrimmed).toUpperCase()
 
-    // Lógica diferente según fase
-    if (fase === 'mezcla') {
-      const skuEsperado = ingredienteActual.codigo.trim().toUpperCase()
-      // Extraer SKU base del código escaneado (ignora sufijo -## si existe)
-      const skuEscaneado = extractBaseSKU(inputTrimmed).toUpperCase()
-
-      if (skuEscaneado === skuEsperado) {
-        setSkuVerificado(true)
-        setInputValue("")
-        const msg = inputTrimmed.toUpperCase() !== skuEsperado
-          ? `✓ Bote ${inputTrimmed.toUpperCase()} validado (SKU: ${skuEsperado})`
-          : `✓ SKU ${skuEsperado} validado correctamente`
-        success(msg, 2000)
-        console.log(`[SessionController] SKU validado: ${skuEsperado}, Escaneado: ${inputTrimmed}`)
-      } else {
-        showError(`✗ SKU incorrecto. Esperado: ${skuEsperado}. Escaneado: ${skuEscaneado}`, 3000)
-        setInputValue("")
-        console.warn(`[SessionController] SKU inválido. Esperado: ${skuEsperado}, Recibido: ${skuEscaneado}`)
-      }
-    } else if (fase === 'ajuste') {
-      // En ajuste, cualquier SKU es válido, pero debemos registrarlo
-      const skuDetectado = extractBaseSKU(inputTrimmed).toUpperCase()
-      if (skuDetectado.length < 3) {
-        showError("Código inválido", 2000)
-        return
-      }
-
-      setAjusteSkuActual(skuDetectado)
-      setAjusteStep("pesar")
+    if (skuEscaneado === skuEsperado) {
+      setSkuVerificado(true)
       setInputValue("")
-      success(`✓ Ajustando con: ${skuDetectado}`, 2000)
-
-      // Tara automática al identificar el producto de ajuste
-      if (window.colorManager?.tara) {
-        window.colorManager.tara().catch((err: any) => console.error(err))
-      }
+      success(`✓ SKU ${skuEsperado} validado correctamente`, 2000)
+    } else {
+      showError(`✗ SKU incorrecto. Esperado: ${skuEsperado}. Escaneado: ${skuEscaneado}`, 3000)
+      setInputValue("")
     }
   }
 
-  // IMPL-20260127-06: Bypass de validación para desarrollo
-  const handleBypassValidacion = () => {
+  const handleValidarSkuAjuste = (skuInput: string) => {
+    const skuDetectado = extractBaseSKU(skuInput).toUpperCase()
+    if (skuDetectado.length < 3) {
+      showError("Código inválido", 2000)
+      return
+    }
+    setAjusteSkuActual(skuDetectado)
+    setAjusteStep("pesar")
+    success(`✓ Ajustando con: ${skuDetectado}`, 2000)
+    if (window.colorManager?.tara) window.colorManager.tara().catch(console.error)
+  }
+
+  const handleBypass = () => {
     if (fase === 'mezcla') {
       setSkuVerificado(true)
       success("🔓 Validación bypassed", 2000)
@@ -150,98 +123,58 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
       setAjusteStep("pesar")
       if (window.colorManager?.tara) window.colorManager.tara().catch(console.error)
     }
-    console.warn("[SessionController] BYPASS DE VALIDACIÓN ACTIVADO")
   }
 
-  // Ir al siguiente ingrediente (o finalizar)
   const handleSiguiente = async () => {
-    // Registrar peso del ingrediente actual
-    const pesoFinal = peso
-    const nuevosPesos = [...pesosRegistrados, pesoFinal]
+    const nuevosPesos = [...pesosRegistrados, peso]
     setPesosRegistrados(nuevosPesos)
 
     if (ingredienteActualIdx < ingredientes.length - 1) {
-      // Ir al siguiente ingrediente
       setIngredienteActualIdx(ingredienteActualIdx + 1)
-      // Realizar tara para el siguiente ingrediente
-      if (window.colorManager?.tara) {
-        await window.colorManager.tara()
-      }
+      if (window.colorManager?.tara) await window.colorManager.tara()
     } else {
-      // Fin de los ingredientes: Ir a Resumen
-      console.log("[SessionController] Mezcla completada, yendo a resumen...")
       setFase("resumen")
     }
   }
 
-  // Manejador para iniciar ajuste manual
-  const handleIniciarAjuste = async () => {
-    setFase("ajuste")
-    setAjusteStep("escanear")
-    // Mantenemos ajustes previos si entra de nuevo
-  }
-
-  // Guardar un ajuste individual
-  const handleAgregarAjuste = async () => {
+  const handleAgregarAjuste = () => {
     const pesoAgregado = Math.max(0, peso)
     if (pesoAgregado <= 0.1) {
       showError("Peso inválido (mínimo 0.1g)", 2000)
       return
     }
-
-    const nuevoAjuste = {
+    setAjustes([...ajustes, {
       codigo: ajusteSkuActual,
       peso: pesoAgregado,
       timestamp: new Date().toISOString()
-    }
-
-    setAjustes([...ajustes, nuevoAjuste])
-    success(`+${pesoAgregado.toFixed(1)}g de ${ajusteSkuActual} agregados`, 2000)
-
-    // Volver a escanear para siguiente ajuste
+    }])
+    success(`+${pesoAgregado.toFixed(1)}g agregado`, 2000)
     setAjusteStep("escanear")
     setAjusteSkuActual("")
   }
 
-  // Manejador para ir a Cierre desde Resumen
-  const irACierre = () => {
-    setFase("cierre")
-  }
-
-  // Guardar mezcla en base de datos
-  // Ahora se llama desde la fase de cierre
-  const guardarMezcla = async (pesosReceta: number[]) => {
+  const handleGuardarFinal = async (data: { cliente: string; vehiculo: string; guardarReceta: boolean }) => {
     try {
       setGuardando(true)
       if (!window.colorManager?.guardarMezcla) {
-        console.error("guardarMezcla no disponible")
         onFinish()
         return
       }
 
-      const ahora = new Date()
-      // Peso de ingredientes (receta base)
-      const pesoBase = pesosReceta.reduce((a, b) => a + b, 0)
-
-      // Peso total de ajustes
+      const pesoBase = pesosRegistrados.reduce((a, b) => a + b, 0)
       const pesoAjustes = ajustes.reduce((acc, curr) => acc + curr.peso, 0)
-
-      // Peso final real
       const pesoFinalReal = pesoBase + pesoAjustes
 
-      const tolerancia = 0.5 // gramos
-      const diferencia = pesoFinalReal - pesoTotal // Diferencia vs Meta Original
+      const tolerancia = 0.5
+      const diferencia = pesoFinalReal - pesoTotal
       const estado = Math.abs(diferencia) <= tolerancia ? "perfecto" : "desviado"
 
-      // Combinar ingredientes base + ajustes para el registro
       const ingredientesLog = [
-        // 1. Ingredientes de receta
         ...ingredientes.map((ing, idx) => ({
           codigo: ing.codigo,
           pesoTarget: ing.pesoTarget,
-          pesoPesado: pesosReceta[idx] || 0,
+          pesoPesado: pesosRegistrados[idx] || 0,
         })),
-        // 2. Ajustes manuales (Target 0)
         ...ajustes.map(adj => ({
           codigo: adj.codigo,
           pesoTarget: 0,
@@ -253,27 +186,24 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
         id: `MZC-${Date.now()}`,
         recetaId: `RECETA-${receta.numero}`,
         recetaNombre: `Receta ${receta.numero}`,
-        fecha: ahora.toISOString(),
+        fecha: new Date().toISOString(),
         horaInicio,
-        horaFin: ahora.toISOString(),
-        pesoTotal: pesoTotal, // Meta original
-        pesoFinal: pesoFinalReal, // Real final
+        horaFin: new Date().toISOString(),
+        pesoTotal: pesoTotal,
+        pesoFinal: pesoFinalReal,
         ingredientes: ingredientesLog,
         estado,
         diferencia,
         tolerancia,
-        // Nuevos campos de cierre
-        cliente: cliente || null,
-        vehiculo: vehiculo || null,
-        notas: notas || null,
-        // TODO: Si guardarReceta es true, llamar endpoint adicional
+        cliente: data.cliente || null,
+        vehiculo: data.vehiculo || null,
+        tipoMezcla: "NUEVA",
+        // guardarReceta no se usa en backend aun
       }
 
       await window.colorManager.guardarMezcla(registro)
-      console.log("[SessionController] Mezcla guardada exitosamente:", registro)
       success("✓ Mezcla guardada correctamente", 3000)
 
-      // IMPL-20260206-01: Imprimir Etiqueta de Mezcla
       if (window.colorManager?.printMixLabel) {
         try {
           success("🖨️ Imprimiendo etiqueta...", 2000)
@@ -292,252 +222,88 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
       onFinish()
     } catch (error) {
       console.error("[SessionController] Error guardando mezcla:", error)
-      const mensaje = error instanceof Error ? error.message : "Error desconocido"
-      showError(`Error al guardar mezcla: ${mensaje}`, 4000)
+      showError(`Error al guardar mezcla`, 4000)
       onFinish()
     } finally {
       setGuardando(false)
     }
   }
 
-  // Verificar si el peso actual está en rango
+  // --- RENDER ---
+
+  if (fase === "resumen") {
+    return (
+      <>
+        <HeaderBar basculaConectada={basculaConectada} />
+        <MixSummary
+          recetaNumero={receta.numero}
+          pesoTotal={pesoTotal}
+          pesoFinalCalculado={pesoFinalCalculado}
+          onManualAdjustment={() => {
+            setFase("ajuste")
+            setAjusteStep("escanear")
+          }}
+          onContinue={() => setFase("cierre")}
+        />
+      </>
+    )
+  }
+
+  if (fase === "ajuste") {
+    return (
+      <>
+        <HeaderBar basculaConectada={basculaConectada} />
+        <ManualAdjustmentPanel
+          totalGlobal={pesoFinalCalculado}
+          ajusteStep={ajusteStep}
+          ajusteSkuActual={ajusteSkuActual}
+          peso={peso}
+          onValidarSku={handleValidarSkuAjuste}
+          onBypass={handleBypass}
+          onCancel={() => {
+            setAjusteStep("escanear")
+            setAjusteSkuActual("")
+          }}
+          onAddAdjustment={handleAgregarAjuste}
+          onFinishAdjustments={() => {
+            // Guardar o ir a resumen? El original iba directo a "guardarMezcla", 
+            // pero lo ideal es ir a resumen o cierre.
+            // Para mantener compatibilidad con flujo anterior, asumimos "Terminar Ajustes" -> Cierre?
+            // El original llamaba a guardarMezcla directo. Mejor vamos a cierre.
+            setFase("cierre")
+          }}
+        />
+      </>
+    )
+  }
+
+  if (fase === "cierre") {
+    return (
+      <>
+        <HeaderBar basculaConectada={basculaConectada} />
+        <SessionClosureForm
+          pesoFinalCalculado={pesoFinalCalculado}
+          recetaMeta={receta.meta}
+          onBack={() => setFase("resumen")}
+          onSave={handleGuardarFinal}
+          guardando={guardando}
+        />
+      </>
+    )
+  }
+
+  // FASE: MEZCLA (Default)
   const tolerancia = 0.5
   const minTarget = ingredienteActual.pesoTarget - tolerancia
   const maxTarget = ingredienteActual.pesoTarget + tolerancia
   const enRango = peso >= minTarget && peso <= maxTarget
 
-  // Renderizado condicional según fase
-  if (fase === "resumen") {
-    const pesoFinalCalculado = pesosRegistrados.reduce((a, b) => a + b, 0) + ajustes.reduce((sum, aj) => sum + aj.peso, 0)
-    const dif = pesoFinalCalculado - pesoTotal
-    const esExacto = Math.abs(dif) <= 0.5
-
-    return (
-      <div className="min-h-screen bg-cm-bg flex flex-col">
-        <HeaderBar basculaConectada={basculaConectada} />
-        <main className="flex-1 flex flex-col items-center justify-center gap-8 p-8">
-          <div className="text-center">
-            <h2 className="text-4xl font-bold text-gray-800 mb-2">¡Mezcla Completada!</h2>
-            <p className="text-gray-600">Receta #{receta.numero}</p>
-          </div>
-
-          <div className="grid grid-cols-3 gap-6 w-full max-w-4xl">
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 text-center">
-              <p className="text-sm text-gray-500 uppercase font-bold tracking-wider">Meta</p>
-              <p className="text-4xl font-black text-blue-600">{pesoTotal.toFixed(1)}g</p>
-            </div>
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 text-center">
-              <p className="text-sm text-gray-500 uppercase font-bold tracking-wider">Obtenido</p>
-              <p className={`text-4xl font-black ${esExacto ? 'text-green-600' : 'text-yellow-600'}`}>
-                {pesoFinalCalculado.toFixed(1)}g
-              </p>
-            </div>
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 text-center">
-              <p className="text-sm text-gray-500 uppercase font-bold tracking-wider">Diferencia</p>
-              <p className={`text-4xl font-black ${esExacto ? 'text-green-600' : 'text-red-500'}`}>
-                {dif > 0 ? '+' : ''}{dif.toFixed(1)}g
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-6 mt-8">
-            <button
-              onClick={handleIniciarAjuste}
-              className="px-8 py-6 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 border-2 border-yellow-400 rounded-xl font-bold text-xl flex flex-col items-center gap-2 transition-all"
-            >
-              <span>🧪 Ajustar Manualmente</span>
-              <span className="text-sm font-normal opacity-75">Agregar más tinte/base</span>
-            </button>
-
-            <button
-              onClick={irACierre}
-              className="px-12 py-6 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-2xl shadow-lg hover:shadow-xl transition-all flex flex-col items-center gap-2"
-            >
-              <span>🏁 Continuar al Cierre</span>
-              <span className="text-sm font-normal opacity-90">Ingresar datos finales</span>
-            </button>
-          </div>
-        </main>
-      </div>
-    )
-  }
-
-  // IMPL-20260206-01: Fase de Cierre (Formulario)
-  if (fase === "cierre") {
-    const pesoFinalCalculado = pesosRegistrados.reduce((a, b) => a + b, 0) + ajustes.reduce((sum, aj) => sum + aj.peso, 0)
-
-    return (
-      <div className="min-h-screen bg-cm-bg flex flex-col">
-        <HeaderBar basculaConectada={basculaConectada} />
-        <main className="flex-1 flex flex-col items-center justify-center p-8 gap-6">
-          <div className="text-center mb-4">
-            <h2 className="text-3xl font-bold text-gray-800">Cierre de Mezcla</h2>
-            <p className="text-gray-600 text-lg">
-              Final: <span className="font-bold text-blue-600">{pesoFinalCalculado.toFixed(1)}g</span> - {receta.meta.carMaker} {receta.meta.colorCode}
-            </p>
-          </div>
-
-          <div className="w-full max-w-lg bg-white p-8 rounded-xl shadow-lg border border-gray-200 space-y-6">
-            {/* Cliente */}
-            <div>
-              <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
-                <User size={18} /> Cliente / Taller
-              </label>
-              <input
-                type="text"
-                value={cliente}
-                onChange={(e) => setCliente(e.target.value)}
-                placeholder="Ej. Juan Pérez / Taller Central"
-                className="w-full p-4 text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-0"
-              />
-            </div>
-
-            {/* Vehículo */}
-            <div>
-              <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
-                <Car size={18} /> Vehículo / Placa
-              </label>
-              <input
-                type="text"
-                value={vehiculo}
-                onChange={(e) => setVehiculo(e.target.value)}
-                placeholder="Ej. Nissan Tsuru 2010"
-                className="w-full p-4 text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-0"
-              />
-            </div>
-
-            {/* Checkbox Receta (Placeholder) */}
-            <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <input
-                type="checkbox"
-                id="saveRecipe"
-                checked={guardarReceta}
-                onChange={(e) => setGuardarReceta(e.target.checked)}
-                className="w-6 h-6 text-blue-600 rounded focus:ring-blue-500"
-              />
-              <label htmlFor="saveRecipe" className="text-gray-700 font-medium cursor-pointer select-none">
-                Guardar como receta repetible
-              </label>
-            </div>
-          </div>
-
-          <div className="flex gap-4 w-full max-w-lg">
-            <button
-              onClick={() => setFase("resumen")}
-              className="flex-1 py-4 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-xl transition-colors"
-            >
-              Atrás
-            </button>
-            <button
-              onClick={() => guardarMezcla(pesosRegistrados)}
-              disabled={guardando}
-              className="flex-[2] py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg transition-colors flex items-center justify-center gap-2 text-xl"
-            >
-              {guardando ? (
-                <span>⏳ Guardando...</span>
-              ) : (
-                <>
-                  <Printer size={24} />
-                  <span>Finalizar y Etiquetar</span>
-                </>
-              )}
-            </button>
-          </div>
-        </main>
-      </div>
-    )
-  }
-
-  if (fase === "ajuste") {
-    const totalGlobal = pesosRegistrados.reduce((a, b) => a + b, 0) + ajustes.reduce((sum, aj) => sum + aj.peso, 0)
-
-    return (
-      <div className="min-h-screen bg-cm-bg flex flex-col">
-        <HeaderBar basculaConectada={basculaConectada} />
-        <main className="flex-1 flex flex-col items-center justify-center p-8 gap-6">
-          <div className="text-center mb-4">
-            <h2 className="text-3xl font-bold text-gray-800">Ajuste Manual</h2>
-            <p className="text-gray-600">Total actual: <span className="font-bold text-blue-600">{totalGlobal.toFixed(1)}g</span></p>
-          </div>
-
-          {ajusteStep === 'escanear' ? (
-            <div className="w-full max-w-lg bg-white p-8 rounded-xl shadow-lg border border-gray-200 text-center">
-              <p className="mb-4 text-gray-600 uppercase font-bold text-sm">Escanea el tinte a agregar</p>
-              <input
-                ref={inputRef}
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleValidarSKU()}
-                className="w-full text-center text-3xl font-black border-b-4 border-blue-500 focus:outline-none mb-6 uppercase"
-                placeholder="ESCANEAR..."
-                autoFocus
-              />
-
-              <div className="flex gap-4 justify-center">
-                <button
-                  onClick={handleBypassValidacion}
-                  className="text-gray-400 text-xs hover:text-gray-600 underline"
-                >
-                  Modo Pruebas (Sin Escáner)
-                </button>
-              </div>
-
-              <div className="mt-8 border-t border-gray-100 pt-4">
-                <button
-                  onClick={() => guardarMezcla(pesosRegistrados)}
-                  className="w-full py-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-lg transition-colors"
-                >
-                  ✅ Terminar Ajustes y Guardar
-                </button>
-              </div>
-            </div>
-          ) : (
-            // PASO 2: PESAR
-            <div className="w-full max-w-2xl text-center">
-              <div className="mb-6">
-                <p className="text-sm text-gray-500 uppercase font-bold tracking-wider">Agregando</p>
-                <h2 className="text-6xl font-black text-gray-900">{ajusteSkuActual}</h2>
-              </div>
-
-              <div className="bg-white p-8 rounded-2xl shadow-lg border-2 border-blue-500 mb-8">
-                <p className="text-gray-400 text-sm mb-2">PESO AGREGADO</p>
-                <p className="text-8xl font-black text-blue-600 tabular-nums">
-                  {peso.toFixed(1)}<span className="text-4xl text-gray-400">g</span>
-                </p>
-              </div>
-
-              <div className="flex gap-4">
-                <button
-                  onClick={() => {
-                    setAjusteStep("escanear")
-                    setAjusteSkuActual("")
-                  }}
-                  className="flex-1 py-4 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-bold text-xl transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleAgregarAjuste}
-                  className="flex-[2] py-4 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl font-bold text-2xl shadow-lg transition-colors"
-                >
-                  💾 Registrar +{Math.max(0, peso).toFixed(1)}g
-                </button>
-              </div>
-            </div>
-          )}
-        </main>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-cm-bg flex flex-col">
-      {/* Header */}
       <HeaderBar basculaConectada={basculaConectada} />
-
-      {/* Main Content */}
       <main className="flex-1 flex flex-col items-center justify-center gap-6 p-8">
-        {/* Progreso de Mezcla */}
+
+        {/* Progreso */}
         <div className="w-full max-w-2xl bg-blue-50 border-2 border-blue-300 rounded-lg p-4">
           <div className="flex justify-between items-center mb-2">
             <p className="text-sm font-semibold text-blue-700">PROGRESO DE MEZCLA</p>
@@ -548,164 +314,107 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
           <div className="w-full bg-blue-200 rounded-full h-3 overflow-hidden">
             <div
               className="bg-blue-600 h-full transition-all duration-300"
-              style={{
-                width: `${((ingredienteActualIdx + 1) / ingredientes.length) * 100}%`,
-              }}
+              style={{ width: `${((ingredienteActualIdx + 1) / ingredientes.length) * 100}%` }}
             />
           </div>
         </div>
 
-        {/* IMPL-20260127-06: Panel de Validación SKU (mostrar si NO está verificado) */}
+        {/* Panel de Validación SKU */}
         {!skuVerificado ? (
           <div className="w-full max-w-2xl bg-yellow-50 border-4 border-yellow-400 rounded-lg p-8 shadow-lg">
-            {/* Icono de candado */}
             <div className="text-center mb-4">
               <p className="text-6xl">🔒</p>
               <p className="text-xl font-bold text-yellow-800 mt-2">VALIDACIÓN REQUERIDA</p>
             </div>
-
-            {/* Nombre del ingrediente esperado */}
             <div className="text-center mb-6">
-              <p className="text-sm text-gray-600 font-semibold uppercase mb-2">
-                Escanea el código correcto:
-              </p>
-              <h2 className="text-6xl font-black text-gray-900 mb-2">
-                {ingredienteActual.codigo}
-              </h2>
+              <p className="text-sm text-gray-600 font-semibold uppercase mb-2">Escanea el código correcto:</p>
+              <h2 className="text-6xl font-black text-gray-900 mb-2">{ingredienteActual.codigo}</h2>
             </div>
-
-            {/* Input de escaneo */}
             <div className="mb-6">
               <input
                 ref={inputRef}
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === "Enter") {
-                    handleValidarSKU()
-                  }
-                }}
+                onKeyPress={(e) => e.key === "Enter" && handleValidarSKU()}
                 placeholder={`Escanea el código ${ingredienteActual.codigo}...`}
                 className="w-full px-6 py-4 text-center text-3xl font-bold border-2 border-yellow-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-600 bg-white"
                 autoFocus
               />
             </div>
-
-            {/* Botones de acción */}
             <div className="flex gap-4 justify-center">
               <button
-                onClick={handleValidarSKU}
+                onClick={() => handleValidarSKU()}
                 className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-lg transition-colors"
               >
                 ✓ Validar
               </button>
-
-              {/* IMPL-20260127-06: Botón Bypass discreto */}
               <button
-                onClick={handleBypassValidacion}
-                title="Modo desarrollo: salta validación"
+                onClick={handleBypass}
                 className="px-3 py-3 bg-gray-400 hover:bg-gray-500 text-gray-700 text-xs rounded font-semibold transition-colors opacity-60 hover:opacity-100"
               >
                 🔓 Bypass
               </button>
             </div>
-
-            {/* Recordatorio */}
-            <p className="text-center text-sm text-yellow-700 mt-6 font-semibold">
-              ⚠️ Escanea o escribe el código del bote para continuar con la mezcla.
-            </p>
           </div>
         ) : (
-          /* Si está verificado, mostrar confirmación breve */
           <div className="w-full max-w-2xl bg-green-50 border-2 border-green-400 rounded-lg p-4">
-            <p className="text-center text-green-700 font-bold">
-              ✓ SKU {ingredienteActual.codigo} validado - Pesando...
-            </p>
+            <p className="text-center text-green-700 font-bold">✓ SKU {ingredienteActual.codigo} validado - Pesando...</p>
           </div>
         )}
 
-        {/* Nombre del Ingrediente Actual - GIGANTE (solo si ya está verificado) */}
+        {/* Panel de Pesaje (Solo si verificado) */}
         {skuVerificado && (
-          <div className="text-center">
-            <p className="text-sm text-gray-600 font-semibold uppercase mb-2">
-              Pesando ahora:
-            </p>
-            <h2 className="text-7xl font-black text-gray-900 mb-2">
-              {ingredienteActual.codigo}
-            </h2>
-            <p className="text-2xl text-gray-700">
-              Meta: <span className="font-bold text-blue-600">{ingredienteActual.pesoTarget.toFixed(1)}g</span>
-            </p>
-          </div>
-        )}
-
-        {/* SmartScale - Solo mostrar si SKU está verificado */}
-        {skuVerificado && (
-          <SmartScale
-            pesoActual={peso}
-            pesoTarget={ingredienteActual.pesoTarget}
-            tolerancia={0.5}
-          />
-        )}
-
-        {/* Información de Sesión - Solo mostrar si SKU está verificado */}
-        {skuVerificado && (
-          <div className="w-full max-w-2xl grid grid-cols-2 gap-4">
-            <div className="bg-white border border-gray-300 rounded-lg p-4">
-              <p className="text-xs text-gray-600 font-semibold uppercase">Peso Acumulado</p>
-              <p className="text-3xl font-black text-gray-900">
-                {pesoAcumulado.toFixed(1)} <span className="text-xl">g</span>
+          <>
+            <div className="text-center">
+              <p className="text-sm text-gray-600 font-semibold uppercase mb-2">Pesando ahora:</p>
+              <h2 className="text-7xl font-black text-gray-900 mb-2">{ingredienteActual.codigo}</h2>
+              <p className="text-2xl text-gray-700">
+                Meta: <span className="font-bold text-blue-600">{ingredienteActual.pesoTarget.toFixed(1)}g</span>
               </p>
-              <p className="text-xs text-gray-500 mt-1">de {pesoTotal.toFixed(1)}g totales</p>
             </div>
 
-            <div className="bg-white border border-gray-300 rounded-lg p-4">
-              <p className="text-xs text-gray-600 font-semibold uppercase">Receta</p>
-              <p className="text-3xl font-black text-gray-900">
-                #{receta.numero}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">{receta.meta.carMaker || "—"}</p>
+            <SmartScale
+              pesoActual={peso}
+              pesoTarget={ingredienteActual.pesoTarget}
+              tolerancia={0.5}
+            />
+
+            <div className="w-full max-w-2xl grid grid-cols-2 gap-4">
+              <div className="bg-white border border-gray-300 rounded-lg p-4">
+                <p className="text-xs text-gray-600 font-semibold uppercase">Peso Acumulado</p>
+                <p className="text-3xl font-black text-gray-900">{pesoAcumulado.toFixed(1)} <span className="text-xl">g</span></p>
+              </div>
+              <div className="bg-white border border-gray-300 rounded-lg p-4">
+                <p className="text-xs text-gray-600 font-semibold uppercase">Receta</p>
+                <p className="text-3xl font-black text-gray-900">#{receta.numero}</p>
+                <p className="text-xs text-gray-500 mt-1">{receta.meta.carMaker || "—"}</p>
+              </div>
             </div>
-          </div>
+
+            <button
+              onClick={handleSiguiente}
+              disabled={!enRango || guardando}
+              className={`
+                px-12 py-6 rounded-lg font-bold text-2xl transition-all
+                ${enRango && !guardando
+                  ? "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-lg hover:shadow-xl"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed opacity-50"
+                }
+              `}
+            >
+              {guardando ? "⏳ Guardando..." : ingredienteActualIdx === ingredientes.length - 1 ? "✓ FINALIZAR MEZCLA" : "SIGUIENTE INGREDIENTE →"}
+            </button>
+
+            <div className="w-full max-w-2xl bg-gray-100 border border-gray-400 rounded-lg p-4 text-center">
+              <p className="text-sm text-gray-600 font-semibold mb-1">ESTADO DEL PESO</p>
+              <p className={`text-xl font-bold ${enRango ? "text-green-600" : "text-yellow-600"}`}>
+                {enRango ? "✓ En Rango" : "⏳ Esperando..."}
+              </p>
+            </div>
+          </>
         )}
 
-        {/* Botón Siguiente - Deshabilitado si SKU no está verificado */}
-        {skuVerificado && (
-          <button
-            onClick={handleSiguiente}
-            disabled={!enRango || guardando}
-            className={`
-              px-12 py-6 rounded-lg font-bold text-2xl transition-all
-              ${enRango && !guardando
-                ? "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-lg hover:shadow-xl"
-                : "bg-gray-300 text-gray-500 cursor-not-allowed opacity-50"
-              }
-            `}
-          >
-            {guardando
-              ? "⏳ Guardando..."
-              : ingredienteActualIdx === ingredientes.length - 1
-                ? "✓ FINALIZAR MEZCLA"
-                : "SIGUIENTE INGREDIENTE →"}
-          </button>
-        )}
-
-        {/* Estado del Peso - Solo mostrar si SKU está verificado */}
-        {skuVerificado && (
-          <div className="w-full max-w-2xl bg-gray-100 border border-gray-400 rounded-lg p-4 text-center">
-            <p className="text-sm text-gray-600 font-semibold mb-1">ESTADO DEL PESO</p>
-            <p className={`text-xl font-bold ${enRango ? "text-green-600" : "text-yellow-600"
-              }`}>
-              {enRango ? "✓ En Rango" : "⏳ Esperando..."}
-            </p>
-            {estable && (
-              <p className="text-xs text-green-600 font-semibold mt-2">Peso estable</p>
-            )}
-          </div>
-        )}
-
-        {/* Botón Cancelar - FIX UI */}
         <div className="mt-auto w-full max-w-2xl">
           <button
             onClick={onCancel || onFinish}
@@ -715,10 +424,8 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
           </button>
         </div>
       </main>
-
-      {/* Footer */}
       <footer className="bg-cm-surface border-t border-cm-border p-4 text-center text-sm text-cm-text-secondary">
-        <p>ColorManager v0.0.1 - Sesión de Mezcla | Build: IMPL-20260127-04</p>
+        <p>ColorManager v0.0.1 - Sesión de Mezcla (Refactored) | Build: FIX-20260206-DEBT</p>
       </footer>
     </div>
   )

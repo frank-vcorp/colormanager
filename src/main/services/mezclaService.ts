@@ -24,31 +24,39 @@ export async function guardarMezcla(
   const id = registro.id || randomUUID()
 
   try {
-    // FIX-20260206-06: Uso de ORM nativo en lugar de SQL Raw (DEBY Debt Fix)
-    // Requiere que todos los campos existan en schema.prisma
+    // FIX-20260206-06: Uso de ORM nativo seguro (DEBY Debt Fix)
     await prisma.mezcla.create({
       data: {
         id: id,
-        nodeId: "LOCAL", // Default local node
+        nodeId: "LOCAL",
         recetaId: registro.recetaId,
         recetaNombre: registro.recetaNombre,
-        colorCode: registro.colorCode || undefined, // undefined ignora el campo si es null
-        fechaCreacion: new Date(registro.fecha),
-        horaInicio: registro.horaInicio, // Asumiendo que schema tiene horaInicio? NO. Verificar schema.
-        // STOP: Schema no tiene horaInicio/Fin. 
-        // Revisando schema en memoria: Mezcla tiene: id, nodeId, recetaId, recetaNombre, fechaCreacion, estado, pesoTotal, pesoActual, ingredientes, operadorId, cliente, vehiculo, notas, createdAt, updatedAt.
-        // Faltan campos en Schema vs Types: horaInicio, horaFin, diferencia, tolerancia, tipoMezcla, operadorNombre.
-
-        // CORRECCIÓN EN VUELO: Debo mapear solo lo que el Schema soporta O actualizar el Schema con todo.
-        // Dado que SOFIA debe ser precisa, primero debo verificar si el Schema soporta todo lo que guardaba el SQL Raw.
-        // SQL Raw insertaba: horaInicio, horaFin, diferencia, tolerancia, tipoMezcla, operadorNombre.
-        // El Schema NO tiene esos campos.
-        // DECISIÓN: Actualizar Schema primero con TODOS los campos faltantes para no perder datos.
+        colorCode: registro.colorCode,
+        fecha: new Date(registro.fecha),
+        horaInicio: registro.horaInicio,
+        horaFin: registro.horaFin,
+        pesoTotal: registro.pesoTotal,
+        pesoFinal: registro.pesoFinal,
+        ingredientes: JSON.stringify(registro.ingredientes),
+        estado: registro.estado,
+        diferencia: registro.diferencia,
+        tolerancia: registro.tolerancia,
+        notas: registro.notas,
+        tipoMezcla: registro.tipoMezcla || "NUEVA",
+        operadorId: registro.operadorId,
+        operadorNombre: registro.operadorNombre,
+        cliente: registro.cliente,
+        vehiculo: registro.vehiculo
       }
     })
 
-    // ...
-  } catch (e) { throw e }
+    console.log(`[MezclaService] ✅ Mezcla guardada (ORM): ${id}`)
+  } catch (error) {
+    console.error("[MezclaService] ❌ Error al guardar mezcla:", error)
+    throw error // Re-throw para que el caller maneje el error
+  }
+
+  return { ...registro, id }
 }
 
 /**
