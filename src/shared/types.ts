@@ -284,5 +284,8 @@ export interface PrintOptions {
       numero?: string
       fecha?: string
     }
+    // REQ-20260206-01: Serialización
+    quantity?: number
+    printSerials?: boolean
   }
 }

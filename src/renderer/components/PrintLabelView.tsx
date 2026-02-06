@@ -7,7 +7,12 @@ import { Producto } from "@shared/types"
  * Lee los datos del producto/lote desde los parámetros de la URL (Query String).
  */
 export default function PrintLabelView() {
-    const [data, setData] = useState<{ product: Producto, lote?: { numero: string; fecha?: string } } | null>(null)
+    const [data, setData] = useState<{
+        product: Producto,
+        lote?: { numero: string; fecha?: string },
+        quantity?: number,
+        printSerials?: boolean
+    } | null>(null)
 
     useEffect(() => {
         // FIX-20260206-02: Leer params de window.location.search (Query Params nativos)
@@ -35,7 +40,11 @@ export default function PrintLabelView() {
             fecha: loteFecha || undefined
         } : undefined
 
-        setData({ product, lote })
+        // REQ-20260206-01: Cantidad y Serialización
+        const quantity = parseInt(params.get("quantity") || "1")
+        const printSerials = params.get("printSerials") === "true"
+
+        setData({ product, lote, quantity, printSerials })
 
         // Auto-ajustar título documento para debug
         document.title = `Imprimiendo ${sku}`
@@ -55,15 +64,53 @@ export default function PrintLabelView() {
                 Forzamos posicionamiento absoluto en top-left para garantizar que 
                 impresoras pequeñas (Niimbot) no centren el contenido si el papel es más grande.
             */}
-            <div style={{ position: 'absolute', top: 0, left: 0, width: '50mm', height: '30mm' }}>
-                <LabelTemplate
-                    product={data.product}
-                    lote={data.lote}
-                    isOpen={true}
-                    onClose={() => { }}
-                    onPrint={() => { }}
-                />
-            </div>
+            {/* 
+                Renderizado Múltiple (REQ-20260206-01)
+                Generamos N copias de la etiqueta. Si printSerials es true, agregamos sufijo.
+            */}
+            {Array.from({ length: 1 }).map((_, globalIndex) => {
+                // El padre es el contenedor absoluto principal
+                // Pero necesitamos iterar según la cantidad
+                const labels = []
+                const quantity = data.quantity || 1
+                const printSerials = data.printSerials || false
+
+                for (let i = 0; i < quantity; i++) {
+                    const serialSuffix = printSerials ? `.${(i + 1).toString().padStart(2, '0')}` : ""
+
+                    // Clonar datos base y modificar si hay serial
+                    const labelProduct = { ...data.product }
+                    const labelLote = data.lote ? { ...data.lote } : undefined
+
+                    if (printSerials) {
+                        // Inyectar serial en SKU o Lote
+                        if (labelLote) {
+                            labelLote.numero = `${labelLote.numero}${serialSuffix}`
+                        } else {
+                            labelProduct.sku = `${labelProduct.sku}${serialSuffix}`
+                        }
+                    }
+
+                    labels.push(
+                        <div key={i} style={{
+                            position: 'relative',
+                            width: '50mm',
+                            height: '30mm',
+                            // Forzar salto de página después de cada etiqueta, excepto la última
+                            pageBreakAfter: i < quantity - 1 ? 'always' : 'auto'
+                        }}>
+                            <LabelTemplate
+                                product={labelProduct}
+                                lote={labelLote}
+                                isOpen={true}
+                                onClose={() => { }}
+                                onPrint={() => { }}
+                            />
+                        </div>
+                    )
+                }
+                return labels
+            })}
 
             {/* Estilos globales forzados para esta vista */}
             <style>{`

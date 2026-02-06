@@ -87,6 +87,8 @@ export const LabelTemplate: React.FC<Props> = ({ product, lote }) => {
 export const PrintPreview: React.FC<Props> = (props) => {
   const { imprimir, obtenerImpresoras, impresoras, cargando, imprimiendo, error } = usePrinter()
   const [selectedPrinter, setSelectedPrinter] = useState<string>("")
+  const [cantidad, setCantidad] = useState<number>(1)
+  const [serializar, setSerializar] = useState<boolean>(false)
 
   // Cargar impresoras al abrir
   useEffect(() => {
@@ -104,6 +106,12 @@ export const PrintPreview: React.FC<Props> = (props) => {
     }
   }, [impresoras, selectedPrinter])
 
+  // Auto-activar serialización si cantidad > 1
+  useEffect(() => {
+    if (cantidad > 1) setSerializar(true)
+    else setSerializar(false)
+  }, [cantidad])
+
   const handlePrint = async () => {
     const success = await imprimir({
       printerName: selectedPrinter,
@@ -111,7 +119,9 @@ export const PrintPreview: React.FC<Props> = (props) => {
       data: {
         sku: props.product.sku,
         nombre: props.product.nombre,
-        lote: props.lote
+        lote: props.lote,
+        quantity: cantidad,
+        printSerials: serializar
       }
     })
 
@@ -131,6 +141,38 @@ export const PrintPreview: React.FC<Props> = (props) => {
 
           <div className="border border-dashed border-gray-400 p-4 mb-4">
             <LabelTemplate {...props} />
+            {cantidad > 1 && (
+              <p className="text-xs text-center text-gray-500 mt-2">
+                Se imprimirán {cantidad} etiquetas {serializar ? "con serial" : "idénticas"}
+              </p>
+            )}
+          </div>
+
+          <div className="flex gap-4 w-full mb-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
+              <input
+                type="number"
+                min="1"
+                max="100"
+                value={cantidad}
+                onChange={(e) => setCantidad(parseInt(e.target.value) || 1)}
+                className="w-full p-2 border border-gray-300 rounded text-sm"
+                disabled={cargando || imprimiendo}
+              />
+            </div>
+            <div className="flex items-center pt-6">
+              <label className="flex items-center text-sm text-gray-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={serializar}
+                  onChange={(e) => setSerializar(e.target.checked)}
+                  className="mr-2 h-4 w-4"
+                  disabled={cargando || imprimiendo}
+                />
+                Numerar (.01, .02...)
+              </label>
+            </div>
           </div>
 
           {/* Selector de Impresora */}
