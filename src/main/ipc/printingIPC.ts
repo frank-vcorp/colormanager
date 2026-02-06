@@ -45,15 +45,6 @@ export function registerPrintingIPC(mainWindow?: BrowserWindow) {
     })
 
     /**
-     * PRINT_LABEL: Imprimir contenido actual (o específico)
-     * Se asume que el contenido a imprimir ya está renderizado o se imprime la ventana actual.
-     * Para etiquetas, lo ideal es imprimir en modo "silencioso".
-     */
-    /**
-     * PRINT_LABEL: Imprimir usando una ventana oculta dedicada
-     * Crea una instancia BrowserWindow invisible, carga la vista de etiqueta y ejecuta print.
-     */
-    /**
      * PRINT_LABEL: Imprimir usando una ventana oculta dedicada
      * Crea una instancia BrowserWindow invisible, carga la vista de etiqueta y ejecuta print.
      */
