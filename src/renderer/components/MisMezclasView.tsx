@@ -13,6 +13,7 @@
 import { useState, useEffect } from "react"
 import { RegistroMezcla } from "@shared/types"
 import HeaderBar from "./HeaderBar"
+import MixDetailsModal from "./MixDetailsModal"
 
 interface MisMezclasViewProps {
   onBack: () => void
@@ -23,6 +24,7 @@ export default function MisMezclasView({ onBack, onRepetirMezcla }: MisMezclasVi
   const [mezclas, setMezclas] = useState<RegistroMezcla[]>([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedMezcla, setSelectedMezcla] = useState<RegistroMezcla | null>(null)
 
   useEffect(() => {
     cargarMezclas()
@@ -43,11 +45,16 @@ export default function MisMezclasView({ onBack, onRepetirMezcla }: MisMezclasVi
     }
   }
 
-  const handleRepetir = async (mezcla: RegistroMezcla) => {
+  const handleVerDetalle = (mezcla: RegistroMezcla) => {
+    setSelectedMezcla(mezcla)
+  }
+
+  const handleRepetirDesdeModal = (mezcla: RegistroMezcla) => {
     onRepetirMezcla(mezcla)
   }
 
-  const handleImprimir = (mezcla: RegistroMezcla) => {
+  const handleImprimir = (e: React.MouseEvent, mezcla: RegistroMezcla) => {
+    e.stopPropagation() // Evitar abrir modal
     // TODO: Implementar impresión de etiqueta
     console.log("[MisMezclasView] Imprimir:", mezcla.id)
     alert(`Imprimiendo etiqueta para mezcla #${mezcla.recetaId}`)
@@ -83,10 +90,17 @@ export default function MisMezclasView({ onBack, onRepetirMezcla }: MisMezclasVi
   return (
     <div className="h-screen bg-[#1e1e1e] flex flex-col">
       {/* Header */}
-      <HeaderBar 
+      <HeaderBar
         basculaConectada={true}
         onMisMezclasClick={undefined}
         onInventarioClick={undefined}
+      />
+
+      <MixDetailsModal
+        isOpen={!!selectedMezcla}
+        onClose={() => setSelectedMezcla(null)}
+        mezcla={selectedMezcla}
+        onRepetir={handleRepetirDesdeModal}
       />
 
       {/* Contenido */}
@@ -143,7 +157,11 @@ export default function MisMezclasView({ onBack, onRepetirMezcla }: MisMezclasVi
                   {mezclas.map((mezcla) => {
                     const tipoBadge = getTipoBadge(mezcla.tipoMezcla)
                     return (
-                      <tr key={mezcla.id} className="hover:bg-[#2a2a2a] transition-colors">
+                      <tr
+                        key={mezcla.id}
+                        className="hover:bg-[#2a2a2a] transition-colors cursor-pointer"
+                        onClick={() => handleVerDetalle(mezcla)}
+                      >
                         <td className="px-4 py-3">
                           <span className="text-[#cccccc] font-mono">#{mezcla.recetaId}</span>
                           <p className="text-[#6e6e6e] text-xs">{mezcla.recetaNombre}</p>
@@ -170,14 +188,17 @@ export default function MisMezclasView({ onBack, onRepetirMezcla }: MisMezclasVi
                         <td className="px-4 py-3 text-center">
                           <div className="flex items-center justify-center gap-2">
                             <button
-                              onClick={() => handleRepetir(mezcla)}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleRepetirDesdeModal(mezcla)
+                              }}
                               className="p-1.5 hover:bg-[#3c3c3c] rounded transition-colors"
                               title="Repetir mezcla"
                             >
                               🔄
                             </button>
                             <button
-                              onClick={() => handleImprimir(mezcla)}
+                              onClick={(e) => handleImprimir(e, mezcla)}
                               className="p-1.5 hover:bg-[#3c3c3c] rounded transition-colors"
                               title="Reimprimir etiqueta"
                             >
@@ -198,7 +219,7 @@ export default function MisMezclasView({ onBack, onRepetirMezcla }: MisMezclasVi
         <div className="bg-[#007acc] px-3 py-1 flex items-center justify-between text-[11px] text-white">
           <span>Total: {mezclas.length} mezclas</span>
           <span>
-            ✅ {mezclas.filter(m => m.estado === 'perfecto').length} perfectas | 
+            ✅ {mezclas.filter(m => m.estado === 'perfecto').length} perfectas |
             ⚠️ {mezclas.filter(m => m.estado === 'desviado').length} desviadas
           </span>
         </div>

@@ -66,9 +66,10 @@ export async function obtenerHistorial(): Promise<RegistroMezcla[]> {
   const prisma = getPrismaClient()
 
   try {
-    const mezclas = await prisma.$queryRawUnsafe(`
-      SELECT * FROM "Mezcla" ORDER BY "createdAt" DESC LIMIT 500
-    `) as any[]
+    const mezclas = await prisma.mezcla.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 500
+    })
 
     return mezclas.map(parseMezclaRow)
   } catch (error) {
@@ -91,27 +92,24 @@ export async function obtenerMisMezclas(
     // Calcular fecha límite (hace X días)
     const fechaLimite = new Date()
     fechaLimite.setDate(fechaLimite.getDate() - diasAtras)
-    const fechaLimiteStr = fechaLimite.toISOString().split('T')[0]
+    // Ajustar al inicio del día
+    fechaLimite.setHours(0, 0, 0, 0)
 
-    let mezclas: any[]
+    const whereClause: any = {
+      fecha: {
+        gte: fechaLimite
+      }
+    }
 
     if (operadorId) {
-      // Filtrar por operador y fecha
-      mezclas = await prisma.$queryRawUnsafe(`
-        SELECT * FROM "Mezcla" 
-        WHERE "operadorId" = ? AND "fecha" >= ?
-        ORDER BY "createdAt" DESC 
-        LIMIT 100
-      `, operadorId, fechaLimiteStr) as any[]
-    } else {
-      // Sin operador, mostrar todas las del período
-      mezclas = await prisma.$queryRawUnsafe(`
-        SELECT * FROM "Mezcla" 
-        WHERE "fecha" >= ?
-        ORDER BY "createdAt" DESC 
-        LIMIT 100
-      `, fechaLimiteStr) as any[]
+      whereClause.operadorId = operadorId
     }
+
+    const mezclas = await prisma.mezcla.findMany({
+      where: whereClause,
+      orderBy: { createdAt: 'desc' },
+      take: 100
+    })
 
     return mezclas.map(parseMezclaRow)
   } catch (error) {
@@ -127,13 +125,13 @@ export async function obtenerMezclaPorId(id: string): Promise<RegistroMezcla | n
   const prisma = getPrismaClient()
 
   try {
-    const mezclas = await prisma.$queryRawUnsafe(`
-      SELECT * FROM "Mezcla" WHERE "id" = ? LIMIT 1
-    `, id) as any[]
+    const mezcla = await prisma.mezcla.findUnique({
+      where: { id }
+    })
 
-    if (mezclas.length === 0) return null
+    if (!mezcla) return null
 
-    return parseMezclaRow(mezclas[0])
+    return parseMezclaRow(mezcla)
   } catch (error) {
     console.error("[MezclaService] ❌ Error al obtener mezcla:", error)
     return null

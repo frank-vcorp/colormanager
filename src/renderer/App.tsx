@@ -163,10 +163,41 @@ function AppMain() {
   // Repetir mezcla: cargar receta desde mezcla existente
   const handleRepetirMezcla = async (mezcla: RegistroMezcla) => {
     console.log("[App] Repetir mezcla:", mezcla.id)
-    // TODO: Cargar la receta correspondiente desde la mezcla
-    // Por ahora, volvemos a home y mostramos mensaje
-    alert(`Función en desarrollo: Repetir mezcla #${mezcla.recetaId}`)
-    setVista("home")
+
+    // Parsear ingredientes si es string
+    const ingredientes: any[] = typeof mezcla.ingredientes === 'string'
+      ? JSON.parse(mezcla.ingredientes as any)
+      : mezcla.ingredientes
+
+    // Reconstruir objeto RecetaSayer para el SessionController
+    const recetaReconstruida: RecetaSayer = {
+      numero: mezcla.recetaId,
+      historia: "H", // Histórico
+      capas: [
+        {
+          nombre: "Capa Base (Repetición)",
+          ingredientes: ingredientes.map((ing, idx) => ({
+            orden: idx + 1,
+            sku: ing.codigo,
+            pesoMeta: ing.pesoTarget, // Usamos el target original
+            descripcion: ing.descripcion || "" // Si existe
+          }))
+        }
+      ],
+      meta: {
+        colorCode: mezcla.colorCode || "",
+        nombreColor: mezcla.recetaNombre,
+        cliente: mezcla.cliente || undefined,
+        vehiculo: mezcla.vehiculo || undefined,
+        notas: mezcla.notas || undefined,
+        fecha: new Date().toISOString() // Fecha actual para la nueva mezcla
+      }
+    }
+
+    setRecetaDetectada(recetaReconstruida)
+    setVista("home") // Ir a home para que vea el sidebar con la receta cargada
+
+    // Opcional: Auto-scroll al sidebar o resaltar
   }
 
   // Callback para HeaderBar: Admin
