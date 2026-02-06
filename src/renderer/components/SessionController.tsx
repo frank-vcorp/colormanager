@@ -529,201 +529,197 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
       </div>
     )
   }
-        </main >
-      </div >
-    )
-}
 
-return (
-  <div className="min-h-screen bg-cm-bg flex flex-col">
-    {/* Header */}
-    <HeaderBar basculaConectada={basculaConectada} />
+  return (
+    <div className="min-h-screen bg-cm-bg flex flex-col">
+      {/* Header */}
+      <HeaderBar basculaConectada={basculaConectada} />
 
-    {/* Main Content */}
-    <main className="flex-1 flex flex-col items-center justify-center gap-6 p-8">
-      {/* Progreso de Mezcla */}
-      <div className="w-full max-w-2xl bg-blue-50 border-2 border-blue-300 rounded-lg p-4">
-        <div className="flex justify-between items-center mb-2">
-          <p className="text-sm font-semibold text-blue-700">PROGRESO DE MEZCLA</p>
-          <p className="text-sm font-bold text-blue-800">
-            Ingrediente {ingredienteActualIdx + 1} de {ingredientes.length}
-          </p>
-        </div>
-        <div className="w-full bg-blue-200 rounded-full h-3 overflow-hidden">
-          <div
-            className="bg-blue-600 h-full transition-all duration-300"
-            style={{
-              width: `${((ingredienteActualIdx + 1) / ingredientes.length) * 100}%`,
-            }}
-          />
-        </div>
-      </div>
-
-      {/* IMPL-20260127-06: Panel de Validación SKU (mostrar si NO está verificado) */}
-      {!skuVerificado ? (
-        <div className="w-full max-w-2xl bg-yellow-50 border-4 border-yellow-400 rounded-lg p-8 shadow-lg">
-          {/* Icono de candado */}
-          <div className="text-center mb-4">
-            <p className="text-6xl">🔒</p>
-            <p className="text-xl font-bold text-yellow-800 mt-2">VALIDACIÓN REQUERIDA</p>
-          </div>
-
-          {/* Nombre del ingrediente esperado */}
-          <div className="text-center mb-6">
-            <p className="text-sm text-gray-600 font-semibold uppercase mb-2">
-              Escanea el código correcto:
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col items-center justify-center gap-6 p-8">
+        {/* Progreso de Mezcla */}
+        <div className="w-full max-w-2xl bg-blue-50 border-2 border-blue-300 rounded-lg p-4">
+          <div className="flex justify-between items-center mb-2">
+            <p className="text-sm font-semibold text-blue-700">PROGRESO DE MEZCLA</p>
+            <p className="text-sm font-bold text-blue-800">
+              Ingrediente {ingredienteActualIdx + 1} de {ingredientes.length}
             </p>
-            <h2 className="text-6xl font-black text-gray-900 mb-2">
-              {ingredienteActual.codigo}
-            </h2>
           </div>
-
-          {/* Input de escaneo */}
-          <div className="mb-6">
-            <input
-              ref={inputRef}
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === "Enter") {
-                  handleValidarSKU()
-                }
+          <div className="w-full bg-blue-200 rounded-full h-3 overflow-hidden">
+            <div
+              className="bg-blue-600 h-full transition-all duration-300"
+              style={{
+                width: `${((ingredienteActualIdx + 1) / ingredientes.length) * 100}%`,
               }}
-              placeholder={`Escanea el código ${ingredienteActual.codigo}...`}
-              className="w-full px-6 py-4 text-center text-3xl font-bold border-2 border-yellow-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-600 bg-white"
-              autoFocus
             />
           </div>
-
-          {/* Botones de acción */}
-          <div className="flex gap-4 justify-center">
-            <button
-              onClick={handleValidarSKU}
-              className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-lg transition-colors"
-            >
-              ✓ Validar
-            </button>
-
-            {/* IMPL-20260127-06: Botón Bypass discreto */}
-            <button
-              onClick={handleBypassValidacion}
-              title="Modo desarrollo: salta validación"
-              className="px-3 py-3 bg-gray-400 hover:bg-gray-500 text-gray-700 text-xs rounded font-semibold transition-colors opacity-60 hover:opacity-100"
-            >
-              🔓 Bypass
-            </button>
-          </div>
-
-          {/* Recordatorio */}
-          <p className="text-center text-sm text-yellow-700 mt-6 font-semibold">
-            ⚠️ Escanea o escribe el código del bote para continuar con la mezcla.
-          </p>
         </div>
-      ) : (
-        /* Si está verificado, mostrar confirmación breve */
-        <div className="w-full max-w-2xl bg-green-50 border-2 border-green-400 rounded-lg p-4">
-          <p className="text-center text-green-700 font-bold">
-            ✓ SKU {ingredienteActual.codigo} validado - Pesando...
-          </p>
-        </div>
-      )}
 
-      {/* Nombre del Ingrediente Actual - GIGANTE (solo si ya está verificado) */}
-      {skuVerificado && (
-        <div className="text-center">
-          <p className="text-sm text-gray-600 font-semibold uppercase mb-2">
-            Pesando ahora:
-          </p>
-          <h2 className="text-7xl font-black text-gray-900 mb-2">
-            {ingredienteActual.codigo}
-          </h2>
-          <p className="text-2xl text-gray-700">
-            Meta: <span className="font-bold text-blue-600">{ingredienteActual.pesoTarget.toFixed(1)}g</span>
-          </p>
-        </div>
-      )}
+        {/* IMPL-20260127-06: Panel de Validación SKU (mostrar si NO está verificado) */}
+        {!skuVerificado ? (
+          <div className="w-full max-w-2xl bg-yellow-50 border-4 border-yellow-400 rounded-lg p-8 shadow-lg">
+            {/* Icono de candado */}
+            <div className="text-center mb-4">
+              <p className="text-6xl">🔒</p>
+              <p className="text-xl font-bold text-yellow-800 mt-2">VALIDACIÓN REQUERIDA</p>
+            </div>
 
-      {/* SmartScale - Solo mostrar si SKU está verificado */}
-      {skuVerificado && (
-        <SmartScale
-          pesoActual={peso}
-          pesoTarget={ingredienteActual.pesoTarget}
-          tolerancia={0.5}
-        />
-      )}
+            {/* Nombre del ingrediente esperado */}
+            <div className="text-center mb-6">
+              <p className="text-sm text-gray-600 font-semibold uppercase mb-2">
+                Escanea el código correcto:
+              </p>
+              <h2 className="text-6xl font-black text-gray-900 mb-2">
+                {ingredienteActual.codigo}
+              </h2>
+            </div>
 
-      {/* Información de Sesión - Solo mostrar si SKU está verificado */}
-      {skuVerificado && (
-        <div className="w-full max-w-2xl grid grid-cols-2 gap-4">
-          <div className="bg-white border border-gray-300 rounded-lg p-4">
-            <p className="text-xs text-gray-600 font-semibold uppercase">Peso Acumulado</p>
-            <p className="text-3xl font-black text-gray-900">
-              {pesoAcumulado.toFixed(1)} <span className="text-xl">g</span>
+            {/* Input de escaneo */}
+            <div className="mb-6">
+              <input
+                ref={inputRef}
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === "Enter") {
+                    handleValidarSKU()
+                  }
+                }}
+                placeholder={`Escanea el código ${ingredienteActual.codigo}...`}
+                className="w-full px-6 py-4 text-center text-3xl font-bold border-2 border-yellow-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-600 bg-white"
+                autoFocus
+              />
+            </div>
+
+            {/* Botones de acción */}
+            <div className="flex gap-4 justify-center">
+              <button
+                onClick={handleValidarSKU}
+                className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-lg transition-colors"
+              >
+                ✓ Validar
+              </button>
+
+              {/* IMPL-20260127-06: Botón Bypass discreto */}
+              <button
+                onClick={handleBypassValidacion}
+                title="Modo desarrollo: salta validación"
+                className="px-3 py-3 bg-gray-400 hover:bg-gray-500 text-gray-700 text-xs rounded font-semibold transition-colors opacity-60 hover:opacity-100"
+              >
+                🔓 Bypass
+              </button>
+            </div>
+
+            {/* Recordatorio */}
+            <p className="text-center text-sm text-yellow-700 mt-6 font-semibold">
+              ⚠️ Escanea o escribe el código del bote para continuar con la mezcla.
             </p>
-            <p className="text-xs text-gray-500 mt-1">de {pesoTotal.toFixed(1)}g totales</p>
           </div>
-
-          <div className="bg-white border border-gray-300 rounded-lg p-4">
-            <p className="text-xs text-gray-600 font-semibold uppercase">Receta</p>
-            <p className="text-3xl font-black text-gray-900">
-              #{receta.numero}
+        ) : (
+          /* Si está verificado, mostrar confirmación breve */
+          <div className="w-full max-w-2xl bg-green-50 border-2 border-green-400 rounded-lg p-4">
+            <p className="text-center text-green-700 font-bold">
+              ✓ SKU {ingredienteActual.codigo} validado - Pesando...
             </p>
-            <p className="text-xs text-gray-500 mt-1">{receta.meta.carMaker || "—"}</p>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Botón Siguiente - Deshabilitado si SKU no está verificado */}
-      {skuVerificado && (
-        <button
-          onClick={handleSiguiente}
-          disabled={!enRango || guardando}
-          className={`
+        {/* Nombre del Ingrediente Actual - GIGANTE (solo si ya está verificado) */}
+        {skuVerificado && (
+          <div className="text-center">
+            <p className="text-sm text-gray-600 font-semibold uppercase mb-2">
+              Pesando ahora:
+            </p>
+            <h2 className="text-7xl font-black text-gray-900 mb-2">
+              {ingredienteActual.codigo}
+            </h2>
+            <p className="text-2xl text-gray-700">
+              Meta: <span className="font-bold text-blue-600">{ingredienteActual.pesoTarget.toFixed(1)}g</span>
+            </p>
+          </div>
+        )}
+
+        {/* SmartScale - Solo mostrar si SKU está verificado */}
+        {skuVerificado && (
+          <SmartScale
+            pesoActual={peso}
+            pesoTarget={ingredienteActual.pesoTarget}
+            tolerancia={0.5}
+          />
+        )}
+
+        {/* Información de Sesión - Solo mostrar si SKU está verificado */}
+        {skuVerificado && (
+          <div className="w-full max-w-2xl grid grid-cols-2 gap-4">
+            <div className="bg-white border border-gray-300 rounded-lg p-4">
+              <p className="text-xs text-gray-600 font-semibold uppercase">Peso Acumulado</p>
+              <p className="text-3xl font-black text-gray-900">
+                {pesoAcumulado.toFixed(1)} <span className="text-xl">g</span>
+              </p>
+              <p className="text-xs text-gray-500 mt-1">de {pesoTotal.toFixed(1)}g totales</p>
+            </div>
+
+            <div className="bg-white border border-gray-300 rounded-lg p-4">
+              <p className="text-xs text-gray-600 font-semibold uppercase">Receta</p>
+              <p className="text-3xl font-black text-gray-900">
+                #{receta.numero}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">{receta.meta.carMaker || "—"}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Botón Siguiente - Deshabilitado si SKU no está verificado */}
+        {skuVerificado && (
+          <button
+            onClick={handleSiguiente}
+            disabled={!enRango || guardando}
+            className={`
               px-12 py-6 rounded-lg font-bold text-2xl transition-all
               ${enRango && !guardando
-              ? "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-lg hover:shadow-xl"
-              : "bg-gray-300 text-gray-500 cursor-not-allowed opacity-50"
-            }
+                ? "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-lg hover:shadow-xl"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed opacity-50"
+              }
             `}
-        >
-          {guardando
-            ? "⏳ Guardando..."
-            : ingredienteActualIdx === ingredientes.length - 1
-              ? "✓ FINALIZAR MEZCLA"
-              : "SIGUIENTE INGREDIENTE →"}
-        </button>
-      )}
+          >
+            {guardando
+              ? "⏳ Guardando..."
+              : ingredienteActualIdx === ingredientes.length - 1
+                ? "✓ FINALIZAR MEZCLA"
+                : "SIGUIENTE INGREDIENTE →"}
+          </button>
+        )}
 
-      {/* Estado del Peso - Solo mostrar si SKU está verificado */}
-      {skuVerificado && (
-        <div className="w-full max-w-2xl bg-gray-100 border border-gray-400 rounded-lg p-4 text-center">
-          <p className="text-sm text-gray-600 font-semibold mb-1">ESTADO DEL PESO</p>
-          <p className={`text-xl font-bold ${enRango ? "text-green-600" : "text-yellow-600"
-            }`}>
-            {enRango ? "✓ En Rango" : "⏳ Esperando..."}
-          </p>
-          {estable && (
-            <p className="text-xs text-green-600 font-semibold mt-2">Peso estable</p>
-          )}
+        {/* Estado del Peso - Solo mostrar si SKU está verificado */}
+        {skuVerificado && (
+          <div className="w-full max-w-2xl bg-gray-100 border border-gray-400 rounded-lg p-4 text-center">
+            <p className="text-sm text-gray-600 font-semibold mb-1">ESTADO DEL PESO</p>
+            <p className={`text-xl font-bold ${enRango ? "text-green-600" : "text-yellow-600"
+              }`}>
+              {enRango ? "✓ En Rango" : "⏳ Esperando..."}
+            </p>
+            {estable && (
+              <p className="text-xs text-green-600 font-semibold mt-2">Peso estable</p>
+            )}
+          </div>
+        )}
+
+        {/* Botón Cancelar - FIX UI */}
+        <div className="mt-auto w-full max-w-2xl">
+          <button
+            onClick={onCancel || onFinish}
+            className="w-full py-4 bg-red-100 hover:bg-red-200 text-red-700 border-2 border-red-300 rounded-lg font-bold text-lg transition-colors flex items-center justify-center gap-2"
+          >
+            <span>✕</span> Cancelar Mezcla
+          </button>
         </div>
-      )}
+      </main>
 
-      {/* Botón Cancelar - FIX UI */}
-      <div className="mt-auto w-full max-w-2xl">
-        <button
-          onClick={onCancel || onFinish}
-          className="w-full py-4 bg-red-100 hover:bg-red-200 text-red-700 border-2 border-red-300 rounded-lg font-bold text-lg transition-colors flex items-center justify-center gap-2"
-        >
-          <span>✕</span> Cancelar Mezcla
-        </button>
-      </div>
-    </main>
-
-    {/* Footer */}
-    <footer className="bg-cm-surface border-t border-cm-border p-4 text-center text-sm text-cm-text-secondary">
-      <p>ColorManager v0.0.1 - Sesión de Mezcla | Build: IMPL-20260127-04</p>
-    </footer>
-  </div>
-)
+      {/* Footer */}
+      <footer className="bg-cm-surface border-t border-cm-border p-4 text-center text-sm text-cm-text-secondary">
+        <p>ColorManager v0.0.1 - Sesión de Mezcla | Build: IMPL-20260127-04</p>
+      </footer>
+    </div>
+  )
 }
