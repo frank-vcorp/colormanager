@@ -203,22 +203,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
           <button
             onClick={() => handleModeChange("DEMO")}
             disabled={saving}
-            className={`flex-1 py-3 px-4 rounded font-semibold transition ${
-              config.mode === "DEMO"
+            className={`flex-1 py-3 px-4 rounded font-semibold transition ${config.mode === "DEMO"
                 ? "bg-blue-500 text-white"
                 : "bg-gray-200 hover:bg-gray-300"
-            } disabled:opacity-50`}
+              } disabled:opacity-50`}
           >
             📊 Modo Demo (Simulación)
           </button>
           <button
             onClick={() => handleModeChange("PRODUCTION")}
             disabled={saving}
-            className={`flex-1 py-3 px-4 rounded font-semibold transition ${
-              config.mode === "PRODUCTION"
+            className={`flex-1 py-3 px-4 rounded font-semibold transition ${config.mode === "PRODUCTION"
                 ? "bg-red-500 text-white"
                 : "bg-gray-200 hover:bg-gray-300"
-            } disabled:opacity-50`}
+              } disabled:opacity-50`}
           >
             ⚙️ Modo Producción (Real)
           </button>
@@ -236,47 +234,94 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
       </div>
 
       {/* Sección: Configuración de Hardware (solo PROD) */}
+      {/* Sección: Configuración de Hardware (solo PROD) */}
       {config.mode === "PRODUCTION" && (
         <div className="mb-8 p-6 border rounded-lg bg-yellow-50">
           <h2 className="text-xl font-semibold mb-4">Configuración de Hardware</h2>
 
-          <div className="mb-4">
+          {/* Tipo de Báscula */}
+          <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Puerto Serial de Báscula
+              Tipo de Báscula
             </label>
-            <input
-              type="text"
-              value={config.hardware.scalePort}
-              onChange={(e) => handleHardwareConfigChange("scalePort", e.target.value)}
-              onBlur={() => {}}
-              disabled={saving}
-              placeholder="ej: COM3, /dev/ttyUSB0"
-              className="w-full px-3 py-2 border rounded disabled:opacity-50"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              En Windows: COM3, COM4, etc. | En Linux/Mac: /dev/ttyUSB0, /dev/ttyACM0, etc.
-            </p>
+            <div className="flex gap-4">
+              <button
+                onClick={() => handleHardwareConfigChange("scaleType", "HID")}
+                className={`flex-1 py-3 px-4 rounded border font-medium text-sm transition ${config.hardware.scaleType === "HID"
+                    ? "bg-yellow-200 border-yellow-400 text-yellow-900"
+                    : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
+                  }`}
+              >
+                🔌 USB (Dymo / HID)
+                <span className="block text-xs font-normal mt-1 opacity-75">
+                  Detección Automática
+                </span>
+              </button>
+              <button
+                onClick={() => handleHardwareConfigChange("scaleType", "SERIAL")}
+                className={`flex-1 py-3 px-4 rounded border font-medium text-sm transition ${config.hardware.scaleType === "SERIAL"
+                    ? "bg-yellow-200 border-yellow-400 text-yellow-900"
+                    : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
+                  }`}
+              >
+                📠 Serial (Mettler Toledo)
+                <span className="block text-xs font-normal mt-1 opacity-75">
+                  Puerto COM / RS232
+                </span>
+              </button>
+            </div>
+
+            {/* Mensaje Informativo para HID */}
+            {config.hardware.scaleType === "HID" && (
+              <p className="text-sm text-gray-600 mt-2 bg-yellow-100/50 p-2 rounded">
+                ℹ️ La báscula se detectará automáticamente al conectarla por USB. No requiere configuración de puerto.
+              </p>
+            )}
           </div>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Velocidad en Baudios
-            </label>
-            <select
-              value={config.hardware.baudRate}
-              onChange={(e) =>
-                handleHardwareConfigChange("baudRate", parseInt(e.target.value))
-              }
-              disabled={saving}
-              className="w-full px-3 py-2 border rounded disabled:opacity-50"
-            >
-              <option value={9600}>9600</option>
-              <option value={19200}>19200</option>
-              <option value={38400}>38400</option>
-              <option value={57600}>57600</option>
-              <option value={115200}>115200</option>
-            </select>
-          </div>
+          {/* Configuración Serial (Condicional) */}
+          {config.hardware.scaleType === "SERIAL" && (
+            <div className="space-y-4 pt-4 border-t border-yellow-200 animate-in fade-in slide-in-from-top-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Puerto Serial
+                </label>
+                <input
+                  type="text"
+                  value={config.hardware.scalePort}
+                  onChange={(e) => handleHardwareConfigChange("scalePort", e.target.value)}
+                  disabled={saving}
+                  placeholder="ej: COM3"
+                  className="w-full px-3 py-2 border rounded disabled:opacity-50"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Windows: <code>COM1</code>, <code>COM2</code>... | Linux: <code>/dev/ttyUSB0</code>
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Velocidad (Baud Rate)
+                </label>
+                <select
+                  value={config.hardware.baudRate}
+                  onChange={(e) =>
+                    handleHardwareConfigChange("baudRate", parseInt(e.target.value))
+                  }
+                  disabled={saving}
+                  className="w-full px-3 py-2 border rounded disabled:opacity-50"
+                >
+                  <option value={2400}>2400</option>
+                  <option value={4800}>4800</option>
+                  <option value={9600}>9600 (Recomendado Mettler)</option>
+                  <option value={19200}>19200</option>
+                  <option value={38400}>38400</option>
+                  <option value={57600}>57600</option>
+                  <option value={115200}>115200</option>
+                </select>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
