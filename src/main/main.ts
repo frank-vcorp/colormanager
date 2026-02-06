@@ -120,10 +120,10 @@ async function autoSetupPrinter(): Promise<void> {
         console.log(`[Main] Auto-setup: Proceso terminó con código ${code}`)
         if (stdout) console.log("[Main] Auto-setup stdout:", stdout.substring(0, 500))
         if (stderr) console.log("[Main] Auto-setup stderr:", stderr.substring(0, 500))
-        
+
         // Marcar como configurado aunque haya errores (para no reintentar)
         fs.writeFileSync(configPath, new Date().toISOString())
-        
+
         resolve()
       })
 
@@ -369,9 +369,14 @@ ipcMain.handle(IPCInvokeChannels.REGISTRAR_PESO, async (_, peso: number) => {
 })
 
 ipcMain.handle(IPCInvokeChannels.CANCELAR_MEZCLA, async () => {
+  // FIX-20260206-07: NO detener el servicio de báscula.
+  // La báscula debe seguir reportando peso al Dashboard (Home).
+  // Solo detenemos si se cierra la app (window closed).
+  /*
   if (scaleService) {
     scaleService.stop()
   }
+  */
   return { success: true }
 })
 
@@ -591,16 +596,16 @@ ipcMain.handle(IPCInvokeChannels.INSTALL_PRINTER, async () => {
   console.log("[Main] Plataforma:", process.platform)
   console.log("[Main] __dirname:", __dirname)
   console.log("[Main] resourcesPath:", process.resourcesPath)
-  
+
   // Solo funciona en Windows
   if (process.platform !== "win32") {
     return { success: false, error: "Solo disponible en Windows" }
   }
-  
+
   try {
     const { spawn } = await import("child_process")
     const fs = await import("fs")
-    
+
     // Buscar el script en múltiples ubicaciones
     const possiblePaths = [
       // Producción (extraResources) - primera prioridad
@@ -612,7 +617,7 @@ ipcMain.handle(IPCInvokeChannels.INSTALL_PRINTER, async () => {
       path.join(app.getAppPath(), "build/setup-printer.ps1"),
       path.join(app.getAppPath(), "../setup-printer.ps1"),
     ]
-    
+
     let finalScriptPath = ""
     for (const p of possiblePaths) {
       console.log(`[Main] Verificando: ${p}`)
@@ -622,24 +627,24 @@ ipcMain.handle(IPCInvokeChannels.INSTALL_PRINTER, async () => {
         break
       }
     }
-    
+
     if (!finalScriptPath) {
       const errorMsg = `Script no encontrado. Rutas probadas:\n${possiblePaths.join("\n")}`
       console.error("[Main] ❌", errorMsg)
       return { success: false, error: errorMsg }
     }
-    
+
     // Copiar script a ubicación temporal para evitar problemas de rutas
     const tempScript = path.join(app.getPath("temp"), "setup-printer.ps1")
     fs.copyFileSync(finalScriptPath, tempScript)
     console.log(`[Main] Script copiado a: ${tempScript}`)
-    
+
     // Usar spawn con shell para ejecutar PowerShell con elevación
     // El truco es usar powershell Start-Process con -Verb RunAs
     const psCommand = `Start-Process -FilePath 'powershell.exe' -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File "${tempScript}" -Action install' -Verb RunAs -Wait`
-    
+
     console.log(`[Main] Comando: ${psCommand}`)
-    
+
     return new Promise((resolve) => {
       const child = spawn("powershell.exe", [
         "-NoProfile",
@@ -649,25 +654,25 @@ ipcMain.handle(IPCInvokeChannels.INSTALL_PRINTER, async () => {
         windowsHide: false, // Mostrar ventana para UAC
         shell: true
       })
-      
+
       let stdout = ""
       let stderr = ""
-      
+
       child.stdout?.on("data", (data) => {
         stdout += data.toString()
         console.log("[Main] stdout:", data.toString())
       })
-      
+
       child.stderr?.on("data", (data) => {
         stderr += data.toString()
         console.log("[Main] stderr:", data.toString())
       })
-      
+
       child.on("error", (err) => {
         console.error("[Main] Error spawn:", err)
         resolve({ success: false, error: err.message })
       })
-      
+
       child.on("close", (code) => {
         console.log(`[Main] Proceso terminó con código: ${code}`)
         if (code === 0) {
@@ -681,7 +686,7 @@ ipcMain.handle(IPCInvokeChannels.INSTALL_PRINTER, async () => {
           }
         }
       })
-      
+
       // Timeout de 2 minutos
       setTimeout(() => {
         resolve({ success: true, output: "Proceso iniciado. Si apareció la ventana UAC, acepte para continuar." })
@@ -699,23 +704,23 @@ ipcMain.handle(IPCInvokeChannels.INSTALL_PRINTER, async () => {
  */
 ipcMain.handle(IPCInvokeChannels.TEST_PRINTER, async () => {
   console.log("[Main] Probando conexión de impresora virtual...")
-  
+
   const config = configService.getConfig()
   const port = config.paths.printerPort || 9100
-  
+
   try {
     const net = await import("net")
-    
+
     return new Promise((resolve) => {
       const client = new net.Socket()
       let connected = false
-      
+
       client.setTimeout(3000)
-      
+
       client.connect(port, "127.0.0.1", () => {
         connected = true
         console.log("[Main] ✓ Conexión TCP exitosa al puerto", port)
-        
+
         // Enviar receta de prueba
         const testReceta = `
 ========================================
@@ -742,24 +747,24 @@ TOTAL:                  2008.75 ml
 `
         client.write(testReceta)
         client.end()
-        
-        resolve({ 
-          success: true, 
-          message: `Conexión exitosa al puerto ${port}. Se envió receta de prueba.` 
+
+        resolve({
+          success: true,
+          message: `Conexión exitosa al puerto ${port}. Se envió receta de prueba.`
         })
       })
-      
+
       client.on("timeout", () => {
         console.log("[Main] ✗ Timeout conectando al puerto", port)
         client.destroy()
         if (!connected) {
-          resolve({ 
-            success: false, 
-            error: `Timeout: El servidor no responde en el puerto ${port}. ¿Está ColorManager ejecutándose?` 
+          resolve({
+            success: false,
+            error: `Timeout: El servidor no responde en el puerto ${port}. ¿Está ColorManager ejecutándose?`
           })
         }
       })
-      
+
       client.on("error", (err: NodeJS.ErrnoException) => {
         console.log("[Main] ✗ Error de conexión:", err.message)
         if (!connected) {
@@ -849,7 +854,7 @@ ipcMain.handle(IPCInvokeChannels.QR_PENDING_LABELS, async () => {
 app.on("ready", async () => {
   // Auto-configurar impresora en Windows (solo primer inicio)
   await autoSetupPrinter()
-  
+
   // Crear la ventana principal
   createWindow()
 })
