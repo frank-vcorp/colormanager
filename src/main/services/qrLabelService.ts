@@ -56,24 +56,24 @@ export async function detectNiimbotPort(): Promise<string | null> {
     console.log('[qrLabelService] Detección COM solo disponible en Windows')
     return null
   }
-  
+
   try {
     // Buscar puertos COM con dispositivo USB-SERIAL CH340 (driver Niimbot)
     const { stdout } = await execAsync(
       'powershell -Command "Get-WmiObject Win32_PnPEntity | Where-Object { $_.Name -match \'CH340|USB-SERIAL|Niimbot\' } | ForEach-Object { if ($_.Name -match \'COM(\\d+)\') { Write-Output $Matches[0] } }"'
     )
-    
+
     const comPort = stdout.trim()
     if (comPort && comPort.startsWith('COM')) {
       console.log(`[qrLabelService] Niimbot detectada en ${comPort}`)
       return comPort
     }
-    
+
     // Fallback: buscar cualquier puerto serial reciente
     const { stdout: ports } = await execAsync(
       'powershell -Command "[System.IO.Ports.SerialPort]::GetPortNames() | ForEach-Object { Write-Output $_ }"'
     )
-    
+
     const portList = ports.trim().split('\n').filter(p => p.startsWith('COM'))
     if (portList.length > 0) {
       // Tomar el último puerto (usualmente el más reciente)
@@ -81,11 +81,11 @@ export async function detectNiimbotPort(): Promise<string | null> {
       console.log(`[qrLabelService] Usando puerto serial: ${lastPort}`)
       return lastPort
     }
-    
+
   } catch (error) {
     console.error('[qrLabelService] Error detectando puerto COM:', error)
   }
-  
+
   return null
 }
 
@@ -114,7 +114,7 @@ export async function generateQRDataURL(codigo: string): Promise<string> {
  */
 export async function generarCodigoEtiqueta(ingredienteSKU: string): Promise<string> {
   const prisma = getPrismaClient()
-  
+
   // Contar lotes existentes de este ingrediente que ya tienen código
   const count = await prisma.lote.count({
     where: {
@@ -122,7 +122,7 @@ export async function generarCodigoEtiqueta(ingredienteSKU: string): Promise<str
       codigoEtiqueta: { not: null }
     }
   })
-  
+
   const secuencial = String(count + 1).padStart(2, '0')
   return `${ingredienteSKU}-${secuencial}`
 }
@@ -137,14 +137,14 @@ export async function generarCodigoEtiqueta(ingredienteSKU: string): Promise<str
  */
 export async function getLabelData(loteId: string): Promise<EtiquetaData | null> {
   const prisma = getPrismaClient()
-  
+
   const lote = await prisma.lote.findUnique({
     where: { id: loteId },
     include: { ingrediente: true }
   })
-  
+
   if (!lote) return null
-  
+
   // Si no tiene código de etiqueta, generarlo
   let codigo = lote.codigoEtiqueta
   if (!codigo) {
@@ -154,10 +154,10 @@ export async function getLabelData(loteId: string): Promise<EtiquetaData | null>
       data: { codigoEtiqueta: codigo }
     })
   }
-  
+
   // Generar QR Data URL para preview
   const qrDataUrl = await generateQRDataURL(codigo)
-  
+
   return {
     codigo,
     nombre: lote.ingrediente.nombre,
@@ -172,7 +172,7 @@ export async function getLabelData(loteId: string): Promise<EtiquetaData | null>
  */
 export async function getPendingLabels(): Promise<EtiquetaData[]> {
   const prisma = getPrismaClient()
-  
+
   const lotes = await prisma.lote.findMany({
     where: {
       estado: { in: ['activo', 'parcial'] },
@@ -187,9 +187,9 @@ export async function getPendingLabels(): Promise<EtiquetaData[]> {
       { createdAt: 'asc' }
     ]
   })
-  
+
   const etiquetas: EtiquetaData[] = []
-  
+
   for (const lote of lotes) {
     let codigo = lote.codigoEtiqueta
     if (!codigo) {
@@ -199,7 +199,7 @@ export async function getPendingLabels(): Promise<EtiquetaData[]> {
         data: { codigoEtiqueta: codigo }
       })
     }
-    
+
     etiquetas.push({
       codigo,
       nombre: lote.ingrediente.nombre,
@@ -207,7 +207,7 @@ export async function getPendingLabels(): Promise<EtiquetaData[]> {
       loteId: lote.id
     })
   }
-  
+
   return etiquetas
 }
 
@@ -229,14 +229,14 @@ export async function printLabel(etiqueta: EtiquetaData): Promise<PrintResult> {
         return await printLabelViaCOM(etiqueta, comPort)
       }
     }
-    
+
     // Fallback: usar impresión tradicional de Electron
     return await printLabelViaElectron(etiqueta)
-    
+
   } catch (error) {
     console.error('[qrLabelService] Error:', error)
-    return { 
-      success: false, 
+    return {
+      success: false,
       error: error instanceof Error ? error.message : 'Error desconocido'
     }
   }
@@ -252,10 +252,10 @@ async function printLabelViaCOM(etiqueta: EtiquetaData, comPort: string): Promis
     // La impresora Niimbot B1 tiene protocolo propietario
     // Por ahora, usamos print via sistema buscando la impresora Niimbot
     console.log(`[qrLabelService] Niimbot detectada en ${comPort}, usando impresión de sistema`)
-    
+
     // Fallback a impresión via Electron buscando específicamente la Niimbot
     return await printLabelViaElectron(etiqueta, 'Niimbot')
-    
+
   } catch (error) {
     console.error('[qrLabelService] Error COM:', error)
     return { success: false, error: `Error puerto ${comPort}: ${error}` }
@@ -272,11 +272,11 @@ async function printLabelViaCOM(etiqueta: EtiquetaData, comPort: string): Promis
 async function printLabelViaElectron(etiqueta: EtiquetaData, _printerHint?: string): Promise<PrintResult> {
   try {
     const qrDataUrl = etiqueta.qrDataUrl || await generateQRDataURL(etiqueta.codigo)
-    
+
     // FIX-20260204-23: Escribir HTML a archivo temporal (más compatible que data: URL)
     const tempDir = require('os').tmpdir()
     const tempFile = require('path').join(tempDir, `colormanager-label-${Date.now()}.html`)
-    
+
     const labelHtml = `<!DOCTYPE html>
 <html>
 <head>
@@ -354,11 +354,11 @@ async function printLabelViaElectron(etiqueta: EtiquetaData, _printerHint?: stri
   </div>
 </body>
 </html>`
-    
+
     // Escribir archivo temporal
     require('fs').writeFileSync(tempFile, labelHtml, 'utf-8')
     console.log('[qrLabelService] HTML escrito a:', tempFile)
-    
+
     // Crear ventana visible
     const printWindow = new BrowserWindow({
       width: 450,
@@ -370,15 +370,15 @@ async function printLabelViaElectron(etiqueta: EtiquetaData, _printerHint?: stri
         contextIsolation: true
       }
     })
-    
+
     // Cargar desde archivo (más confiable que data: URL)
     await printWindow.loadFile(tempFile)
-    
+
     // Esperar renderizado completo
     await new Promise(resolve => setTimeout(resolve, 1000))
-    
+
     console.log('[qrLabelService] Contenido cargado, mostrando diálogo de impresión...')
-    
+
     // Mostrar diálogo de impresión
     const printResult = await new Promise<boolean>((resolve) => {
       printWindow.webContents.print(
@@ -394,21 +394,21 @@ async function printLabelViaElectron(etiqueta: EtiquetaData, _printerHint?: stri
         }
       )
     })
-    
+
     // Limpiar archivo temporal
     try {
       require('fs').unlinkSync(tempFile)
     } catch (e) {
       // Ignorar error de limpieza
     }
-    
+
     // Cerrar ventana
     setTimeout(() => {
       if (!printWindow.isDestroyed()) {
         printWindow.close()
       }
     }, 500)
-    
+
     if (printResult) {
       const prisma = getPrismaClient()
       await prisma.lote.update({
@@ -419,11 +419,11 @@ async function printLabelViaElectron(etiqueta: EtiquetaData, _printerHint?: stri
     } else {
       return { success: false, error: 'Impresión cancelada' }
     }
-    
+
   } catch (error) {
     console.error('[qrLabelService] Error:', error)
-    return { 
-      success: false, 
+    return {
+      success: false,
       error: error instanceof Error ? error.message : 'Error desconocido'
     }
   }
@@ -434,32 +434,32 @@ async function printLabelViaElectron(etiqueta: EtiquetaData, _printerHint?: stri
  */
 export async function printAllLabels(): Promise<PrintResult> {
   const etiquetas = await getPendingLabels()
-  
+
   if (etiquetas.length === 0) {
     return { success: true, printed: 0, error: 'No hay etiquetas pendientes' }
   }
-  
+
   let printed = 0
   const errors: string[] = []
-  
+
   for (const etiqueta of etiquetas) {
     // Agregar QR data URL si no lo tiene
     if (!etiqueta.qrDataUrl) {
       etiqueta.qrDataUrl = await generateQRDataURL(etiqueta.codigo)
     }
-    
+
     const result = await printLabel(etiqueta)
-    
+
     if (result.success) {
       printed++
     } else {
       errors.push(`${etiqueta.codigo}: ${result.error}`)
     }
-    
+
     // Pequeña pausa entre impresiones
     await new Promise(r => setTimeout(r, 500))
   }
-  
+
   return {
     success: errors.length === 0,
     printed,
@@ -473,7 +473,7 @@ export async function printAllLabels(): Promise<PrintResult> {
  */
 export async function assignLabelCodesToAll(): Promise<{ assigned: number }> {
   const prisma = getPrismaClient()
-  
+
   const lotesWithoutCode = await prisma.lote.findMany({
     where: { codigoEtiqueta: null },
     include: { ingrediente: true },
@@ -482,9 +482,9 @@ export async function assignLabelCodesToAll(): Promise<{ assigned: number }> {
       { createdAt: 'asc' }
     ]
   })
-  
+
   let assigned = 0
-  
+
   for (const lote of lotesWithoutCode) {
     const codigo = await generarCodigoEtiqueta(lote.ingrediente.codigo)
     await prisma.lote.update({
@@ -493,7 +493,7 @@ export async function assignLabelCodesToAll(): Promise<{ assigned: number }> {
     })
     assigned++
   }
-  
+
   return { assigned }
 }
 
@@ -504,5 +504,5 @@ export async function assignLabelCodesToAll(): Promise<{ assigned: number }> {
  */
 export function extractBaseSKU(codigoEtiqueta: string): string {
   // Remover sufijo -## si existe
-  return codigoEtiqueta.replace(/-\d{2}$/, '')
+  return codigoEtiqueta.replace(/[.-]\d{2}$/, '')
 }

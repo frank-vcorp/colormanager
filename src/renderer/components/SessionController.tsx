@@ -35,7 +35,7 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
   const [pesosRegistrados, setPesosRegistrados] = useState<number[]>([]) // Pesos por ingrediente
   const [horaInicio] = useState(new Date().toISOString())
   const [guardando, setGuardando] = useState(false)
-  
+
   // IMPL-20260127-06: Estados de validación SKU
   const [skuVerificado, setSkuVerificado] = useState(false)
   const [inputValue, setInputValue] = useState("")
@@ -81,7 +81,7 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
   // ARCH-20260204-01: Extrae SKU base de código de etiqueta
   // "KT-1400-01" → "KT-1400", "KT-1400" → "KT-1400"
   const extractBaseSKU = (codigo: string): string => {
-    return codigo.replace(/-\d{2}$/, '')
+    return codigo.replace(/[.-]\d{2}$/, '')
   }
 
   // IMPL-20260127-06: Validar SKU al presionar ENTER
@@ -89,7 +89,7 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
   const handleValidarSKU = () => {
     const inputTrimmed = inputValue.trim()
     const skuEsperado = ingredienteActual.codigo.trim().toUpperCase()
-    
+
     // Extraer SKU base del código escaneado (ignora sufijo -## si existe)
     const skuEscaneado = extractBaseSKU(inputTrimmed).toUpperCase()
 
@@ -98,7 +98,7 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
       setSkuVerificado(true)
       setInputValue("")
       // Mostrar código completo escaneado para trazabilidad
-      const msg = inputTrimmed.toUpperCase() !== skuEsperado 
+      const msg = inputTrimmed.toUpperCase() !== skuEsperado
         ? `✓ Bote ${inputTrimmed.toUpperCase()} validado (SKU: ${skuEsperado})`
         : `✓ SKU ${skuEsperado} validado correctamente`
       success(msg, 2000)
@@ -343,18 +343,17 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
             disabled={!enRango || guardando}
             className={`
               px-12 py-6 rounded-lg font-bold text-2xl transition-all
-              ${
-                enRango && !guardando
-                  ? "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-lg hover:shadow-xl"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed opacity-50"
+              ${enRango && !guardando
+                ? "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-lg hover:shadow-xl"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed opacity-50"
               }
             `}
           >
-            {guardando 
+            {guardando
               ? "⏳ Guardando..."
-              : ingredienteActualIdx === ingredientes.length - 1 
-              ? "✓ FINALIZAR MEZCLA" 
-              : "SIGUIENTE INGREDIENTE →"}
+              : ingredienteActualIdx === ingredientes.length - 1
+                ? "✓ FINALIZAR MEZCLA"
+                : "SIGUIENTE INGREDIENTE →"}
           </button>
         )}
 
@@ -362,9 +361,8 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
         {skuVerificado && (
           <div className="w-full max-w-2xl bg-gray-100 border border-gray-400 rounded-lg p-4 text-center">
             <p className="text-sm text-gray-600 font-semibold mb-1">ESTADO DEL PESO</p>
-            <p className={`text-xl font-bold ${
-              enRango ? "text-green-600" : "text-yellow-600"
-            }`}>
+            <p className={`text-xl font-bold ${enRango ? "text-green-600" : "text-yellow-600"
+              }`}>
               {enRango ? "✓ En Rango" : "⏳ Esperando..."}
             </p>
             {estable && (
