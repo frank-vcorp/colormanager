@@ -357,7 +357,7 @@ async function processRows(rows: SicarRow[]): Promise<ImportacionResultado> {
           }
 
           const costo = row.Costo ? parseFloat(String(row.Costo)) : 0
-          const hoy = new Date().toISOString().split('T')[0] // YYYYMMDD format
+          const costo = row.Costo ? parseFloat(String(row.Costo)) : 0
 
           // Intentar actualizar primero
           const existente = await tx.ingrediente.findUnique({
