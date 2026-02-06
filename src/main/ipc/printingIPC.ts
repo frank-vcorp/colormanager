@@ -127,7 +127,10 @@ export function registerPrintingIPC(mainWindow?: BrowserWindow) {
                 copies: options.copies || 1,
                 margins: {
                     marginType: 'none'
-                }
+                },
+                // FIX-20260206-05: Forzar tamaño de papel en micras (50mm x 30mm)
+                // Electron usa micras para tamaños personalizados: 1mm = 1000 micras
+                pageSize: { width: 50000, height: 30000 }
             }
 
             console.log("[PrintingIPC] Enviando trabajo a driver...")
