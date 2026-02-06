@@ -279,8 +279,8 @@ function AppMain() {
 
               {/* Estado de báscula compacto */}
               <div className={`mb-6 px-4 py-2 rounded-full text-xs font-medium ${basculaConectada
-                  ? "bg-green-900/30 text-green-400 border border-green-700/50"
-                  : "bg-red-900/30 text-red-400 border border-red-700/50"
+                ? "bg-green-900/30 text-green-400 border border-green-700/50"
+                : "bg-red-900/30 text-red-400 border border-red-700/50"
                 }`}>
                 {basculaConectada ? "● Báscula conectada" : "○ Báscula desconectada"}
               </div>
@@ -312,6 +312,25 @@ function AppMain() {
 }
 
 export default function App() {
+  // ARCH-20260206-01: Router simple para ventana de impresión oculta
+  const [isPrintWindow, setIsPrintWindow] = useState(window.location.hash.startsWith("#/print-label"))
+
+  useEffect(() => {
+    // Escuchar cambios de hash por si acaso (aunque en ventana oculta es estático)
+    const checkHash = () => setIsPrintWindow(window.location.hash.startsWith("#/print-label"))
+    window.addEventListener("hashchange", checkHash)
+    return () => window.removeEventListener("hashchange", checkHash)
+  }, [])
+
+  // Si es ventana de impresión, renderizar SOLO la vista de etiqueta (sin providers ni CSS global de app)
+  if (isPrintWindow) {
+    // Importación dinámica para evitar cargar todo el bundle si es posible (splitting)
+    // Pero por simplicidad ahora usamos require o el componente directo si ya está importado.
+    // Como App.tsx ya carga todo, renderizamos directo.
+    const PrintLabelView = require("./components/PrintLabelView").default
+    return <PrintLabelView />
+  }
+
   return (
     <ModalProvider>
       <ToastProvider>

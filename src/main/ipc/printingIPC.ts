@@ -49,23 +49,79 @@ export function registerPrintingIPC(mainWindow?: BrowserWindow) {
      * Se asume que el contenido a imprimir ya está renderizado o se imprime la ventana actual.
      * Para etiquetas, lo ideal es imprimir en modo "silencioso".
      */
+    /**
+     * PRINT_LABEL: Imprimir usando una ventana oculta dedicada
+     * Crea una instancia BrowserWindow invisible, carga la vista de etiqueta y ejecuta print.
+     */
     ipcMain.handle(IPCInvokeChannels.PRINT_LABEL, async (_, options: PrintOptions) => {
+        let printWindow: BrowserWindow | null = null
+
         try {
-            if (!mainWindow || mainWindow.isDestroyed()) {
-                throw new Error("Ventana principal no disponible")
+            console.log(`[PrintingIPC] Solicitud de impresión dedicada. Devi: ${options.printerName || 'Default'}`)
+
+            // 1. Crear ventana oculta de tamaño exacto
+            printWindow = new BrowserWindow({
+                show: false, // IMPORTANTE: Invisible
+                width: 250,  // ~66mm
+                height: 150, // ~40mm
+                webPreferences: {
+                    nodeIntegration: true, // Necesario si usa imports
+                    contextIsolation: false
+                }
+            })
+
+            // 2. Construir URL con parámetros
+            // BASE_URL depende de dev/prod. Si mainWindow existe, usamos su base.
+            let baseURL = ""
+            if (mainWindow) {
+                const mainURL = mainWindow.webContents.getURL()
+                // Extraer base (file://.../index.html o http://localhost:5173)
+                // Si es file://, termina en index.html. Si es localhost, termina en /.
+                if (mainURL.includes("index.html")) {
+                    baseURL = mainURL.split("#")[0] // file://.../index.html
+                } else {
+                    baseURL = mainURL.split("#")[0].replace(/\/$/, "") // http://localhost:5173
+                }
+            } else {
+                // Fallback si no hay mainWindow (raro)
+                throw new Error("No se pudo determinar Base URL para ventana de impresión")
             }
 
-            console.log(`[PrintingIPC] Solicitud de impresión. Device: ${options.printerName || 'Default'}, Silent: ${options.silent}`)
+            const params = new URLSearchParams()
+            if (options.data) {
+                params.set("sku", options.data.sku || "")
+                params.set("nombre", options.data.nombre || "")
+                if (options.data.lote) {
+                    params.set("lote", options.data.lote.numero)
+                    if (options.data.lote.fecha) params.set("fechaLote", options.data.lote.fecha)
+                }
+            }
+            // Si data no viene en options, se asume que usa props pasados (pero IPC tiene limitaciones)
+            // Para asegurar, deberíamos pasar los datos explícitamente en `options.extraData` si el type lo permite
+            // Ojo: PrintOptions no tiene campo 'data' oficial en types.ts, lo agregamos dinámicamente o casteamos.
+            // WORKAROUND: Asumimos que `options` trae propiedades extra si usamos (options as any)
+            const extraData = (options as any).data || (options as any).product
+            if (extraData) {
+                params.set("sku", extraData.sku || "")
+                params.set("nombre", extraData.nombre || "")
+            }
+            if ((options as any).lote) {
+                params.set("lote", (options as any).lote.numero)
+            }
 
-            const contents = mainWindow.webContents
+            const printUrl = `${baseURL}#/print-label?${params.toString()}`
+            console.log(`[PrintingIPC] Cargando ventana oculta: ${printUrl}`)
 
-            // Configuración de impresión
+            await printWindow.loadURL(printUrl)
+
+            // 3. Imprimir
+            const contents = printWindow.webContents
+
             const printSettings: Electron.WebContentsPrintOptions = {
-                silent: options.silent ?? true, // Por defecto silencioso si no se especifica
+                silent: options.silent ?? true,
                 printBackground: true,
-                deviceName: options.printerName, // Si es undefined, usa default
+                deviceName: options.printerName,
                 copies: options.copies || 1,
-                // Márgenes mínimos para etiquetas
                 margins: {
                     marginType: 'custom',
                     top: 0,
@@ -75,23 +131,32 @@ export function registerPrintingIPC(mainWindow?: BrowserWindow) {
                 }
             }
 
-            // Ejecutar impresión
+            console.log("[PrintingIPC] Enviando trabajo a driver...")
+
             await new Promise<void>((resolve, reject) => {
-                contents.print(printSettings, (success, errorType) => {
-                    if (!success) {
-                        console.error(`[PrintingIPC] Fallo de impresión: ${errorType}`)
-                        reject(new Error(errorType || "Fallo desconocido de impresión"))
-                    } else {
-                        console.log("[PrintingIPC] Impresión enviada correctamente")
-                        resolve()
-                    }
-                })
+                // Esperar un poco a que renderice React
+                setTimeout(() => {
+                    contents.print(printSettings, (success, errorType) => {
+                        if (!success) {
+                            console.error(`[PrintingIPC] Fallo de impresión: ${errorType}`)
+                            reject(new Error(errorType || "Fallo desconocido"))
+                        } else {
+                            console.log("[PrintingIPC] Éxito enviando a cola")
+                            resolve()
+                        }
+                    })
+                }, 500) // 500ms buffer para renderizado de barcode
             })
 
             return { success: true }
         } catch (error) {
             console.error("[PrintingIPC] Error imprimiendo:", error)
             return { success: false, error: String(error) }
+        } finally {
+            // 4. Limpieza
+            if (printWindow && !printWindow.isDestroyed()) {
+                printWindow.close()
+            }
         }
     })
 }

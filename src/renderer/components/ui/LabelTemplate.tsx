@@ -190,48 +190,18 @@ export const PrintPreview: React.FC<Props> = (props) => {
             margin: 0;
           }
           
-          /* ESTRATEGIA VISIBILITY:
-             No usar display: none en body/#root porque React desmonta/oculta los hijos.
-             Usar visibility: hidden oculta visualmente pero mantiene el árbol DOM activo.
-          */
           body {
-            visibility: hidden;
             background-color: white;
-          }
-          
-          /* Asegurar que el contenedor de impresión sea visible y se posicione absoluto */
-          .print-container {
-            visibility: visible !important;
-            display: flex !important;
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
             margin: 0 !important;
             padding: 0 !important;
-            width: 50mm !important;
-            height: 30mm !important;
-            z-index: 99999 !important;
-            background-color: white !important;
-            /* Resetear cualquier transformación o flex del padre */
-            transform: none !important;
           }
           
-          /* Todo lo dentro del contenedor debe ser visible */
-          .print-container * {
-            visibility: visible !important;
-          }
-
-          /* Forzar contraste máximo y negro puro */
+          /* Forzar contraste máximo y negro puro para códigos de barras nítidos */
           * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
             color-adjust: exact !important;
           }
-        }
-        
-        /* Ocultar en pantalla: usar display none aquí es seguro */
-        .hidden {
-           display: none !important;
         }
       `}</style>
     </>
