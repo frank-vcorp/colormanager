@@ -126,11 +126,7 @@ export function registerPrintingIPC(mainWindow?: BrowserWindow) {
                 deviceName: options.printerName,
                 copies: options.copies || 1,
                 margins: {
-                    marginType: 'custom',
-                    top: 0,
-                    bottom: 0,
-                    left: 0,
-                    right: 0
+                    marginType: 'none'
                 }
             }
 

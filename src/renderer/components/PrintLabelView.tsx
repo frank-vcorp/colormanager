@@ -51,13 +51,19 @@ export default function PrintLabelView() {
          Aquí lo renderizamos directamente.
          Ya no necesitamos 'isOpen' ni callbacks porque esta ventana ES la vista previa/final.
       */}
-            <LabelTemplate
-                product={data.product}
-                lote={data.lote}
-                isOpen={true}
-                onClose={() => { }}
-                onPrint={() => { }}
-            />
+            {/* 
+                Forzamos posicionamiento absoluto en top-left para garantizar que 
+                impresoras pequeñas (Niimbot) no centren el contenido si el papel es más grande.
+            */}
+            <div style={{ position: 'absolute', top: 0, left: 0, width: '50mm', height: '30mm' }}>
+                <LabelTemplate
+                    product={data.product}
+                    lote={data.lote}
+                    isOpen={true}
+                    onClose={() => { }}
+                    onPrint={() => { }}
+                />
+            </div>
 
             {/* Estilos globales forzados para esta vista */}
             <style>{`
