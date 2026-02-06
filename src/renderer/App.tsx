@@ -97,6 +97,18 @@ function AppMain() {
       console.error("[App] Error del sistema:", error)
       const message = typeof error === "string" ? error : error.message || "Error desconocido"
       setError(message)
+
+      // FIX-20260206-05: Auto-ocultar errores de conexión de báscula después de 5s
+      // para evitar que queden "pegados" si la reconexión es interna
+      if (message.toLowerCase().includes("báscula") || message.includes("HID")) {
+        setTimeout(() => {
+          setError(current => {
+            // Solo limpiar si sigue siendo el mismo error de conexión
+            if (current === message) return null
+            return current
+          })
+        }, 5000)
+      }
     })
   }, [])
 
@@ -278,9 +290,9 @@ function AppMain() {
               )}
 
               {/* Estado de báscula compacto */}
-              <div className={`mb-6 px-4 py-2 rounded-full text-xs font-medium ${basculaConectada
+              <div className={`mb-6 px-4 py-2 rounded-full text-xs font-medium transition-colors duration-500 ${basculaConectada
                 ? "bg-green-900/30 text-green-400 border border-green-700/50"
-                : "bg-red-900/30 text-red-400 border border-red-700/50"
+                : "bg-amber-900/30 text-amber-400 border border-amber-700/50 animate-pulse"
                 }`}>
                 {basculaConectada ? "● Báscula conectada" : "○ Báscula desconectada"}
               </div>

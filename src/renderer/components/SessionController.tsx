@@ -36,7 +36,7 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
   const [horaInicio] = useState(new Date().toISOString())
   const [guardando, setGuardando] = useState(false)
 
-  // IMPL-20260127-06: Estados de validación SKU
+  const [fase, setFase] = useState<"mezcla" | "resumen" | "ajuste">("mezcla")
   const [skuVerificado, setSkuVerificado] = useState(false)
   const [inputValue, setInputValue] = useState("")
   const inputRef = useRef<HTMLInputElement>(null)
@@ -135,10 +135,41 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
         await window.colorManager.tara()
       }
     } else {
-      // Fin de la mezcla: guardar registro
-      console.log("[SessionController] Finalizando mezcla...")
-      await guardarMezcla(nuevosPesos)
+      // Fin de los ingredientes: Ir a Resumen
+      console.log("[SessionController] Mezcla completada, yendo a resumen...")
+      setFase("resumen")
     }
+  }
+
+  // Manejador para iniciar ajuste manual
+  const handleIniciarAjuste = async () => {
+    setPesoAjusteInicial(peso) // Guardar peso actual como base (debería ser el total acumulado si no se taró)
+    // O mejor, hacemos TARA para empezar a medir solo lo agregado
+    if (window.colorManager?.tara) {
+      await window.colorManager.tara()
+    }
+    setPesoAjusteAgregado(0)
+    setFase("ajuste")
+  }
+
+  // Manejador para finalizar desde el resumen o ajuste
+  const handleFinalizarTotal = async () => {
+    // Calcular peso final real incluyendo ajustes
+    // El array pesosRegistrados tiene los componentes. 
+    // Si hubo ajuste, deberíamos sumarlo o registrarlo como un ingrediente extra "Ajuste Manual"?
+    // Por simplicidad para el MVP, guardamos los pesos registrados y si hay ajuste, lo notamos en el log o sumamos al total.
+
+    // Si estamos en ajuste, el peso "extra" es lo que marca la báscula (asumiendo tara al iniciar ajuste)
+    let pesosFinales = [...pesosRegistrados]
+
+    if (fase === 'ajuste') {
+      // Si se hizo ajuste, agregamos un "ingrediente" virtual o simplemente actualizamos el peso total en el registro
+      // Para mantener la estructura de ingredientes alineada con la receta, NO agregamos al array de ingredientes pesados 
+      // (que mapean 1:1 con la receta), pero el RegistroMezcla tiene pesoFinal.
+      // Podríamos agregar un campo "pesoAjuste" al registro en el futuro.
+    }
+
+    await guardarMezcla(pesosFinales)
   }
 
   // Guardar mezcla en base de datos
@@ -152,9 +183,20 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
       }
 
       const ahora = new Date()
-      const pesoFinal = pesos.reduce((a, b) => a + b, 0)
+      // Peso de ingredientes (receta base)
+      const pesoBase = pesos.reduce((a, b) => a + b, 0)
       const tolerancia = 0.5 // gramos
-      const diferencia = pesoFinal - pesoTotal
+
+      // Peso final real sumando los ingredientes pesados + ajuste manual si lo hubo
+      let pesoFinalReal = pesoBase
+
+      if (fase === 'ajuste') {
+        // En fase ajuste hicimos TARA, así que 'peso' es lo agregado extra
+        // Usamos Math.max(0, peso) para evitar valores negativos si la balanza fluctúa
+        pesoFinalReal += Math.max(0, peso)
+      }
+
+      const diferencia = pesoFinalReal - pesoTotal
       const estado = Math.abs(diferencia) <= tolerancia ? "perfecto" : "desviado"
 
       const registro: RegistroMezcla = {
@@ -165,7 +207,7 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
         horaInicio,
         horaFin: ahora.toISOString(),
         pesoTotal,
-        pesoFinal,
+        pesoFinal: pesoFinalReal,
         ingredientes: ingredientes.map((ing, idx) => ({
           codigo: ing.codigo,
           pesoTarget: ing.pesoTarget,
@@ -195,6 +237,95 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
   const minTarget = ingredienteActual.pesoTarget - tolerancia
   const maxTarget = ingredienteActual.pesoTarget + tolerancia
   const enRango = peso >= minTarget && peso <= maxTarget
+
+  // Renderizado condicional según fase
+  if (fase === "resumen") {
+    const pesoFinalCalculado = pesosRegistrados.reduce((a, b) => a + b, 0)
+    const dif = pesoFinalCalculado - pesoTotal
+    const esExacto = Math.abs(dif) <= 0.5
+
+    return (
+      <div className="min-h-screen bg-cm-bg flex flex-col">
+        <HeaderBar basculaConectada={basculaConectada} />
+        <main className="flex-1 flex flex-col items-center justify-center gap-8 p-8">
+          <div className="text-center">
+            <h2 className="text-4xl font-bold text-gray-800 mb-2">¡Mezcla Completada!</h2>
+            <p className="text-gray-600">Receta #{receta.numero}</p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-6 w-full max-w-4xl">
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 text-center">
+              <p className="text-sm text-gray-500 uppercase font-bold tracking-wider">Meta</p>
+              <p className="text-4xl font-black text-blue-600">{pesoTotal.toFixed(1)}g</p>
+            </div>
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 text-center">
+              <p className="text-sm text-gray-500 uppercase font-bold tracking-wider">Obtenido</p>
+              <p className={`text-4xl font-black ${esExacto ? 'text-green-600' : 'text-yellow-600'}`}>
+                {pesoFinalCalculado.toFixed(1)}g
+              </p>
+            </div>
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 text-center">
+              <p className="text-sm text-gray-500 uppercase font-bold tracking-wider">Diferencia</p>
+              <p className={`text-4xl font-black ${esExacto ? 'text-green-600' : 'text-red-500'}`}>
+                {dif > 0 ? '+' : ''}{dif.toFixed(1)}g
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-6 mt-8">
+            <button
+              onClick={handleIniciarAjuste}
+              className="px-8 py-6 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 border-2 border-yellow-400 rounded-xl font-bold text-xl flex flex-col items-center gap-2 transition-all"
+            >
+              <span>🧪 Ajustar Manualmente</span>
+              <span className="text-sm font-normal opacity-75">Agregar más tinte/base</span>
+            </button>
+
+            <button
+              onClick={handleFinalizarTotal}
+              className="px-12 py-6 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-2xl shadow-lg hover:shadow-xl transition-all flex flex-col items-center gap-2"
+            >
+              <span>✅ Finalizar y Guardar</span>
+              <span className="text-sm font-normal opacity-90">Cerrar sesión de mezcla</span>
+            </button>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  if (fase === "ajuste") {
+    return (
+      <div className="min-h-screen bg-cm-bg flex flex-col border-8 border-yellow-400">
+        <HeaderBar basculaConectada={basculaConectada} />
+        <div className="bg-yellow-400 text-yellow-900 px-4 py-2 font-bold text-center">
+          ⚠️ MODO AJUSTE MANUAL - Precaución
+        </div>
+        <main className="flex-1 flex flex-col items-center justify-center gap-8 p-8">
+          <div className="text-center">
+            <h2 className="text-6xl font-black text-gray-900 mb-2">
+              +{peso.toFixed(1)}g
+            </h2>
+            <p className="text-xl text-gray-600">Agregado extra</p>
+          </div>
+
+          <div className="w-full max-w-2xl bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+            <p className="text-gray-700 mb-4 text-center">
+              Agrega manualmente los tintes necesarios. El peso mostrado se sumará al total de la mezcla.
+            </p>
+            <div className="flex justify-center">
+              <button
+                onClick={handleFinalizarTotal}
+                className="w-full px-8 py-4 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-xl shadow-lg transition-all"
+              >
+                Guardar Ajuste (Total: {(pesosRegistrados.reduce((a, b) => a + b, 0) + peso).toFixed(1)}g)
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-cm-bg flex flex-col">
@@ -371,13 +502,15 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
           </div>
         )}
 
-        {/* Botón Cancelar */}
-        <button
-          onClick={onCancel || onFinish}
-          className="px-8 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
-        >
-          Cancelar Mezcla
-        </button>
+        {/* Botón Cancelar - FIX UI */}
+        <div className="mt-auto w-full max-w-2xl">
+          <button
+            onClick={onCancel || onFinish}
+            className="w-full py-4 bg-red-100 hover:bg-red-200 text-red-700 border-2 border-red-300 rounded-lg font-bold text-lg transition-colors flex items-center justify-center gap-2"
+          >
+            <span>✕</span> Cancelar Mezcla
+          </button>
+        </div>
       </main>
 
       {/* Footer */}
