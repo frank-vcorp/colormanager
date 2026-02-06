@@ -60,6 +60,8 @@ model Mezcla {
   pesoTotal     Float
   pesoActual    Float    @default(0)
   operadorId    String?
+  cliente       String?  // IMPL-20260206-01: Protocolo de Cierre
+  vehiculo      String?  // IMPL-20260206-01: Protocolo de Cierre
   notas         String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime

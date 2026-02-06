@@ -7,7 +7,7 @@
  * @see /src/shared/types.ts para interfaces compartidas
  */
 
-import { PesoEvent, RecetaSayer, RegistroMezcla, Producto, ImportacionResultado, SyncResponse, AjusteStockParams, AjusteStockResponse, AuthResponse, AppConfig, PrinterStatus, PrintJob, PrinterInfo, PrintOptions } from "@shared/types"
+import { PesoEvent, RecetaSayer, RegistroMezcla, Producto, ImportacionResultado, SyncResponse, AjusteStockParams, AjusteStockResponse, AuthResponse, AppConfig, PrinterStatus, PrintJob, PrinterInfo, PrintOptions, MixLabelData } from "@shared/types"
 
 declare global {
   interface Window {
@@ -48,6 +48,7 @@ declare global {
       // FIX-20260205-01: Métodos de impresión
       getPrinters: () => Promise<{ success: boolean; data?: PrinterInfo[]; error?: string }>
       printLabel: (options: PrintOptions) => Promise<{ success: boolean; error?: string }>
+      printMixLabel: (data: MixLabelData) => Promise<{ success: boolean; printed?: number; error?: string }>
 
       // IMPL-20260204-04: Instalar impresora virtual manualmente
       instalarImpresora: () => Promise<{ success: boolean; error?: string; output?: string }>

@@ -14,6 +14,7 @@ import { RecetaSayer, IngredienteReceta, RegistroMezcla } from "@shared/types"
 import { useBascula } from "../hooks/useBascula"
 import { useToast } from "../hooks/useToast"
 import SmartScale from "./SmartScale"
+import { User, Car, FileText, Save, Check, Printer } from "lucide-react"
 import HeaderBar from "./HeaderBar"
 
 interface SessionControllerProps {
@@ -36,9 +37,15 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
   const [horaInicio] = useState(new Date().toISOString())
   const [guardando, setGuardando] = useState(false)
 
-  const [fase, setFase] = useState<"mezcla" | "resumen" | "ajuste">("mezcla")
+  const [fase, setFase] = useState<"mezcla" | "resumen" | "ajuste" | "cierre">("mezcla")
   const [skuVerificado, setSkuVerificado] = useState(false)
   const [inputValue, setInputValue] = useState("")
+
+  // Metadatos de Cierre (IMPL-20260206-01)
+  const [cliente, setCliente] = useState("")
+  const [vehiculo, setVehiculo] = useState("")
+  const [notas, setNotas] = useState("")
+  const [guardarReceta, setGuardarReceta] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Estado para ajuste manual inteligente (REQ-20260206-SmartAdjust)
@@ -196,12 +203,13 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
     setAjusteSkuActual("")
   }
 
-  // Manejador para finalizar desde el resumen o ajuste
-  const handleFinalizarTotal = async () => {
-    await guardarMezcla(pesosRegistrados)
+  // Manejador para ir a Cierre desde Resumen
+  const irACierre = () => {
+    setFase("cierre")
   }
 
   // Guardar mezcla en base de datos
+  // Ahora se llama desde la fase de cierre
   const guardarMezcla = async (pesosReceta: number[]) => {
     try {
       setGuardando(true)
@@ -254,11 +262,33 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
         estado,
         diferencia,
         tolerancia,
+        // Nuevos campos de cierre
+        cliente: cliente || null,
+        vehiculo: vehiculo || null,
+        notas: notas || null,
+        // TODO: Si guardarReceta es true, llamar endpoint adicional
       }
 
       await window.colorManager.guardarMezcla(registro)
       console.log("[SessionController] Mezcla guardada exitosamente:", registro)
       success("✓ Mezcla guardada correctamente", 3000)
+
+      // IMPL-20260206-01: Imprimir Etiqueta de Mezcla
+      if (window.colorManager?.printMixLabel) {
+        try {
+          success("🖨️ Imprimiendo etiqueta...", 2000)
+          await window.colorManager.printMixLabel({
+            id: registro.id,
+            nombre: registro.recetaNombre,
+            cliente: registro.cliente,
+            vehiculo: registro.vehiculo,
+            fecha: new Date().toLocaleDateString()
+          })
+        } catch (err) {
+          console.error("Error imprimiendo etiqueta:", err)
+          showError("Error imprimiendo etiqueta", 3000)
+        }
+      }
       onFinish()
     } catch (error) {
       console.error("[SessionController] Error guardando mezcla:", error)
@@ -320,11 +350,97 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
             </button>
 
             <button
-              onClick={handleFinalizarTotal}
-              className="px-12 py-6 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-2xl shadow-lg hover:shadow-xl transition-all flex flex-col items-center gap-2"
+              onClick={irACierre}
+              className="px-12 py-6 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-2xl shadow-lg hover:shadow-xl transition-all flex flex-col items-center gap-2"
             >
-              <span>✅ Finalizar y Guardar</span>
-              <span className="text-sm font-normal opacity-90">Cerrar sesión de mezcla</span>
+              <span>🏁 Continuar al Cierre</span>
+              <span className="text-sm font-normal opacity-90">Ingresar datos finales</span>
+            </button>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  // IMPL-20260206-01: Fase de Cierre (Formulario)
+  if (fase === "cierre") {
+    const pesoFinalCalculado = pesosRegistrados.reduce((a, b) => a + b, 0) + ajustes.reduce((sum, aj) => sum + aj.peso, 0)
+
+    return (
+      <div className="min-h-screen bg-cm-bg flex flex-col">
+        <HeaderBar basculaConectada={basculaConectada} />
+        <main className="flex-1 flex flex-col items-center justify-center p-8 gap-6">
+          <div className="text-center mb-4">
+            <h2 className="text-3xl font-bold text-gray-800">Cierre de Mezcla</h2>
+            <p className="text-gray-600 text-lg">
+              Final: <span className="font-bold text-blue-600">{pesoFinalCalculado.toFixed(1)}g</span> - {receta.meta.carMaker} {receta.meta.colorCode}
+            </p>
+          </div>
+
+          <div className="w-full max-w-lg bg-white p-8 rounded-xl shadow-lg border border-gray-200 space-y-6">
+            {/* Cliente */}
+            <div>
+              <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
+                <User size={18} /> Cliente / Taller
+              </label>
+              <input
+                type="text"
+                value={cliente}
+                onChange={(e) => setCliente(e.target.value)}
+                placeholder="Ej. Juan Pérez / Taller Central"
+                className="w-full p-4 text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-0"
+              />
+            </div>
+
+            {/* Vehículo */}
+            <div>
+              <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
+                <Car size={18} /> Vehículo / Placa
+              </label>
+              <input
+                type="text"
+                value={vehiculo}
+                onChange={(e) => setVehiculo(e.target.value)}
+                placeholder="Ej. Nissan Tsuru 2010"
+                className="w-full p-4 text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-0"
+              />
+            </div>
+
+            {/* Checkbox Receta (Placeholder) */}
+            <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <input
+                type="checkbox"
+                id="saveRecipe"
+                checked={guardarReceta}
+                onChange={(e) => setGuardarReceta(e.target.checked)}
+                className="w-6 h-6 text-blue-600 rounded focus:ring-blue-500"
+              />
+              <label htmlFor="saveRecipe" className="text-gray-700 font-medium cursor-pointer select-none">
+                Guardar como receta repetible
+              </label>
+            </div>
+          </div>
+
+          <div className="flex gap-4 w-full max-w-lg">
+            <button
+              onClick={() => setFase("resumen")}
+              className="flex-1 py-4 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-xl transition-colors"
+            >
+              Atrás
+            </button>
+            <button
+              onClick={() => guardarMezcla(pesosRegistrados)}
+              disabled={guardando}
+              className="flex-[2] py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg transition-colors flex items-center justify-center gap-2 text-xl"
+            >
+              {guardando ? (
+                <span>⏳ Guardando...</span>
+              ) : (
+                <>
+                  <Printer size={24} />
+                  <span>Finalizar y Etiquetar</span>
+                </>
+              )}
             </button>
           </div>
         </main>
@@ -345,7 +461,7 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
 
               <div className="mt-8 border-t border-gray-100 pt-4">
                 <button
-                  onClick={handleFinalizarTotal}
+                  onClick={() => guardarMezcla(pesosRegistrados)}
                   className="w-full py-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-lg transition-colors"
                 >
                   ✅ Terminar Ajustes y Guardar (Total: {totalGlobal.toFixed(1)}g)

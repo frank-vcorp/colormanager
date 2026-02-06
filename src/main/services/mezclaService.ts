@@ -20,17 +20,18 @@ export async function guardarMezcla(
   registro: RegistroMezcla
 ): Promise<RegistroMezcla> {
   const prisma = getPrismaClient()
-  
+
   const id = registro.id || randomUUID()
-  
+
   try {
     await prisma.$executeRawUnsafe(`
       INSERT INTO "Mezcla" (
         "id", "recetaId", "recetaNombre", "colorCode", "fecha", 
         "horaInicio", "horaFin", "pesoTotal", "pesoFinal", 
         "ingredientes", "estado", "diferencia", "tolerancia", 
-        "notas", "tipoMezcla", "operadorId", "operadorNombre"
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        "notas", "tipoMezcla", "operadorId", "operadorNombre",
+        "cliente", "vehiculo"
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
       id,
       registro.recetaId,
@@ -48,11 +49,13 @@ export async function guardarMezcla(
       registro.notas || null,
       registro.tipoMezcla || "NUEVA",
       registro.operadorId || null,
-      registro.operadorNombre || null
+      registro.operadorNombre || null,
+      registro.cliente || null,
+      registro.vehiculo || null
     )
-    
+
     console.log(`[MezclaService] ✅ Mezcla guardada: ${id}`)
-    
+
     return { ...registro, id }
   } catch (error) {
     console.error("[MezclaService] ❌ Error al guardar mezcla:", error)
@@ -65,12 +68,12 @@ export async function guardarMezcla(
  */
 export async function obtenerHistorial(): Promise<RegistroMezcla[]> {
   const prisma = getPrismaClient()
-  
+
   try {
     const mezclas = await prisma.$queryRawUnsafe(`
       SELECT * FROM "Mezcla" ORDER BY "createdAt" DESC LIMIT 500
     `) as any[]
-    
+
     return mezclas.map(parseMezclaRow)
   } catch (error) {
     console.error("[MezclaService] ❌ Error al obtener historial:", error)
@@ -87,15 +90,15 @@ export async function obtenerMisMezclas(
   diasAtras: number = 7
 ): Promise<RegistroMezcla[]> {
   const prisma = getPrismaClient()
-  
+
   try {
     // Calcular fecha límite (hace X días)
     const fechaLimite = new Date()
     fechaLimite.setDate(fechaLimite.getDate() - diasAtras)
     const fechaLimiteStr = fechaLimite.toISOString().split('T')[0]
-    
+
     let mezclas: any[]
-    
+
     if (operadorId) {
       // Filtrar por operador y fecha
       mezclas = await prisma.$queryRawUnsafe(`
@@ -113,7 +116,7 @@ export async function obtenerMisMezclas(
         LIMIT 100
       `, fechaLimiteStr) as any[]
     }
-    
+
     return mezclas.map(parseMezclaRow)
   } catch (error) {
     console.error("[MezclaService] ❌ Error al obtener mis mezclas:", error)
@@ -126,14 +129,14 @@ export async function obtenerMisMezclas(
  */
 export async function obtenerMezclaPorId(id: string): Promise<RegistroMezcla | null> {
   const prisma = getPrismaClient()
-  
+
   try {
     const mezclas = await prisma.$queryRawUnsafe(`
       SELECT * FROM "Mezcla" WHERE "id" = ? LIMIT 1
     `, id) as any[]
-    
+
     if (mezclas.length === 0) return null
-    
+
     return parseMezclaRow(mezclas[0])
   } catch (error) {
     console.error("[MezclaService] ❌ Error al obtener mezcla:", error)
@@ -155,8 +158,8 @@ function parseMezclaRow(row: any): RegistroMezcla {
     horaFin: row.horaFin,
     pesoTotal: row.pesoTotal,
     pesoFinal: row.pesoFinal,
-    ingredientes: typeof row.ingredientes === 'string' 
-      ? JSON.parse(row.ingredientes) 
+    ingredientes: typeof row.ingredientes === 'string'
+      ? JSON.parse(row.ingredientes)
       : row.ingredientes,
     estado: row.estado,
     diferencia: row.diferencia,
@@ -165,6 +168,8 @@ function parseMezclaRow(row: any): RegistroMezcla {
     tipoMezcla: row.tipoMezcla as TipoMezcla,
     operadorId: row.operadorId,
     operadorNombre: row.operadorNombre,
+    cliente: row.cliente,
+    vehiculo: row.vehiculo
   }
 }
 

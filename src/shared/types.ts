@@ -104,11 +104,13 @@ export interface RegistroMezcla {
   estado: "perfecto" | "desviado" | "cancelado"
   diferencia: number // pesoFinal - pesoTotal
   tolerancia: number
-  notas?: string
+  notas?: string | null
   // Nuevos campos ARCH-20260130-01
   tipoMezcla?: TipoMezcla
-  operadorId?: number
-  operadorNombre?: string
+  operadorId?: number | null
+  operadorNombre?: string | null
+  cliente?: string | null // IMPL-20260206-01
+  vehiculo?: string | null // IMPL-20260206-01
   colorCode?: string
 }
 
@@ -183,6 +185,7 @@ export const IPCInvokeChannels = {
   // FIX-20260205-01: Canales de Impresión Física
   GET_PRINTERS: "printer:get-list",
   PRINT_LABEL: "printer:print-label",
+  PRINT_MIX_LABEL: "printer:print-mix-label", // IMPL-20260206-01
 
   // IMPL-20260204-04: Instalar impresora virtual desde UI
   INSTALL_PRINTER: "printer:install",
@@ -288,4 +291,14 @@ export interface PrintOptions {
     quantity?: number
     printSerials?: boolean
   }
+}
+
+// IMPL-20260206-01: Datos para etiqueta de mezcla
+export interface MixLabelData {
+  id: string           // "MZC-123456"
+  nombre: string       // "Rojo Taxi 05"
+  cliente?: string | null
+  vehiculo?: string | null
+  fecha: string        // "06/02/2026"
+  qrDataUrl?: string
 }

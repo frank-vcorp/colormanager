@@ -154,6 +154,8 @@ exports.Prisma.MezclaScalarFieldEnum = {
   pesoTotal: 'pesoTotal',
   pesoActual: 'pesoActual',
   operadorId: 'operadorId',
+  cliente: 'cliente',
+  vehiculo: 'vehiculo',
   notas: 'notas',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

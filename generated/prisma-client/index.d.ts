@@ -3314,6 +3314,8 @@ export namespace Prisma {
     pesoTotal: number | null
     pesoActual: number | null
     operadorId: string | null
+    cliente: string | null
+    vehiculo: string | null
     notas: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -3329,6 +3331,8 @@ export namespace Prisma {
     pesoTotal: number | null
     pesoActual: number | null
     operadorId: string | null
+    cliente: string | null
+    vehiculo: string | null
     notas: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -3344,6 +3348,8 @@ export namespace Prisma {
     pesoTotal: number
     pesoActual: number
     operadorId: number
+    cliente: number
+    vehiculo: number
     notas: number
     createdAt: number
     updatedAt: number
@@ -3371,6 +3377,8 @@ export namespace Prisma {
     pesoTotal?: true
     pesoActual?: true
     operadorId?: true
+    cliente?: true
+    vehiculo?: true
     notas?: true
     createdAt?: true
     updatedAt?: true
@@ -3386,6 +3394,8 @@ export namespace Prisma {
     pesoTotal?: true
     pesoActual?: true
     operadorId?: true
+    cliente?: true
+    vehiculo?: true
     notas?: true
     createdAt?: true
     updatedAt?: true
@@ -3401,6 +3411,8 @@ export namespace Prisma {
     pesoTotal?: true
     pesoActual?: true
     operadorId?: true
+    cliente?: true
+    vehiculo?: true
     notas?: true
     createdAt?: true
     updatedAt?: true
@@ -3503,6 +3515,8 @@ export namespace Prisma {
     pesoTotal: number
     pesoActual: number
     operadorId: string | null
+    cliente: string | null
+    vehiculo: string | null
     notas: string | null
     createdAt: Date
     updatedAt: Date
@@ -3537,6 +3551,8 @@ export namespace Prisma {
     pesoTotal?: boolean
     pesoActual?: boolean
     operadorId?: boolean
+    cliente?: boolean
+    vehiculo?: boolean
     notas?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -3552,6 +3568,8 @@ export namespace Prisma {
     pesoTotal?: boolean
     pesoActual?: boolean
     operadorId?: boolean
+    cliente?: boolean
+    vehiculo?: boolean
     notas?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -3567,6 +3585,8 @@ export namespace Prisma {
     pesoTotal?: boolean
     pesoActual?: boolean
     operadorId?: boolean
+    cliente?: boolean
+    vehiculo?: boolean
     notas?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -3586,6 +3606,8 @@ export namespace Prisma {
       pesoTotal: number
       pesoActual: number
       operadorId: string | null
+      cliente: string | null
+      vehiculo: string | null
       notas: string | null
       createdAt: Date
       updatedAt: Date
@@ -3991,6 +4013,8 @@ export namespace Prisma {
     readonly pesoTotal: FieldRef<"Mezcla", 'Float'>
     readonly pesoActual: FieldRef<"Mezcla", 'Float'>
     readonly operadorId: FieldRef<"Mezcla", 'String'>
+    readonly cliente: FieldRef<"Mezcla", 'String'>
+    readonly vehiculo: FieldRef<"Mezcla", 'String'>
     readonly notas: FieldRef<"Mezcla", 'String'>
     readonly createdAt: FieldRef<"Mezcla", 'DateTime'>
     readonly updatedAt: FieldRef<"Mezcla", 'DateTime'>
@@ -6178,6 +6202,8 @@ export namespace Prisma {
     pesoTotal: 'pesoTotal',
     pesoActual: 'pesoActual',
     operadorId: 'operadorId',
+    cliente: 'cliente',
+    vehiculo: 'vehiculo',
     notas: 'notas',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -6444,6 +6470,8 @@ export namespace Prisma {
     pesoTotal?: FloatFilter<"Mezcla"> | number
     pesoActual?: FloatFilter<"Mezcla"> | number
     operadorId?: StringNullableFilter<"Mezcla"> | string | null
+    cliente?: StringNullableFilter<"Mezcla"> | string | null
+    vehiculo?: StringNullableFilter<"Mezcla"> | string | null
     notas?: StringNullableFilter<"Mezcla"> | string | null
     createdAt?: DateTimeFilter<"Mezcla"> | Date | string
     updatedAt?: DateTimeFilter<"Mezcla"> | Date | string
@@ -6459,6 +6487,8 @@ export namespace Prisma {
     pesoTotal?: SortOrder
     pesoActual?: SortOrder
     operadorId?: SortOrderInput | SortOrder
+    cliente?: SortOrderInput | SortOrder
+    vehiculo?: SortOrderInput | SortOrder
     notas?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -6477,6 +6507,8 @@ export namespace Prisma {
     pesoTotal?: FloatFilter<"Mezcla"> | number
     pesoActual?: FloatFilter<"Mezcla"> | number
     operadorId?: StringNullableFilter<"Mezcla"> | string | null
+    cliente?: StringNullableFilter<"Mezcla"> | string | null
+    vehiculo?: StringNullableFilter<"Mezcla"> | string | null
     notas?: StringNullableFilter<"Mezcla"> | string | null
     createdAt?: DateTimeFilter<"Mezcla"> | Date | string
     updatedAt?: DateTimeFilter<"Mezcla"> | Date | string
@@ -6492,6 +6524,8 @@ export namespace Prisma {
     pesoTotal?: SortOrder
     pesoActual?: SortOrder
     operadorId?: SortOrderInput | SortOrder
+    cliente?: SortOrderInput | SortOrder
+    vehiculo?: SortOrderInput | SortOrder
     notas?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -6515,6 +6549,8 @@ export namespace Prisma {
     pesoTotal?: FloatWithAggregatesFilter<"Mezcla"> | number
     pesoActual?: FloatWithAggregatesFilter<"Mezcla"> | number
     operadorId?: StringNullableWithAggregatesFilter<"Mezcla"> | string | null
+    cliente?: StringNullableWithAggregatesFilter<"Mezcla"> | string | null
+    vehiculo?: StringNullableWithAggregatesFilter<"Mezcla"> | string | null
     notas?: StringNullableWithAggregatesFilter<"Mezcla"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Mezcla"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Mezcla"> | Date | string
@@ -6839,6 +6875,8 @@ export namespace Prisma {
     pesoTotal: number
     pesoActual?: number
     operadorId?: string | null
+    cliente?: string | null
+    vehiculo?: string | null
     notas?: string | null
     createdAt?: Date | string
     updatedAt: Date | string
@@ -6854,6 +6892,8 @@ export namespace Prisma {
     pesoTotal: number
     pesoActual?: number
     operadorId?: string | null
+    cliente?: string | null
+    vehiculo?: string | null
     notas?: string | null
     createdAt?: Date | string
     updatedAt: Date | string
@@ -6869,6 +6909,8 @@ export namespace Prisma {
     pesoTotal?: FloatFieldUpdateOperationsInput | number
     pesoActual?: FloatFieldUpdateOperationsInput | number
     operadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    cliente?: NullableStringFieldUpdateOperationsInput | string | null
+    vehiculo?: NullableStringFieldUpdateOperationsInput | string | null
     notas?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -6884,6 +6926,8 @@ export namespace Prisma {
     pesoTotal?: FloatFieldUpdateOperationsInput | number
     pesoActual?: FloatFieldUpdateOperationsInput | number
     operadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    cliente?: NullableStringFieldUpdateOperationsInput | string | null
+    vehiculo?: NullableStringFieldUpdateOperationsInput | string | null
     notas?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -6899,6 +6943,8 @@ export namespace Prisma {
     pesoTotal: number
     pesoActual?: number
     operadorId?: string | null
+    cliente?: string | null
+    vehiculo?: string | null
     notas?: string | null
     createdAt?: Date | string
     updatedAt: Date | string
@@ -6914,6 +6960,8 @@ export namespace Prisma {
     pesoTotal?: FloatFieldUpdateOperationsInput | number
     pesoActual?: FloatFieldUpdateOperationsInput | number
     operadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    cliente?: NullableStringFieldUpdateOperationsInput | string | null
+    vehiculo?: NullableStringFieldUpdateOperationsInput | string | null
     notas?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -6929,6 +6977,8 @@ export namespace Prisma {
     pesoTotal?: FloatFieldUpdateOperationsInput | number
     pesoActual?: FloatFieldUpdateOperationsInput | number
     operadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    cliente?: NullableStringFieldUpdateOperationsInput | string | null
+    vehiculo?: NullableStringFieldUpdateOperationsInput | string | null
     notas?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -7357,6 +7407,8 @@ export namespace Prisma {
     pesoTotal?: SortOrder
     pesoActual?: SortOrder
     operadorId?: SortOrder
+    cliente?: SortOrder
+    vehiculo?: SortOrder
     notas?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -7377,6 +7429,8 @@ export namespace Prisma {
     pesoTotal?: SortOrder
     pesoActual?: SortOrder
     operadorId?: SortOrder
+    cliente?: SortOrder
+    vehiculo?: SortOrder
     notas?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -7392,6 +7446,8 @@ export namespace Prisma {
     pesoTotal?: SortOrder
     pesoActual?: SortOrder
     operadorId?: SortOrder
+    cliente?: SortOrder
+    vehiculo?: SortOrder
     notas?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder

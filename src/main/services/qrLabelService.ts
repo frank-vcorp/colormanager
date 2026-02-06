@@ -497,12 +497,184 @@ export async function assignLabelCodesToAll(): Promise<{ assigned: number }> {
   return { assigned }
 }
 
+// ============================================================================
+// ETIQUETAS DE MEZCLA (IMPL-20260206-01)
+// ============================================================================
+
+export interface MixLabelData {
+  id: string           // "MZC-123456"
+  nombre: string       // "Rojo Taxi 05"
+  cliente?: string     // "Juan Perez"
+  vehiculo?: string    // "Tsuru 2010"
+  fecha: string        // "06/02/2026"
+  qrDataUrl?: string
+}
+
 /**
- * Extrae el SKU base de un código de etiqueta
- * "KT-1400-01" → "KT-1400"
- * "KT-1400" → "KT-1400" (sin cambios)
+ * Imprime etiqueta de MEZCLA FINAL
  */
-export function extractBaseSKU(codigoEtiqueta: string): string {
-  // Remover sufijo -## si existe
-  return codigoEtiqueta.replace(/[.-]\d{2}$/, '')
+export async function printMixLabel(data: MixLabelData): Promise<PrintResult> {
+  try {
+    // Generar QR si no existe
+    if (!data.qrDataUrl) {
+      data.qrDataUrl = await generateQRDataURL(data.id)
+    }
+
+    // Por ahora, usamos siempre el método Electron (HTML -> Print)
+    // Se adaptará si se requiere soporte directo Niimbot más adelante
+    return await printMixLabelViaElectron(data)
+
+  } catch (error) {
+    console.error('[qrLabelService] Error printMixLabel:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    }
+  }
+}
+
+/**
+ * Genera HTML e imprime etiqueta de mezcla
+ * Diseño optimizado para Niimbot B1 (50x30mm)
+ */
+async function printMixLabelViaElectron(data: MixLabelData): Promise<PrintResult> {
+  try {
+    // FIX-20260204-23: Escribir HTML a archivo temporal
+    const tempDir = require('os').tmpdir()
+    const tempFile = require('path').join(tempDir, `colormanager-mix-${Date.now()}.html`)
+
+    const labelHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Mezcla ${data.id}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    /* Tamaño Niimbot B1 50x30mm */
+    @page { size: 50mm 30mm; margin: 0; }
+    body {
+      font-family: Arial, sans-serif;
+      width: 50mm;
+      height: 30mm;
+      overflow: hidden;
+      background: white;
+    }
+    .container {
+      display: flex;
+      flex-direction: row;
+      height: 100%;
+      padding: 2mm;
+      align-items: center;
+    }
+    .qr-section {
+      width: 20mm;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .qr-img {
+      width: 18mm;
+      height: 18mm;
+    }
+    .id-text {
+      font-size: 6pt;
+      font-family: monospace;
+      margin-top: 1px;
+      font-weight: bold;
+    }
+    .info-section {
+      flex: 1;
+      padding-left: 2mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      height: 100%;
+    }
+    .nombre-color {
+      font-size: 9pt;
+      font-weight: bold;
+      line-height: 1.1;
+      margin-bottom: 3px;
+      max-height: 24px;
+      overflow: hidden;
+    }
+    .meta-row {
+      font-size: 7pt;
+      color: #333;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.2;
+    }
+    .fecha {
+      font-size: 6pt;
+      color: #555;
+      margin-top: 2px;
+      border-top: 1px solid #ccc;
+      padding-top: 1px;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="qr-section">
+      <img class="qr-img" src="${data.qrDataUrl}" />
+      <div class="id-text">${data.id.substring(0, 8)}</div>
+    </div>
+    <div class="info-section">
+      <div class="nombre-color">${data.nombre}</div>
+      ${data.cliente ? `<div class="meta-row">👤 ${data.cliente}</div>` : ''}
+      ${data.vehiculo ? `<div class="meta-row">🚗 ${data.vehiculo}</div>` : ''}
+      <div class="fecha">${data.fecha}</div>
+    </div>
+  </div>
+</body>
+</html>`
+
+    require('fs').writeFileSync(tempFile, labelHtml, 'utf-8')
+
+    const printWindow = new BrowserWindow({
+      width: 400,
+      height: 300,
+      show: false, // Oculto para no molestar
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true
+      }
+    })
+
+    await printWindow.loadFile(tempFile)
+
+    // Esperar carga
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    const printResult = await new Promise<boolean>((resolve) => {
+      printWindow.webContents.print(
+        {
+          silent: true, // Silencioso si es posible
+          printBackground: false,
+          deviceName: '' // Usar default
+        },
+        (success, failureReason) => {
+          if (!success) console.error('[qrLabelService] Error Impresión Mezcla:', failureReason)
+          resolve(success)
+        }
+      )
+    })
+
+    // Cleanup
+    try { require('fs').unlinkSync(tempFile) } catch (e) { }
+
+    setTimeout(() => {
+      if (!printWindow.isDestroyed()) printWindow.close()
+    }, 1000)
+
+    return { success: printResult, printed: printResult ? 1 : 0 }
+
+  } catch (error) {
+    console.error('[qrLabelService] Error printMixLabelViaElectron:', error)
+    return { success: false, error: String(error) }
+  }
 }

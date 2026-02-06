@@ -161,4 +161,20 @@ export function registerPrintingIPC(mainWindow?: BrowserWindow) {
             }
         }
     })
+
+    /**
+     * PRINT_MIX_LABEL: Imprimir etiqueta de mezcla final
+     * ID: IMPL-20260206-01
+     */
+    ipcMain.handle(IPCInvokeChannels.PRINT_MIX_LABEL, async (_, data: any) => {
+        try {
+            console.log(`[PrintingIPC] Imprimir Etiqueta Mezcla: ${data.id}`)
+            // Lazy import para evitar ciclos si los hubiera
+            const qrLabelService = require('../services/qrLabelService')
+            return await qrLabelService.printMixLabel(data)
+        } catch (error) {
+            console.error("[PrintingIPC] Error en PRINT_MIX_LABEL:", error)
+            return { success: false, error: String(error) }
+        }
+    })
 }

@@ -11,7 +11,7 @@
  */
 
 import { contextBridge, ipcRenderer } from "electron"
-import { IPCChannels, IPCInvokeChannels, PesoEvent, RecetaSayer, AjusteStockParams, AppConfig, PrinterStatus, PrintJob, PrintOptions } from "../../shared/types"
+import { IPCChannels, IPCInvokeChannels, PesoEvent, RecetaSayer, AjusteStockParams, AppConfig, PrinterStatus, PrintJob, PrintOptions, MixLabelData } from "../../shared/types"
 // FIX REFERENCE: FIX-20260127-04
 
 // Exponer solo lo necesario via ContextBridge
@@ -77,6 +77,7 @@ contextBridge.exposeInMainWorld("colorManager", {
   // FIX-20260205-01: Métodos de impresión
   getPrinters: () => ipcRenderer.invoke(IPCInvokeChannels.GET_PRINTERS),
   printLabel: (options: PrintOptions) => ipcRenderer.invoke(IPCInvokeChannels.PRINT_LABEL, options),
+  printMixLabel: (data: MixLabelData) => ipcRenderer.invoke(IPCInvokeChannels.PRINT_MIX_LABEL, data), // IMPL-20260206-01
 
   // IMPL-20260204-04: Instalar impresora virtual manualmente
   instalarImpresora: () => ipcRenderer.invoke(IPCInvokeChannels.INSTALL_PRINTER),
