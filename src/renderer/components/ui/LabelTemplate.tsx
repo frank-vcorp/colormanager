@@ -186,44 +186,52 @@ export const PrintPreview: React.FC<Props> = (props) => {
       <style>{`
         @media print {
           @page {
-            size: auto;   /* Permite al driver decidir, mejor compatibilidad HP */
+            size: auto;
             margin: 0;
           }
           
-          /* Ocultar TODO por defecto de manera agresiva */
-          body > *:not(.print-container) {
-            display: none !important;
+          /* ESTRATEGIA VISIBILITY:
+             No usar display: none en body/#root porque React desmonta/oculta los hijos.
+             Usar visibility: hidden oculta visualmente pero mantiene el árbol DOM activo.
+          */
+          body {
+            visibility: hidden;
+            background-color: white;
           }
-
-          /* Contenedor de impresión */
+          
+          /* Asegurar que el contenedor de impresión sea visible y se posicione absoluto */
           .print-container {
+            visibility: visible !important;
             display: flex !important;
-            position: fixed !important;
+            position: absolute !important;
             top: 0 !important;
             left: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            background: white !important;
-            z-index: 9999 !important;
-            align-items: flex-start !important;
-            justify-content: flex-start !important;
             margin: 0 !important;
             padding: 0 !important;
+            width: 50mm !important;
+            height: 30mm !important;
+            z-index: 99999 !important;
+            background-color: white !important;
+            /* Resetear cualquier transformación o flex del padre */
+            transform: none !important;
+          }
+          
+          /* Todo lo dentro del contenedor debe ser visible */
+          .print-container * {
+            visibility: visible !important;
           }
 
-          /* Forzar contraste máximo */
+          /* Forzar contraste máximo y negro puro */
           * {
-            color: #000000 !important;
-            text-shadow: none !important;
-            filter: none !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+            color-adjust: exact !important;
           }
         }
         
-        /* Ocultar en pantalla */
-        .screen-only {
-           /* Clases de Tailwind o lógica react se encargan, esto es refuerzo */
+        /* Ocultar en pantalla: usar display none aquí es seguro */
+        .hidden {
+           display: none !important;
         }
       `}</style>
     </>
