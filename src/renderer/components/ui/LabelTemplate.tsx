@@ -23,14 +23,25 @@ interface Props {
 export const LabelTemplate: React.FC<Props> = ({ product, lote }) => {
   return (
     <div
-      className="bg-white text-black flex flex-col items-center justify-between p-1 overflow-hidden font-sans"
+      className="bg-white text-black flex flex-col items-center justify-between p-1 overflow-hidden font-sans print-content"
       style={{
         width: "50mm",
         height: "30mm",
-        border: "1px solid black", // Borde para debug visual en pantalla
+        // Borde solo visible en pantalla, no impreso
         boxSizing: "border-box"
       }}
     >
+      {/* Estilo inline para borde en pantalla solamente */}
+      <style>{`
+        .print-content {
+           border: 1px solid black;
+        }
+        @media print {
+          .print-content {
+            border: none !important;
+          }
+        }
+      `}</style>
       {/* Encabezado: Nombre del Producto */}
       <h2
         className="text-center font-bold leading-none mb-0.5 w-full text-ellipsis overflow-hidden whitespace-nowrap"
@@ -167,41 +178,52 @@ export const PrintPreview: React.FC<Props> = (props) => {
       </div>
 
       {/* Versión imprimible oculta en pantalla normal pero visible al imprimir */}
-      <div className="hidden print:flex print:absolute print:top-0 print:left-0 print:w-full print:h-full print:bg-white print:items-start print:justify-center p-4">
+      {/* Versión imprimible con clase específica para la nueva estrategia CSS */}
+      <div className="hidden print-container">
         <LabelTemplate {...props} />
       </div>
 
       <style>{`
         @media print {
           @page {
-            /* Definir tamaño exacto de etiqueta para evitar saltos de página */
-            size: 50mm 30mm; 
+            size: auto;   /* Permite al driver decidir, mejor compatibilidad HP */
             margin: 0;
           }
-          .screen-only {
+          
+          /* Ocultar TODO por defecto de manera agresiva */
+          body > *:not(.print-container) {
             display: none !important;
           }
-          body {
-            margin: 0;
-            padding: 0;
-          }
-          body * {
-            visibility: hidden;
-          }
-          .print:flex, .print:flex * {
-            visibility: visible;
-          }
-          .print:flex {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 50mm;
-            height: 30mm;
+
+          /* Contenedor de impresión */
+          .print-container {
             display: flex !important;
-            align-items: flex-start; /* Evitar centrado vertical forzado */
-            justify-content: flex-start;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: white !important;
+            z-index: 9999 !important;
+            align-items: flex-start !important;
+            justify-content: flex-start !important;
+            margin: 0 !important;
             padding: 0 !important;
           }
+
+          /* Forzar contraste máximo */
+          * {
+            color: #000000 !important;
+            text-shadow: none !important;
+            filter: none !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+        }
+        
+        /* Ocultar en pantalla */
+        .screen-only {
+           /* Clases de Tailwind o lógica react se encargan, esto es refuerzo */
         }
       `}</style>
     </>
