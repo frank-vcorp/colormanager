@@ -59,7 +59,7 @@ export default function PrintLabelView() {
                 onPrint={() => { }}
             />
 
-            /* Estilos globales forzados para esta vista */
+            {/* Estilos globales forzados para esta vista */}
             <style>{`
         @page {
             size: 50mm 30mm;
