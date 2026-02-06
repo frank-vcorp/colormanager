@@ -3296,12 +3296,20 @@ export namespace Prisma {
 
   export type MezclaAvgAggregateOutputType = {
     pesoTotal: number | null
+    pesoFinal: number | null
     pesoActual: number | null
+    diferencia: number | null
+    tolerancia: number | null
+    operadorId: number | null
   }
 
   export type MezclaSumAggregateOutputType = {
     pesoTotal: number | null
+    pesoFinal: number | null
     pesoActual: number | null
+    diferencia: number | null
+    tolerancia: number | null
+    operadorId: number | null
   }
 
   export type MezclaMinAggregateOutputType = {
@@ -3309,11 +3317,21 @@ export namespace Prisma {
     nodeId: string | null
     recetaId: string | null
     recetaNombre: string | null
+    colorCode: string | null
+    fecha: Date | null
+    horaInicio: string | null
+    horaFin: string | null
     fechaCreacion: Date | null
     estado: string | null
     pesoTotal: number | null
+    pesoFinal: number | null
     pesoActual: number | null
-    operadorId: string | null
+    ingredientes: string | null
+    diferencia: number | null
+    tolerancia: number | null
+    tipoMezcla: string | null
+    operadorId: number | null
+    operadorNombre: string | null
     cliente: string | null
     vehiculo: string | null
     notas: string | null
@@ -3326,11 +3344,21 @@ export namespace Prisma {
     nodeId: string | null
     recetaId: string | null
     recetaNombre: string | null
+    colorCode: string | null
+    fecha: Date | null
+    horaInicio: string | null
+    horaFin: string | null
     fechaCreacion: Date | null
     estado: string | null
     pesoTotal: number | null
+    pesoFinal: number | null
     pesoActual: number | null
-    operadorId: string | null
+    ingredientes: string | null
+    diferencia: number | null
+    tolerancia: number | null
+    tipoMezcla: string | null
+    operadorId: number | null
+    operadorNombre: string | null
     cliente: string | null
     vehiculo: string | null
     notas: string | null
@@ -3343,11 +3371,21 @@ export namespace Prisma {
     nodeId: number
     recetaId: number
     recetaNombre: number
+    colorCode: number
+    fecha: number
+    horaInicio: number
+    horaFin: number
     fechaCreacion: number
     estado: number
     pesoTotal: number
+    pesoFinal: number
     pesoActual: number
+    ingredientes: number
+    diferencia: number
+    tolerancia: number
+    tipoMezcla: number
     operadorId: number
+    operadorNombre: number
     cliente: number
     vehiculo: number
     notas: number
@@ -3359,12 +3397,20 @@ export namespace Prisma {
 
   export type MezclaAvgAggregateInputType = {
     pesoTotal?: true
+    pesoFinal?: true
     pesoActual?: true
+    diferencia?: true
+    tolerancia?: true
+    operadorId?: true
   }
 
   export type MezclaSumAggregateInputType = {
     pesoTotal?: true
+    pesoFinal?: true
     pesoActual?: true
+    diferencia?: true
+    tolerancia?: true
+    operadorId?: true
   }
 
   export type MezclaMinAggregateInputType = {
@@ -3372,11 +3418,21 @@ export namespace Prisma {
     nodeId?: true
     recetaId?: true
     recetaNombre?: true
+    colorCode?: true
+    fecha?: true
+    horaInicio?: true
+    horaFin?: true
     fechaCreacion?: true
     estado?: true
     pesoTotal?: true
+    pesoFinal?: true
     pesoActual?: true
+    ingredientes?: true
+    diferencia?: true
+    tolerancia?: true
+    tipoMezcla?: true
     operadorId?: true
+    operadorNombre?: true
     cliente?: true
     vehiculo?: true
     notas?: true
@@ -3389,11 +3445,21 @@ export namespace Prisma {
     nodeId?: true
     recetaId?: true
     recetaNombre?: true
+    colorCode?: true
+    fecha?: true
+    horaInicio?: true
+    horaFin?: true
     fechaCreacion?: true
     estado?: true
     pesoTotal?: true
+    pesoFinal?: true
     pesoActual?: true
+    ingredientes?: true
+    diferencia?: true
+    tolerancia?: true
+    tipoMezcla?: true
     operadorId?: true
+    operadorNombre?: true
     cliente?: true
     vehiculo?: true
     notas?: true
@@ -3406,11 +3472,21 @@ export namespace Prisma {
     nodeId?: true
     recetaId?: true
     recetaNombre?: true
+    colorCode?: true
+    fecha?: true
+    horaInicio?: true
+    horaFin?: true
     fechaCreacion?: true
     estado?: true
     pesoTotal?: true
+    pesoFinal?: true
     pesoActual?: true
+    ingredientes?: true
+    diferencia?: true
+    tolerancia?: true
+    tipoMezcla?: true
     operadorId?: true
+    operadorNombre?: true
     cliente?: true
     vehiculo?: true
     notas?: true
@@ -3510,11 +3586,21 @@ export namespace Prisma {
     nodeId: string
     recetaId: string
     recetaNombre: string
+    colorCode: string | null
+    fecha: Date
+    horaInicio: string | null
+    horaFin: string | null
     fechaCreacion: Date
     estado: string
     pesoTotal: number
+    pesoFinal: number
     pesoActual: number
-    operadorId: string | null
+    ingredientes: string
+    diferencia: number
+    tolerancia: number
+    tipoMezcla: string
+    operadorId: number | null
+    operadorNombre: string | null
     cliente: string | null
     vehiculo: string | null
     notas: string | null
@@ -3546,11 +3632,21 @@ export namespace Prisma {
     nodeId?: boolean
     recetaId?: boolean
     recetaNombre?: boolean
+    colorCode?: boolean
+    fecha?: boolean
+    horaInicio?: boolean
+    horaFin?: boolean
     fechaCreacion?: boolean
     estado?: boolean
     pesoTotal?: boolean
+    pesoFinal?: boolean
     pesoActual?: boolean
+    ingredientes?: boolean
+    diferencia?: boolean
+    tolerancia?: boolean
+    tipoMezcla?: boolean
     operadorId?: boolean
+    operadorNombre?: boolean
     cliente?: boolean
     vehiculo?: boolean
     notas?: boolean
@@ -3563,11 +3659,21 @@ export namespace Prisma {
     nodeId?: boolean
     recetaId?: boolean
     recetaNombre?: boolean
+    colorCode?: boolean
+    fecha?: boolean
+    horaInicio?: boolean
+    horaFin?: boolean
     fechaCreacion?: boolean
     estado?: boolean
     pesoTotal?: boolean
+    pesoFinal?: boolean
     pesoActual?: boolean
+    ingredientes?: boolean
+    diferencia?: boolean
+    tolerancia?: boolean
+    tipoMezcla?: boolean
     operadorId?: boolean
+    operadorNombre?: boolean
     cliente?: boolean
     vehiculo?: boolean
     notas?: boolean
@@ -3580,11 +3686,21 @@ export namespace Prisma {
     nodeId?: boolean
     recetaId?: boolean
     recetaNombre?: boolean
+    colorCode?: boolean
+    fecha?: boolean
+    horaInicio?: boolean
+    horaFin?: boolean
     fechaCreacion?: boolean
     estado?: boolean
     pesoTotal?: boolean
+    pesoFinal?: boolean
     pesoActual?: boolean
+    ingredientes?: boolean
+    diferencia?: boolean
+    tolerancia?: boolean
+    tipoMezcla?: boolean
     operadorId?: boolean
+    operadorNombre?: boolean
     cliente?: boolean
     vehiculo?: boolean
     notas?: boolean
@@ -3601,11 +3717,21 @@ export namespace Prisma {
       nodeId: string
       recetaId: string
       recetaNombre: string
+      colorCode: string | null
+      fecha: Date
+      horaInicio: string | null
+      horaFin: string | null
       fechaCreacion: Date
       estado: string
       pesoTotal: number
+      pesoFinal: number
       pesoActual: number
-      operadorId: string | null
+      ingredientes: string
+      diferencia: number
+      tolerancia: number
+      tipoMezcla: string
+      operadorId: number | null
+      operadorNombre: string | null
       cliente: string | null
       vehiculo: string | null
       notas: string | null
@@ -4008,11 +4134,21 @@ export namespace Prisma {
     readonly nodeId: FieldRef<"Mezcla", 'String'>
     readonly recetaId: FieldRef<"Mezcla", 'String'>
     readonly recetaNombre: FieldRef<"Mezcla", 'String'>
+    readonly colorCode: FieldRef<"Mezcla", 'String'>
+    readonly fecha: FieldRef<"Mezcla", 'DateTime'>
+    readonly horaInicio: FieldRef<"Mezcla", 'String'>
+    readonly horaFin: FieldRef<"Mezcla", 'String'>
     readonly fechaCreacion: FieldRef<"Mezcla", 'DateTime'>
     readonly estado: FieldRef<"Mezcla", 'String'>
     readonly pesoTotal: FieldRef<"Mezcla", 'Float'>
+    readonly pesoFinal: FieldRef<"Mezcla", 'Float'>
     readonly pesoActual: FieldRef<"Mezcla", 'Float'>
-    readonly operadorId: FieldRef<"Mezcla", 'String'>
+    readonly ingredientes: FieldRef<"Mezcla", 'String'>
+    readonly diferencia: FieldRef<"Mezcla", 'Float'>
+    readonly tolerancia: FieldRef<"Mezcla", 'Float'>
+    readonly tipoMezcla: FieldRef<"Mezcla", 'String'>
+    readonly operadorId: FieldRef<"Mezcla", 'Int'>
+    readonly operadorNombre: FieldRef<"Mezcla", 'String'>
     readonly cliente: FieldRef<"Mezcla", 'String'>
     readonly vehiculo: FieldRef<"Mezcla", 'String'>
     readonly notas: FieldRef<"Mezcla", 'String'>
@@ -6197,11 +6333,21 @@ export namespace Prisma {
     nodeId: 'nodeId',
     recetaId: 'recetaId',
     recetaNombre: 'recetaNombre',
+    colorCode: 'colorCode',
+    fecha: 'fecha',
+    horaInicio: 'horaInicio',
+    horaFin: 'horaFin',
     fechaCreacion: 'fechaCreacion',
     estado: 'estado',
     pesoTotal: 'pesoTotal',
+    pesoFinal: 'pesoFinal',
     pesoActual: 'pesoActual',
+    ingredientes: 'ingredientes',
+    diferencia: 'diferencia',
+    tolerancia: 'tolerancia',
+    tipoMezcla: 'tipoMezcla',
     operadorId: 'operadorId',
+    operadorNombre: 'operadorNombre',
     cliente: 'cliente',
     vehiculo: 'vehiculo',
     notas: 'notas',
@@ -6465,11 +6611,21 @@ export namespace Prisma {
     nodeId?: StringFilter<"Mezcla"> | string
     recetaId?: StringFilter<"Mezcla"> | string
     recetaNombre?: StringFilter<"Mezcla"> | string
+    colorCode?: StringNullableFilter<"Mezcla"> | string | null
+    fecha?: DateTimeFilter<"Mezcla"> | Date | string
+    horaInicio?: StringNullableFilter<"Mezcla"> | string | null
+    horaFin?: StringNullableFilter<"Mezcla"> | string | null
     fechaCreacion?: DateTimeFilter<"Mezcla"> | Date | string
     estado?: StringFilter<"Mezcla"> | string
     pesoTotal?: FloatFilter<"Mezcla"> | number
+    pesoFinal?: FloatFilter<"Mezcla"> | number
     pesoActual?: FloatFilter<"Mezcla"> | number
-    operadorId?: StringNullableFilter<"Mezcla"> | string | null
+    ingredientes?: StringFilter<"Mezcla"> | string
+    diferencia?: FloatFilter<"Mezcla"> | number
+    tolerancia?: FloatFilter<"Mezcla"> | number
+    tipoMezcla?: StringFilter<"Mezcla"> | string
+    operadorId?: IntNullableFilter<"Mezcla"> | number | null
+    operadorNombre?: StringNullableFilter<"Mezcla"> | string | null
     cliente?: StringNullableFilter<"Mezcla"> | string | null
     vehiculo?: StringNullableFilter<"Mezcla"> | string | null
     notas?: StringNullableFilter<"Mezcla"> | string | null
@@ -6482,11 +6638,21 @@ export namespace Prisma {
     nodeId?: SortOrder
     recetaId?: SortOrder
     recetaNombre?: SortOrder
+    colorCode?: SortOrderInput | SortOrder
+    fecha?: SortOrder
+    horaInicio?: SortOrderInput | SortOrder
+    horaFin?: SortOrderInput | SortOrder
     fechaCreacion?: SortOrder
     estado?: SortOrder
     pesoTotal?: SortOrder
+    pesoFinal?: SortOrder
     pesoActual?: SortOrder
+    ingredientes?: SortOrder
+    diferencia?: SortOrder
+    tolerancia?: SortOrder
+    tipoMezcla?: SortOrder
     operadorId?: SortOrderInput | SortOrder
+    operadorNombre?: SortOrderInput | SortOrder
     cliente?: SortOrderInput | SortOrder
     vehiculo?: SortOrderInput | SortOrder
     notas?: SortOrderInput | SortOrder
@@ -6502,11 +6668,21 @@ export namespace Prisma {
     nodeId?: StringFilter<"Mezcla"> | string
     recetaId?: StringFilter<"Mezcla"> | string
     recetaNombre?: StringFilter<"Mezcla"> | string
+    colorCode?: StringNullableFilter<"Mezcla"> | string | null
+    fecha?: DateTimeFilter<"Mezcla"> | Date | string
+    horaInicio?: StringNullableFilter<"Mezcla"> | string | null
+    horaFin?: StringNullableFilter<"Mezcla"> | string | null
     fechaCreacion?: DateTimeFilter<"Mezcla"> | Date | string
     estado?: StringFilter<"Mezcla"> | string
     pesoTotal?: FloatFilter<"Mezcla"> | number
+    pesoFinal?: FloatFilter<"Mezcla"> | number
     pesoActual?: FloatFilter<"Mezcla"> | number
-    operadorId?: StringNullableFilter<"Mezcla"> | string | null
+    ingredientes?: StringFilter<"Mezcla"> | string
+    diferencia?: FloatFilter<"Mezcla"> | number
+    tolerancia?: FloatFilter<"Mezcla"> | number
+    tipoMezcla?: StringFilter<"Mezcla"> | string
+    operadorId?: IntNullableFilter<"Mezcla"> | number | null
+    operadorNombre?: StringNullableFilter<"Mezcla"> | string | null
     cliente?: StringNullableFilter<"Mezcla"> | string | null
     vehiculo?: StringNullableFilter<"Mezcla"> | string | null
     notas?: StringNullableFilter<"Mezcla"> | string | null
@@ -6519,11 +6695,21 @@ export namespace Prisma {
     nodeId?: SortOrder
     recetaId?: SortOrder
     recetaNombre?: SortOrder
+    colorCode?: SortOrderInput | SortOrder
+    fecha?: SortOrder
+    horaInicio?: SortOrderInput | SortOrder
+    horaFin?: SortOrderInput | SortOrder
     fechaCreacion?: SortOrder
     estado?: SortOrder
     pesoTotal?: SortOrder
+    pesoFinal?: SortOrder
     pesoActual?: SortOrder
+    ingredientes?: SortOrder
+    diferencia?: SortOrder
+    tolerancia?: SortOrder
+    tipoMezcla?: SortOrder
     operadorId?: SortOrderInput | SortOrder
+    operadorNombre?: SortOrderInput | SortOrder
     cliente?: SortOrderInput | SortOrder
     vehiculo?: SortOrderInput | SortOrder
     notas?: SortOrderInput | SortOrder
@@ -6544,11 +6730,21 @@ export namespace Prisma {
     nodeId?: StringWithAggregatesFilter<"Mezcla"> | string
     recetaId?: StringWithAggregatesFilter<"Mezcla"> | string
     recetaNombre?: StringWithAggregatesFilter<"Mezcla"> | string
+    colorCode?: StringNullableWithAggregatesFilter<"Mezcla"> | string | null
+    fecha?: DateTimeWithAggregatesFilter<"Mezcla"> | Date | string
+    horaInicio?: StringNullableWithAggregatesFilter<"Mezcla"> | string | null
+    horaFin?: StringNullableWithAggregatesFilter<"Mezcla"> | string | null
     fechaCreacion?: DateTimeWithAggregatesFilter<"Mezcla"> | Date | string
     estado?: StringWithAggregatesFilter<"Mezcla"> | string
     pesoTotal?: FloatWithAggregatesFilter<"Mezcla"> | number
+    pesoFinal?: FloatWithAggregatesFilter<"Mezcla"> | number
     pesoActual?: FloatWithAggregatesFilter<"Mezcla"> | number
-    operadorId?: StringNullableWithAggregatesFilter<"Mezcla"> | string | null
+    ingredientes?: StringWithAggregatesFilter<"Mezcla"> | string
+    diferencia?: FloatWithAggregatesFilter<"Mezcla"> | number
+    tolerancia?: FloatWithAggregatesFilter<"Mezcla"> | number
+    tipoMezcla?: StringWithAggregatesFilter<"Mezcla"> | string
+    operadorId?: IntNullableWithAggregatesFilter<"Mezcla"> | number | null
+    operadorNombre?: StringNullableWithAggregatesFilter<"Mezcla"> | string | null
     cliente?: StringNullableWithAggregatesFilter<"Mezcla"> | string | null
     vehiculo?: StringNullableWithAggregatesFilter<"Mezcla"> | string | null
     notas?: StringNullableWithAggregatesFilter<"Mezcla"> | string | null
@@ -6870,16 +7066,26 @@ export namespace Prisma {
     nodeId: string
     recetaId: string
     recetaNombre: string
+    colorCode?: string | null
+    fecha?: Date | string
+    horaInicio?: string | null
+    horaFin?: string | null
     fechaCreacion?: Date | string
     estado?: string
     pesoTotal: number
+    pesoFinal?: number
     pesoActual?: number
-    operadorId?: string | null
+    ingredientes: string
+    diferencia?: number
+    tolerancia?: number
+    tipoMezcla?: string
+    operadorId?: number | null
+    operadorNombre?: string | null
     cliente?: string | null
     vehiculo?: string | null
     notas?: string | null
     createdAt?: Date | string
-    updatedAt: Date | string
+    updatedAt?: Date | string
   }
 
   export type MezclaUncheckedCreateInput = {
@@ -6887,16 +7093,26 @@ export namespace Prisma {
     nodeId: string
     recetaId: string
     recetaNombre: string
+    colorCode?: string | null
+    fecha?: Date | string
+    horaInicio?: string | null
+    horaFin?: string | null
     fechaCreacion?: Date | string
     estado?: string
     pesoTotal: number
+    pesoFinal?: number
     pesoActual?: number
-    operadorId?: string | null
+    ingredientes: string
+    diferencia?: number
+    tolerancia?: number
+    tipoMezcla?: string
+    operadorId?: number | null
+    operadorNombre?: string | null
     cliente?: string | null
     vehiculo?: string | null
     notas?: string | null
     createdAt?: Date | string
-    updatedAt: Date | string
+    updatedAt?: Date | string
   }
 
   export type MezclaUpdateInput = {
@@ -6904,11 +7120,21 @@ export namespace Prisma {
     nodeId?: StringFieldUpdateOperationsInput | string
     recetaId?: StringFieldUpdateOperationsInput | string
     recetaNombre?: StringFieldUpdateOperationsInput | string
+    colorCode?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha?: DateTimeFieldUpdateOperationsInput | Date | string
+    horaInicio?: NullableStringFieldUpdateOperationsInput | string | null
+    horaFin?: NullableStringFieldUpdateOperationsInput | string | null
     fechaCreacion?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: StringFieldUpdateOperationsInput | string
     pesoTotal?: FloatFieldUpdateOperationsInput | number
+    pesoFinal?: FloatFieldUpdateOperationsInput | number
     pesoActual?: FloatFieldUpdateOperationsInput | number
-    operadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    ingredientes?: StringFieldUpdateOperationsInput | string
+    diferencia?: FloatFieldUpdateOperationsInput | number
+    tolerancia?: FloatFieldUpdateOperationsInput | number
+    tipoMezcla?: StringFieldUpdateOperationsInput | string
+    operadorId?: NullableIntFieldUpdateOperationsInput | number | null
+    operadorNombre?: NullableStringFieldUpdateOperationsInput | string | null
     cliente?: NullableStringFieldUpdateOperationsInput | string | null
     vehiculo?: NullableStringFieldUpdateOperationsInput | string | null
     notas?: NullableStringFieldUpdateOperationsInput | string | null
@@ -6921,11 +7147,21 @@ export namespace Prisma {
     nodeId?: StringFieldUpdateOperationsInput | string
     recetaId?: StringFieldUpdateOperationsInput | string
     recetaNombre?: StringFieldUpdateOperationsInput | string
+    colorCode?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha?: DateTimeFieldUpdateOperationsInput | Date | string
+    horaInicio?: NullableStringFieldUpdateOperationsInput | string | null
+    horaFin?: NullableStringFieldUpdateOperationsInput | string | null
     fechaCreacion?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: StringFieldUpdateOperationsInput | string
     pesoTotal?: FloatFieldUpdateOperationsInput | number
+    pesoFinal?: FloatFieldUpdateOperationsInput | number
     pesoActual?: FloatFieldUpdateOperationsInput | number
-    operadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    ingredientes?: StringFieldUpdateOperationsInput | string
+    diferencia?: FloatFieldUpdateOperationsInput | number
+    tolerancia?: FloatFieldUpdateOperationsInput | number
+    tipoMezcla?: StringFieldUpdateOperationsInput | string
+    operadorId?: NullableIntFieldUpdateOperationsInput | number | null
+    operadorNombre?: NullableStringFieldUpdateOperationsInput | string | null
     cliente?: NullableStringFieldUpdateOperationsInput | string | null
     vehiculo?: NullableStringFieldUpdateOperationsInput | string | null
     notas?: NullableStringFieldUpdateOperationsInput | string | null
@@ -6938,16 +7174,26 @@ export namespace Prisma {
     nodeId: string
     recetaId: string
     recetaNombre: string
+    colorCode?: string | null
+    fecha?: Date | string
+    horaInicio?: string | null
+    horaFin?: string | null
     fechaCreacion?: Date | string
     estado?: string
     pesoTotal: number
+    pesoFinal?: number
     pesoActual?: number
-    operadorId?: string | null
+    ingredientes: string
+    diferencia?: number
+    tolerancia?: number
+    tipoMezcla?: string
+    operadorId?: number | null
+    operadorNombre?: string | null
     cliente?: string | null
     vehiculo?: string | null
     notas?: string | null
     createdAt?: Date | string
-    updatedAt: Date | string
+    updatedAt?: Date | string
   }
 
   export type MezclaUpdateManyMutationInput = {
@@ -6955,11 +7201,21 @@ export namespace Prisma {
     nodeId?: StringFieldUpdateOperationsInput | string
     recetaId?: StringFieldUpdateOperationsInput | string
     recetaNombre?: StringFieldUpdateOperationsInput | string
+    colorCode?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha?: DateTimeFieldUpdateOperationsInput | Date | string
+    horaInicio?: NullableStringFieldUpdateOperationsInput | string | null
+    horaFin?: NullableStringFieldUpdateOperationsInput | string | null
     fechaCreacion?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: StringFieldUpdateOperationsInput | string
     pesoTotal?: FloatFieldUpdateOperationsInput | number
+    pesoFinal?: FloatFieldUpdateOperationsInput | number
     pesoActual?: FloatFieldUpdateOperationsInput | number
-    operadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    ingredientes?: StringFieldUpdateOperationsInput | string
+    diferencia?: FloatFieldUpdateOperationsInput | number
+    tolerancia?: FloatFieldUpdateOperationsInput | number
+    tipoMezcla?: StringFieldUpdateOperationsInput | string
+    operadorId?: NullableIntFieldUpdateOperationsInput | number | null
+    operadorNombre?: NullableStringFieldUpdateOperationsInput | string | null
     cliente?: NullableStringFieldUpdateOperationsInput | string | null
     vehiculo?: NullableStringFieldUpdateOperationsInput | string | null
     notas?: NullableStringFieldUpdateOperationsInput | string | null
@@ -6972,11 +7228,21 @@ export namespace Prisma {
     nodeId?: StringFieldUpdateOperationsInput | string
     recetaId?: StringFieldUpdateOperationsInput | string
     recetaNombre?: StringFieldUpdateOperationsInput | string
+    colorCode?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha?: DateTimeFieldUpdateOperationsInput | Date | string
+    horaInicio?: NullableStringFieldUpdateOperationsInput | string | null
+    horaFin?: NullableStringFieldUpdateOperationsInput | string | null
     fechaCreacion?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: StringFieldUpdateOperationsInput | string
     pesoTotal?: FloatFieldUpdateOperationsInput | number
+    pesoFinal?: FloatFieldUpdateOperationsInput | number
     pesoActual?: FloatFieldUpdateOperationsInput | number
-    operadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    ingredientes?: StringFieldUpdateOperationsInput | string
+    diferencia?: FloatFieldUpdateOperationsInput | number
+    tolerancia?: FloatFieldUpdateOperationsInput | number
+    tipoMezcla?: StringFieldUpdateOperationsInput | string
+    operadorId?: NullableIntFieldUpdateOperationsInput | number | null
+    operadorNombre?: NullableStringFieldUpdateOperationsInput | string | null
     cliente?: NullableStringFieldUpdateOperationsInput | string | null
     vehiculo?: NullableStringFieldUpdateOperationsInput | string | null
     notas?: NullableStringFieldUpdateOperationsInput | string | null
@@ -7397,16 +7663,37 @@ export namespace Prisma {
     _max?: NestedBoolFilter<$PrismaModel>
   }
 
+  export type IntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
   export type MezclaCountOrderByAggregateInput = {
     id?: SortOrder
     nodeId?: SortOrder
     recetaId?: SortOrder
     recetaNombre?: SortOrder
+    colorCode?: SortOrder
+    fecha?: SortOrder
+    horaInicio?: SortOrder
+    horaFin?: SortOrder
     fechaCreacion?: SortOrder
     estado?: SortOrder
     pesoTotal?: SortOrder
+    pesoFinal?: SortOrder
     pesoActual?: SortOrder
+    ingredientes?: SortOrder
+    diferencia?: SortOrder
+    tolerancia?: SortOrder
+    tipoMezcla?: SortOrder
     operadorId?: SortOrder
+    operadorNombre?: SortOrder
     cliente?: SortOrder
     vehiculo?: SortOrder
     notas?: SortOrder
@@ -7416,7 +7703,11 @@ export namespace Prisma {
 
   export type MezclaAvgOrderByAggregateInput = {
     pesoTotal?: SortOrder
+    pesoFinal?: SortOrder
     pesoActual?: SortOrder
+    diferencia?: SortOrder
+    tolerancia?: SortOrder
+    operadorId?: SortOrder
   }
 
   export type MezclaMaxOrderByAggregateInput = {
@@ -7424,11 +7715,21 @@ export namespace Prisma {
     nodeId?: SortOrder
     recetaId?: SortOrder
     recetaNombre?: SortOrder
+    colorCode?: SortOrder
+    fecha?: SortOrder
+    horaInicio?: SortOrder
+    horaFin?: SortOrder
     fechaCreacion?: SortOrder
     estado?: SortOrder
     pesoTotal?: SortOrder
+    pesoFinal?: SortOrder
     pesoActual?: SortOrder
+    ingredientes?: SortOrder
+    diferencia?: SortOrder
+    tolerancia?: SortOrder
+    tipoMezcla?: SortOrder
     operadorId?: SortOrder
+    operadorNombre?: SortOrder
     cliente?: SortOrder
     vehiculo?: SortOrder
     notas?: SortOrder
@@ -7441,11 +7742,21 @@ export namespace Prisma {
     nodeId?: SortOrder
     recetaId?: SortOrder
     recetaNombre?: SortOrder
+    colorCode?: SortOrder
+    fecha?: SortOrder
+    horaInicio?: SortOrder
+    horaFin?: SortOrder
     fechaCreacion?: SortOrder
     estado?: SortOrder
     pesoTotal?: SortOrder
+    pesoFinal?: SortOrder
     pesoActual?: SortOrder
+    ingredientes?: SortOrder
+    diferencia?: SortOrder
+    tolerancia?: SortOrder
+    tipoMezcla?: SortOrder
     operadorId?: SortOrder
+    operadorNombre?: SortOrder
     cliente?: SortOrder
     vehiculo?: SortOrder
     notas?: SortOrder
@@ -7455,7 +7766,27 @@ export namespace Prisma {
 
   export type MezclaSumOrderByAggregateInput = {
     pesoTotal?: SortOrder
+    pesoFinal?: SortOrder
     pesoActual?: SortOrder
+    diferencia?: SortOrder
+    tolerancia?: SortOrder
+    operadorId?: SortOrder
+  }
+
+  export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
   }
 
   export type SyncLogCountOrderByAggregateInput = {
@@ -7640,6 +7971,14 @@ export namespace Prisma {
     update?: XOR<XOR<IngredienteUpdateToOneWithWhereWithoutLotesInput, IngredienteUpdateWithoutLotesInput>, IngredienteUncheckedUpdateWithoutLotesInput>
   }
 
+  export type NullableIntFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
   export type IntFieldUpdateOperationsInput = {
     set?: number
     increment?: number
@@ -7820,6 +8159,33 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedBoolFilter<$PrismaModel>
     _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
+  export type NestedFloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
   }
 
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {

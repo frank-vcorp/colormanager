@@ -55,16 +55,26 @@ model Mezcla {
   nodeId        String
   recetaId      String
   recetaNombre  String
+  colorCode     String?
+  fecha         DateTime @default(now()) // Fecha de registro (SQL: fecha)
+  horaInicio    String?  // SQL: horaInicio
+  horaFin       String?  // SQL: horaFin
   fechaCreacion DateTime @default(now())
   estado        String   @default("pendiente")
   pesoTotal     Float
+  pesoFinal     Float    @default(0) // SQL: pesoFinal
   pesoActual    Float    @default(0)
-  operadorId    String?
-  cliente       String?  // IMPL-20260206-01: Protocolo de Cierre
-  vehiculo      String?  // IMPL-20260206-01: Protocolo de Cierre
+  ingredientes  String   // JSON
+  diferencia    Float    @default(0)
+  tolerancia    Float    @default(0)
+  tipoMezcla    String   @default("NUEVA")
+  operadorId    Int?     // Match User.id (Int)
+  operadorNombre String?
+  cliente       String?
+  vehiculo      String?
   notas         String?
   createdAt     DateTime @default(now())
-  updatedAt     DateTime
+  updatedAt     DateTime @updatedAt
 
   @@index([fechaCreacion])
   @@index([estado])
