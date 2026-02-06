@@ -556,64 +556,72 @@ async function printMixLabelViaElectron(data: MixLabelData): Promise<PrintResult
       font-family: Arial, sans-serif;
       width: 50mm;
       height: 30mm;
-      overflow: hidden;
       background: white;
+      /* Ajuste de márgenes seguros */
+      padding: 1mm;
     }
     .container {
       display: flex;
       flex-direction: row;
       height: 100%;
-      padding: 2mm;
       align-items: center;
+      border: 1px solid white; /* Prevent collapse */
     }
     .qr-section {
-      width: 20mm;
+      width: 18mm;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
     }
     .qr-img {
-      width: 18mm;
-      height: 18mm;
+      width: 16mm;
+      height: 16mm;
+      image-rendering: pixelated; /* Mejor nitidez para barcode/qr */
     }
     .id-text {
-      font-size: 6pt;
+      font-size: 5pt;
       font-family: monospace;
       margin-top: 1px;
       font-weight: bold;
+      text-align: center;
+      width: 100%;
     }
     .info-section {
       flex: 1;
-      padding-left: 2mm;
+      padding-left: 2px;
       display: flex;
       flex-direction: column;
       justify-content: center;
       height: 100%;
-    }
-    .nombre-color {
-      font-size: 9pt;
-      font-weight: bold;
-      line-height: 1.1;
-      margin-bottom: 3px;
-      max-height: 24px;
       overflow: hidden;
     }
+    .nombre-color {
+      font-size: 8pt;
+      font-weight: bold;
+      line-height: 1;
+      margin-bottom: 2px;
+      max-height: 22px;
+      overflow: hidden;
+      text-transform: uppercase;
+    }
     .meta-row {
-      font-size: 7pt;
-      color: #333;
+      font-size: 6.5pt;
+      color: #000;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      line-height: 1.2;
+      line-height: 1.1;
+      font-weight: 600;
     }
     .fecha {
       font-size: 6pt;
-      color: #555;
+      color: #000;
       margin-top: 2px;
-      border-top: 1px solid #ccc;
+      border-top: 1px solid #000;
       padding-top: 1px;
       display: block;
+      text-align: right;
     }
   </style>
 </head>
@@ -621,12 +629,12 @@ async function printMixLabelViaElectron(data: MixLabelData): Promise<PrintResult
   <div class="container">
     <div class="qr-section">
       <img class="qr-img" src="${data.qrDataUrl}" />
-      <div class="id-text">${data.id.substring(0, 8)}</div>
+      <div class="id-text">${data.id.substring(data.id.length - 6)}</div>
     </div>
     <div class="info-section">
       <div class="nombre-color">${data.nombre}</div>
-      ${data.cliente ? `<div class="meta-row">👤 ${data.cliente}</div>` : ''}
-      ${data.vehiculo ? `<div class="meta-row">🚗 ${data.vehiculo}</div>` : ''}
+      ${data.cliente ? `<div class="meta-row">👤 ${data.cliente.substring(0, 15)}</div>` : ''}
+      ${data.vehiculo ? `<div class="meta-row">🚗 ${data.vehiculo.substring(0, 15)}</div>` : ''}
       <div class="fecha">${data.fecha}</div>
     </div>
   </div>
@@ -638,7 +646,7 @@ async function printMixLabelViaElectron(data: MixLabelData): Promise<PrintResult
     const printWindow = new BrowserWindow({
       width: 400,
       height: 300,
-      show: false, // Oculto para no molestar
+      show: false, // Oculto
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true
@@ -647,15 +655,35 @@ async function printMixLabelViaElectron(data: MixLabelData): Promise<PrintResult
 
     await printWindow.loadFile(tempFile)
 
-    // Esperar carga
-    await new Promise(resolve => setTimeout(resolve, 500))
+    // Aumentar tiempo de espera para asegurar carga de imagen QR
+    await new Promise(resolve => setTimeout(resolve, 1500))
+
+    // Buscar impresora Niimbot
+    const printers = await printWindow.webContents.getPrintersAsync()
+    console.log('[qrLabelService] Impresoras disponibles:', printers.map(p => p.name))
+
+    // Buscar impresora que contenga "Niimbot" o "B1" (case insensitive)
+    const niimbotPrinter = printers.find(p =>
+      p.name.toLowerCase().includes('niimbot') ||
+      p.name.toLowerCase().includes('b1')
+    )
+
+    const deviceName = niimbotPrinter ? niimbotPrinter.name : ''
+
+    if (deviceName) {
+      console.log(`[qrLabelService] ✅ Usando impresora detectada: ${deviceName}`)
+    } else {
+      console.warn('[qrLabelService] ⚠️ No se detectó impresora Niimbot. Usando default.')
+    }
 
     const printResult = await new Promise<boolean>((resolve) => {
       printWindow.webContents.print(
         {
-          silent: true, // Silencioso si es posible
+          silent: true,
           printBackground: false,
-          deviceName: '' // Usar default
+          deviceName: deviceName, // Usar impresora específica si se encontró
+          // Definir márgenes minimos si es posible
+          margins: { marginType: 'none' }
         },
         (success, failureReason) => {
           if (!success) console.error('[qrLabelService] Error Impresión Mezcla:', failureReason)
@@ -669,7 +697,7 @@ async function printMixLabelViaElectron(data: MixLabelData): Promise<PrintResult
 
     setTimeout(() => {
       if (!printWindow.isDestroyed()) printWindow.close()
-    }, 1000)
+    }, 2000) // Dar tiempo al spooler
 
     return { success: printResult, printed: printResult ? 1 : 0 }
 
