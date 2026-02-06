@@ -5,28 +5,69 @@ import { usePrinter } from "../../hooks/usePrinter"
 
 interface Props {
   product: Producto
+  // FIX-20260205-02: Campo opcional para datos de lote específico
+  lote?: {
+    numero: string
+    fecha?: string
+  }
   isOpen: boolean
   onClose: () => void
   onPrint: () => void
 }
 
-export const LabelTemplate: React.FC<Props> = ({ product }) => {
+/**
+ * Plantilla ajustada para Niimbot D11/D110/B21
+ * Dimensiones típicas: 50mm x 30mm (aprox 1.9" x 1.1")
+ * Ajustamos CSS a medidas físicas para evitar problemas de escala
+ */
+export const LabelTemplate: React.FC<Props> = ({ product, lote }) => {
   return (
-    <div className="w-[300px] h-[150px] border-2 border-black flex flex-col items-center justify-center p-2 bg-white text-black">
-      <h2 className="text-xl font-bold text-center mb-1 leading-tight overflow-hidden text-ellipsis whitespace-nowrap w-full">
+    <div
+      className="bg-white text-black flex flex-col items-center justify-between p-1 overflow-hidden font-sans"
+      style={{
+        width: "50mm",
+        height: "30mm",
+        border: "1px solid black", // Borde para debug visual en pantalla
+        boxSizing: "border-box"
+      }}
+    >
+      {/* Encabezado: Nombre del Producto */}
+      <h2
+        className="text-center font-bold leading-none mb-0.5 w-full text-ellipsis overflow-hidden whitespace-nowrap"
+        style={{ fontSize: "3.5mm" }}
+      >
         {product.nombre}
       </h2>
-      <div className="flex-1 flex items-center justify-center w-full overflow-hidden">
-        <Barcode
-          value={product.sku}
-          width={2}
-          height={50}
-          fontSize={16}
-          margin={0}
-          displayValue={true}
-        />
+
+      {/* Cuerpo: Código de Barras y Lote */}
+      <div className="flex-1 flex flex-col items-center justify-center w-full">
+        <div className="w-[95%] overflow-hidden flex justify-center">
+          <Barcode
+            value={product.sku}
+            width={1.2}        // Barras más finas
+            height={30}        // Menor altura
+            fontSize={9}       // Texto SKU más pequeño
+            marginBottom={1}
+            marginTop={1}
+            displayValue={true}
+          />
+        </div>
       </div>
-      <p className="text-xs mt-1">{new Date().toLocaleDateString()}</p>
+
+      {/* Pie: Fecha y Lote/Bote */}
+      <div className="w-full flex justify-between items-end border-t border-black pt-0.5 mt-0.5">
+        <span style={{ fontSize: "2.5mm" }}>
+          {new Date().toLocaleDateString("es-MX", { day: '2-digit', month: '2-digit', year: '2-digit' })}
+        </span>
+
+        {lote ? (
+          <span className="font-bold flex items-center" style={{ fontSize: "2.8mm" }}>
+            🧪 Bote: {lote.numero}
+          </span>
+        ) : (
+          <span style={{ fontSize: "2.5mm" }}>SKU: {product.sku}</span>
+        )}
+      </div>
     </div>
   )
 }
@@ -132,8 +173,17 @@ export const PrintPreview: React.FC<Props> = (props) => {
 
       <style>{`
         @media print {
+          @page {
+            /* Definir tamaño exacto de etiqueta para evitar saltos de página */
+            size: 50mm 30mm; 
+            margin: 0;
+          }
           .screen-only {
             display: none !important;
+          }
+          body {
+            margin: 0;
+            padding: 0;
           }
           body * {
             visibility: hidden;
@@ -145,6 +195,12 @@ export const PrintPreview: React.FC<Props> = (props) => {
             position: absolute;
             left: 0;
             top: 0;
+            width: 50mm;
+            height: 30mm;
+            display: flex !important;
+            align-items: flex-start; /* Evitar centrado vertical forzado */
+            justify-content: flex-start;
+            padding: 0 !important;
           }
         }
       `}</style>

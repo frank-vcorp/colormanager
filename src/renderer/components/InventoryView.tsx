@@ -10,6 +10,7 @@
  * @updated IMPL-20260128-01: Agregar protección de roles - solo ADMIN puede importar y ajustar
  * @updated IMPL-20260129-02: Agregar expansión de filas para ver Lotes Activos (Sprint 2.6 - FIFO)
  * @updated ARCH-20260204-01: Agregar botón de etiqueta QR en sub-tabla de lotes
+ * @updated FIX-20260205-02: Agregar botón de etiqueta Bote en sub-tabla de lotes
  */
 
 import React, { useState, useEffect } from "react"
@@ -38,11 +39,11 @@ const SICAR_PRESENTATION: Record<string, { label: string; ml: number }> = {
 function getPresentacionInfo(sku: string, stockMl: number): { presentacion: string; botes: number } | null {
   const match = sku.match(/\.(\d{2})$/)
   if (!match) return null
-  
+
   const suffix = match[1]
   const pres = SICAR_PRESENTATION[suffix]
   if (!pres) return null
-  
+
   return {
     presentacion: pres.label,
     botes: Math.round((stockMl / pres.ml) * 10) / 10, // Redondear a 1 decimal
@@ -74,6 +75,8 @@ interface ModalAjuste {
 interface ModalImpresion {
   abierto: boolean
   producto?: Producto
+  // FIX-20260205-02: Soporte para imprimir lote específico
+  lote?: { numero: string; fecha?: string }
 }
 
 // ARCH-20260204-01: Estado para modal de etiqueta QR
@@ -158,10 +161,11 @@ export default function InventoryView({ onBack }: Props) {
     })
   }
 
-  const abrirModalImpresion = (producto: Producto) => {
+  const abrirModalImpresion = (producto: Producto, lote?: { numero: string; fecha?: string }) => {
     setModalImpresion({
       abierto: true,
       producto,
+      lote
     })
   }
 
@@ -346,11 +350,10 @@ export default function InventoryView({ onBack }: Props) {
             <button
               onClick={importarSicar}
               disabled={importando}
-              className={`px-4 py-2 text-sm rounded transition-colors font-medium flex items-center gap-2 ${
-                importando
+              className={`px-4 py-2 text-sm rounded transition-colors font-medium flex items-center gap-2 ${importando
                   ? "bg-blue-200 text-blue-700 cursor-not-allowed"
                   : "bg-blue-100 text-blue-600 border border-blue-200 hover:bg-blue-200"
-              }`}
+                }`}
             >
               {importando ? "📥 Importando..." : "📥 Importar SICAR"}
             </button>
@@ -358,19 +361,18 @@ export default function InventoryView({ onBack }: Props) {
           <button
             onClick={sincronizarInventario}
             disabled={syncState.status === "syncing"}
-            className={`px-4 py-2 text-sm rounded transition-colors font-medium flex items-center gap-2 ${
-              syncState.status === "syncing"
+            className={`px-4 py-2 text-sm rounded transition-colors font-medium flex items-center gap-2 ${syncState.status === "syncing"
                 ? "bg-purple-200 text-purple-700 cursor-not-allowed"
                 : syncState.status === "success"
                   ? "bg-green-100 text-green-600 border border-green-200 hover:bg-green-200"
                   : syncState.status === "error"
                     ? "bg-red-100 text-red-600 border border-red-200 hover:bg-red-200"
                     : "bg-purple-100 text-purple-600 border border-purple-200 hover:bg-purple-200"
-            }`}
+              }`}
           >
-            {syncState.status === "syncing" 
-              ? "☁️ Sincronizando..." 
-              : syncState.status === "success" 
+            {syncState.status === "syncing"
+              ? "☁️ Sincronizando..."
+              : syncState.status === "success"
                 ? "✅ Sincronizado"
                 : "☁️ Sincronizar"}
           </button>
@@ -391,7 +393,7 @@ export default function InventoryView({ onBack }: Props) {
           >
             🏷️ Imprimir Etiquetas QR
           </button>
-          
+
           {isAdmin && (
             <button
               onClick={resetearStock}
@@ -420,13 +422,12 @@ export default function InventoryView({ onBack }: Props) {
       {/* Estado de Sincronización */}
       {syncState.status !== "idle" && (
         <div
-          className={`max-w-6xl mx-auto mb-6 p-4 rounded-lg text-sm ${
-            syncState.status === "syncing"
+          className={`max-w-6xl mx-auto mb-6 p-4 rounded-lg text-sm ${syncState.status === "syncing"
               ? "bg-purple-50 border border-purple-200 text-purple-800"
               : syncState.status === "success"
                 ? "bg-green-50 border border-green-200 text-green-800"
                 : "bg-red-50 border border-red-200 text-red-800"
-          }`}
+            }`}
         >
           <div className="font-medium">{syncState.message}</div>
           {syncState.processed !== undefined && syncState.status === "success" && (
@@ -463,7 +464,7 @@ export default function InventoryView({ onBack }: Props) {
                   // Lógica de estado visual
                   let statusColor = "bg-green-100 text-green-700"
                   let statusText = "Normal"
-                  
+
                   if (prod.stockActual < 500) {
                     statusColor = "bg-orange-100 text-orange-700"
                     statusText = "Bajo"
@@ -475,14 +476,14 @@ export default function InventoryView({ onBack }: Props) {
 
                   const isExpanded = expandedRow === prod.sku
                   const hasLotes = prod.lotes && prod.lotes.length > 0
-                  
+
                   // FIX-20260204-20: Obtener info de presentación
                   const presInfo = getPresentacionInfo(prod.sku, prod.stockActual)
 
                   return (
                     <React.Fragment key={prod.sku}>
                       {/* Fila Principal - Clickeable para expandir */}
-                      <tr 
+                      <tr
                         className="hover:bg-gray-50 transition-colors cursor-pointer"
                         onClick={(e) => {
                           // No expandir si hace click en botones
@@ -510,7 +511,7 @@ export default function InventoryView({ onBack }: Props) {
                         </td>
                         <td className="p-4 text-right font-mono font-bold text-lg">
                           {presInfo ? (
-                            <>{presInfo.botes}</>  
+                            <>{presInfo.botes}</>
                           ) : (
                             <span className="text-gray-400">—</span>
                           )}
@@ -564,7 +565,7 @@ export default function InventoryView({ onBack }: Props) {
                                       <th className="p-2 text-right font-semibold text-gray-600">Cantidad (g)</th>
                                       <th className="p-2 text-center font-semibold text-gray-600">Estado</th>
                                       <th className="p-2 text-left font-semibold text-gray-600">Creado</th>
-                                      <th className="p-2 text-center font-semibold text-gray-600">Etiqueta</th>
+                                      <th className="p-2 text-center font-semibold text-gray-600">Acciones</th>
                                     </tr>
                                   </thead>
                                   <tbody className="divide-y divide-gray-100">
@@ -587,11 +588,21 @@ export default function InventoryView({ onBack }: Props) {
                                           <td className="p-2 text-gray-600 text-xs">
                                             {new Date(lote.createdAt).toLocaleDateString("es-MX")}
                                           </td>
-                                          {/* ARCH-20260204-01: Botón de etiqueta QR */}
-                                          <td className="p-2 text-center">
+                                          {/* FIX-20260205-02: Botones de impresión (Bote y QR) */}
+                                          <td className="p-2 text-center flex gap-1 justify-center">
+                                            {/* Botón etiqueta legible */}
+                                            <button
+                                              onClick={() => abrirModalImpresion(prod, { numero: lote.numeroLote, fecha: lote.createdAt })}
+                                              className="px-2 py-1 text-xs bg-blue-100 text-blue-700 border border-blue-200 rounded hover:bg-blue-200 transition-colors font-medium flex items-center gap-1"
+                                              title="Imprimir etiqueta de Bote (Texto)"
+                                            >
+                                              🖨️ Bote
+                                            </button>
+
+                                            {/* Botón QR */}
                                             <button
                                               onClick={() => abrirModalQR(lote.id)}
-                                              className="px-2 py-1 text-xs bg-purple-100 text-purple-700 border border-purple-200 rounded hover:bg-purple-200 transition-colors font-medium"
+                                              className="px-2 py-1 text-xs bg-purple-100 text-purple-700 border border-purple-200 rounded hover:bg-purple-200 transition-colors font-medium flex items-center gap-1"
                                               title="Imprimir etiqueta QR"
                                             >
                                               🏷️ QR
@@ -612,11 +623,11 @@ export default function InventoryView({ onBack }: Props) {
                 })}
               </tbody>
             </table>
-            
+
             {inventario.length === 0 && (
-                <div className="p-12 text-center text-gray-400">
-                    No hay productos en el inventario.
-                </div>
+              <div className="p-12 text-center text-gray-400">
+                No hay productos en el inventario.
+              </div>
             )}
           </div>
         )}
@@ -637,21 +648,19 @@ export default function InventoryView({ onBack }: Props) {
               <div className="flex gap-2">
                 <button
                   onClick={() => setModal({ ...modal, operacion: "sumar" })}
-                  className={`flex-1 py-2 rounded text-sm font-medium transition-colors ${
-                    modal.operacion === "sumar"
+                  className={`flex-1 py-2 rounded text-sm font-medium transition-colors ${modal.operacion === "sumar"
                       ? "bg-green-100 text-green-700 border border-green-300"
                       : "bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200"
-                  }`}
+                    }`}
                 >
                   ➕ Ingreso
                 </button>
                 <button
                   onClick={() => setModal({ ...modal, operacion: "restar" })}
-                  className={`flex-1 py-2 rounded text-sm font-medium transition-colors ${
-                    modal.operacion === "restar"
+                  className={`flex-1 py-2 rounded text-sm font-medium transition-colors ${modal.operacion === "restar"
                       ? "bg-red-100 text-red-700 border border-red-300"
                       : "bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200"
-                  }`}
+                    }`}
                 >
                   ➖ Salida/Merma
                 </button>
@@ -722,6 +731,7 @@ export default function InventoryView({ onBack }: Props) {
       {modalImpresion.abierto && modalImpresion.producto && (
         <PrintPreview
           product={modalImpresion.producto}
+          lote={modalImpresion.lote}
           isOpen={modalImpresion.abierto}
           onClose={cerrarModalImpresion}
           onPrint={imprimirEtiqueta}
@@ -737,4 +747,3 @@ export default function InventoryView({ onBack }: Props) {
     </div>
   )
 }
-
