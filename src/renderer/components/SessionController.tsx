@@ -240,7 +240,7 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
 
   // Renderizado condicional según fase
   if (fase === "resumen") {
-    const pesoFinalCalculado = pesosRegistrados.reduce((a, b) => a + b, 0)
+    const pesoFinalCalculado = pesosRegistrados.reduce((a, b) => a + b, 0) + ajustes.reduce((sum, aj) => sum + aj.peso, 0)
     const dif = pesoFinalCalculado - pesoTotal
     const esExacto = Math.abs(dif) <= 0.5
 
@@ -295,33 +295,90 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
   }
 
   if (fase === "ajuste") {
+    const totalAjustado = ajustes.reduce((sum, aj) => sum + aj.peso, 0)
+    const totalGlobal = pesosRegistrados.reduce((a, b) => a + b, 0) + totalAjustado + (ajusteStep === 'pesar' ? Math.max(0, peso) : 0)
+
     return (
       <div className="min-h-screen bg-cm-bg flex flex-col border-8 border-yellow-400">
         <HeaderBar basculaConectada={basculaConectada} />
-        <div className="bg-yellow-400 text-yellow-900 px-4 py-2 font-bold text-center">
-          ⚠️ MODO AJUSTE MANUAL - Precaución
+        <div className="bg-yellow-400 text-yellow-900 px-4 py-2 font-bold text-center flex justify-between items-center">
+          <span>⚠️ MODO AJUSTE MANUAL</span>
+          <span className="text-xs bg-yellow-600 text-white px-2 py-1 rounded">Ajustes: {ajustes.length} | +{totalAjustado.toFixed(1)}g</span>
         </div>
-        <main className="flex-1 flex flex-col items-center justify-center gap-8 p-8">
-          <div className="text-center">
-            <h2 className="text-6xl font-black text-gray-900 mb-2">
-              +{peso.toFixed(1)}g
-            </h2>
-            <p className="text-xl text-gray-600">Agregado extra</p>
-          </div>
 
-          <div className="w-full max-w-2xl bg-white p-6 rounded-lg shadow-lg border border-gray-200">
-            <p className="text-gray-700 mb-4 text-center">
-              Agrega manualmente los tintes necesarios. El peso mostrado se sumará al total de la mezcla.
-            </p>
-            <div className="flex justify-center">
-              <button
-                onClick={handleFinalizarTotal}
-                className="w-full px-8 py-4 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-xl shadow-lg transition-all"
-              >
-                Guardar Ajuste (Total: {(pesosRegistrados.reduce((a, b) => a + b, 0) + peso).toFixed(1)}g)
-              </button>
+        <main className="flex-1 flex flex-col items-center justify-center gap-8 p-8">
+          {ajusteStep === 'escanear' ? (
+            // PASO 1: ESCANEAR
+            <div className="w-full max-w-2xl bg-white p-8 rounded-lg shadow-lg border border-yellow-300">
+              <div className="text-center mb-6">
+                <p className="text-6xl mb-2">🔍</p>
+                <h2 className="text-3xl font-bold text-gray-800">¿Qué vas a agregar?</h2>
+                <p className="text-gray-500">Escanea el bote para registrar trazabilidad</p>
+              </div>
+
+              <input
+                ref={inputRef}
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && handleValidarSKU()}
+                placeholder="Escanea el código..."
+                className="w-full px-6 py-4 text-center text-3xl font-bold border-2 border-yellow-400 rounded-lg focus:outline-none focus:ring-4 focus:ring-yellow-200 mb-6 bg-yellow-50"
+                autoFocus
+              />
+
+              <div className="flex gap-4 justify-center">
+                <button
+                  onClick={handleBypassValidacion}
+                  className="text-gray-400 text-xs hover:text-gray-600 underline"
+                >
+                  Modo Pruebas (Sin Escáner)
+                </button>
+              </div>
+
+              <div className="mt-8 border-t border-gray-100 pt-4">
+                <button
+                  onClick={handleFinalizarTotal}
+                  className="w-full py-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-lg transition-colors"
+                >
+                  ✅ Terminar Ajustes y Guardar (Total: {totalGlobal.toFixed(1)}g)
+                </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            // PASO 2: PESAR
+            <div className="w-full max-w-2xl text-center">
+              <div className="mb-6">
+                <p className="text-sm text-gray-500 uppercase font-bold tracking-wider">Agregando</p>
+                <h2 className="text-6xl font-black text-gray-900">{ajusteSkuActual}</h2>
+              </div>
+
+              <div className="bg-white p-8 rounded-2xl shadow-lg border-2 border-blue-500 mb-8">
+                <p className="text-gray-400 text-sm mb-2">PESO AGREGADO</p>
+                <p className="text-8xl font-black text-blue-600 tabular-nums">
+                  {peso.toFixed(1)}<span className="text-4xl text-gray-400">g</span>
+                </p>
+              </div>
+
+              <div className="flex gap-4">
+                <button
+                  onClick={() => {
+                    setAjusteStep("escanear")
+                    setAjusteSkuActual("")
+                  }}
+                  className="flex-1 py-4 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-bold text-xl transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleAgregarAjuste}
+                  className="flex-[2] py-4 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl font-bold text-2xl shadow-lg transition-colors"
+                >
+                  💾 Registrar +{Math.max(0, peso).toFixed(1)}g
+                </button>
+              </div>
+            </div>
+          )}
         </main>
       </div>
     )
