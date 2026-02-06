@@ -88,25 +88,17 @@ export function registerPrintingIPC(mainWindow?: BrowserWindow) {
             }
 
             const params = new URLSearchParams()
+
+            // Usar datos tipados de PrintOptions
             if (options.data) {
                 params.set("sku", options.data.sku || "")
                 params.set("nombre", options.data.nombre || "")
                 if (options.data.lote) {
-                    params.set("lote", options.data.lote.numero)
-                    if (options.data.lote.fecha) params.set("fechaLote", options.data.lote.fecha)
+                    params.set("lote", options.data.lote.numero || "")
+                    if (options.data.lote.fecha) {
+                        params.set("fechaLote", options.data.lote.fecha)
+                    }
                 }
-            }
-            // Si data no viene en options, se asume que usa props pasados (pero IPC tiene limitaciones)
-            // Para asegurar, deberíamos pasar los datos explícitamente en `options.extraData` si el type lo permite
-            // Ojo: PrintOptions no tiene campo 'data' oficial en types.ts, lo agregamos dinámicamente o casteamos.
-            // WORKAROUND: Asumimos que `options` trae propiedades extra si usamos (options as any)
-            const extraData = (options as any).data || (options as any).product
-            if (extraData) {
-                params.set("sku", extraData.sku || "")
-                params.set("nombre", extraData.nombre || "")
-            }
-            if ((options as any).lote) {
-                params.set("lote", (options as any).lote.numero)
             }
 
             const printUrl = `${baseURL}#/print-label?${params.toString()}`

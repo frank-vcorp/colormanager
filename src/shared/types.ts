@@ -277,4 +277,12 @@ export interface PrintOptions {
   printerName?: string // Si no se especifica, usa default
   silent?: boolean
   copies?: number
+  data?: {
+    sku?: string
+    nombre?: string
+    lote?: {
+      numero?: string
+      fecha?: string
+    }
+  }
 }
