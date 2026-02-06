@@ -311,23 +311,27 @@ function AppMain() {
   )
 }
 
+// FIX-20260206-02: Import estático para evitar problemas de carga
+import PrintLabelView from "./components/PrintLabelView"
+
 export default function App() {
-  // ARCH-20260206-01: Router simple para ventana de impresión oculta
-  const [isPrintWindow, setIsPrintWindow] = useState(window.location.hash.startsWith("#/print-label"))
+  // FIX-20260206-02: Usar Query Params (?mode=print) en lugar de Hash
+  // Esto es más robusto porque el Router no intenta "navegar" a un query param
+  const urlParams = new URLSearchParams(window.location.search)
+  const isPrintMode = urlParams.get("mode") === "print"
+
+  const [isPrintWindow, setIsPrintWindow] = useState(isPrintMode)
 
   useEffect(() => {
-    // Escuchar cambios de hash por si acaso (aunque en ventana oculta es estático)
-    const checkHash = () => setIsPrintWindow(window.location.hash.startsWith("#/print-label"))
-    window.addEventListener("hashchange", checkHash)
-    return () => window.removeEventListener("hashchange", checkHash)
+    // No necesitamos listener de hashchange, el query param es estático al abrir la ventana
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("mode") === "print") {
+      setIsPrintWindow(true)
+    }
   }, [])
 
-  // Si es ventana de impresión, renderizar SOLO la vista de etiqueta (sin providers ni CSS global de app)
+  // Si es ventana de impresión, renderizar SOLO la vista de etiqueta
   if (isPrintWindow) {
-    // Importación dinámica para evitar cargar todo el bundle si es posible (splitting)
-    // Pero por simplicidad ahora usamos require o el componente directo si ya está importado.
-    // Como App.tsx ya carga todo, renderizamos directo.
-    const PrintLabelView = require("./components/PrintLabelView").default
     return <PrintLabelView />
   }
 

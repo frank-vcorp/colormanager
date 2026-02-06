@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react"
-import { useLocation } from "react-router-dom" // Asumiendo que usamos router, o nativo
 import { LabelTemplate } from "./ui/LabelTemplate"
 import { Producto } from "@shared/types"
 
@@ -11,11 +10,9 @@ export default function PrintLabelView() {
     const [data, setData] = useState<{ product: Producto, lote?: { numero: string; fecha?: string } } | null>(null)
 
     useEffect(() => {
-        // Parsear parámetros de la URL
-        // Formato esperado: #/print-label?sku=...&nombre=...&lote=...
-        const hash = window.location.hash
-        const queryString = hash.split('?')[1]
-        const params = new URLSearchParams(queryString)
+        // FIX-20260206-02: Leer params de window.location.search (Query Params nativos)
+        // URL esperada: index.html?mode=print&sku=...&nombre=...
+        const params = new URLSearchParams(window.location.search)
 
         const sku = params.get("sku") || "UNKNOWN"
         const nombre = params.get("nombre") || "Sin Nombre"
@@ -24,14 +21,9 @@ export default function PrintLabelView() {
         const product: Producto = {
             sku,
             nombre,
-            stockActual: 0, // No relevante para impresión
-            stockMinimo: 0,
-            costo: 0,
-            ultimoCosto: 0,
-            id: 0,
-            unidadMedida: "ml",
-            categoria: "General",
-            updatedAt: new Date().toISOString()
+            stockActual: 0,
+            unidad: "ml", // Valor por defecto válido
+            // Otros campos opcionales fuera
         }
 
         // Datos de lote opcionales

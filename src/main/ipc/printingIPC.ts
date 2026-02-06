@@ -53,6 +53,10 @@ export function registerPrintingIPC(mainWindow?: BrowserWindow) {
      * PRINT_LABEL: Imprimir usando una ventana oculta dedicada
      * Crea una instancia BrowserWindow invisible, carga la vista de etiqueta y ejecuta print.
      */
+    /**
+     * PRINT_LABEL: Imprimir usando una ventana oculta dedicada
+     * Crea una instancia BrowserWindow invisible, carga la vista de etiqueta y ejecuta print.
+     */
     ipcMain.handle(IPCInvokeChannels.PRINT_LABEL, async (_, options: PrintOptions) => {
         let printWindow: BrowserWindow | null = null
 
@@ -101,7 +105,14 @@ export function registerPrintingIPC(mainWindow?: BrowserWindow) {
                 }
             }
 
-            const printUrl = `${baseURL}#/print-label?${params.toString()}`
+            // FIX-20260206-02: Usar Query Param ?mode=print en lugar de Hash
+            // Agregar mode=print para que App.tsx detecte y renderice solo la etiqueta
+            params.set("mode", "print")
+
+            // Asegurar separador correcto (? o &)
+            const separator = baseURL.includes("?") ? "&" : "?"
+            const printUrl = `${baseURL}${separator}${params.toString()}`
+
             console.log(`[PrintingIPC] Cargando ventana oculta: ${printUrl}`)
 
             await printWindow.loadURL(printUrl)
