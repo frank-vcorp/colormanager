@@ -12,6 +12,26 @@ import { getPrismaClient } from "./db"
 import { randomUUID } from "crypto"
 
 /**
+ * Genera el siguiente número de lote secuencial para un ingrediente (001, 002, etc.)
+ */
+export async function getNextLotNumber(ingredienteId: string, tx?: any): Promise<string> {
+  const prisma = tx || getPrismaClient()
+
+  // Buscar el último lote creado para este ingrediente
+  const lastLote = await prisma.lote.findFirst({
+    where: { ingredienteId },
+    orderBy: { createdAt: 'desc' },
+  })
+
+  let nextNum = 1
+  if (lastLote && /^\d{3}$/.test(lastLote.numeroLote)) {
+    nextNum = parseInt(lastLote.numeroLote, 10) + 1
+  }
+
+  return String(nextNum).padStart(3, '0')
+}
+
+/**
  * Datos iniciales de inventario
  * FIX-20260204-17: Array vacío - el inventario real se importa desde Excel de Sayer
  */
@@ -82,7 +102,7 @@ export async function seedInitialInventory(): Promise<void> {
       // Usar transacción para insertar múltiples ingredientes + lotes
       for (const producto of INVENTARIO_INICIAL) {
         const ingredienteId = `ING-${producto.sku}-${Date.now()}`
-        
+
         // Crear ingrediente con lote inicial en transacción
         await prisma.$transaction([
           prisma.ingrediente.create({
@@ -102,14 +122,14 @@ export async function seedInitialInventory(): Promise<void> {
             data: {
               id: randomUUID(),
               ingredienteId: ingredienteId,
-              numeroLote: `LOTE-INICIAL-${producto.sku}`,
+              numeroLote: "001", // Lote inicial siempre 001
               cantidad: producto.stockActual,
               estado: "activo",
             },
           }),
         ])
       }
-      
+
       console.log(`[Inventory] ${INVENTARIO_INICIAL.length} ingredientes con lotes iniciales insertados`)
     } else {
       console.log(`[Inventory] Tabla ya contiene ${count} ingredientes`)
@@ -315,7 +335,7 @@ export async function adjustStock(
   operacion: "sumar" | "restar"
 ): Promise<number> {
   const prisma = getPrismaClient()
-  
+
   try {
     // Validaciones
     if (cantidad <= 0) {
@@ -341,7 +361,7 @@ export async function adjustStock(
     // Calcular nuevo stock
     const delta = operacion === "sumar" ? cantidad : -cantidad
     const nuevoStock = ingrediente.stockActual + delta
-    
+
     // Validar que no quede negativo en resta
     if (nuevoStock < 0) {
       throw new Error(
@@ -363,17 +383,19 @@ export async function adjustStock(
 
     // Transacción: Actualizar ingrediente + SyncLog + Manejar Lotes
     if (operacion === "sumar") {
-      // INGRESO: Crear nuevo Lote (IMPL-20260129-01)
-      const numeroLote = `ADJ-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-      
-      await prisma.$transaction([
-        prisma.ingrediente.update({
+      // INGRESO: Crear nuevo Lote (IMPL-20260129-01) con secuencial (FIX-20260206)
+
+      let numeroLote = ""
+
+      await prisma.$transaction(async (tx: any) => {
+        numeroLote = await getNextLotNumber(ingrediente.id, tx)
+
+        await tx.ingrediente.update({
           where: { codigo: sku },
-          data: {
-            stockActual: nuevoStock,
-          },
-        }),
-        prisma.syncLog.create({
+          data: { stockActual: nuevoStock },
+        })
+
+        await tx.syncLog.create({
           data: {
             id: randomUUID(),
             tabla: "Inventario",
@@ -382,9 +404,9 @@ export async function adjustStock(
             cambios: JSON.stringify(cambios),
             nodeId: "LOCAL",
           },
-        }),
-        // Crear nuevo Lote para el ingreso (IMPL-20260129-01)
-        prisma.lote.create({
+        })
+
+        await tx.lote.create({
           data: {
             id: randomUUID(),
             ingredienteId: ingrediente.id,
@@ -392,8 +414,8 @@ export async function adjustStock(
             cantidad,
             estado: "activo",
           },
-        }),
-      ])
+        })
+      })
 
       console.log(
         `[Inventory] Ingreso: ${sku} +${cantidad}g por "${motivo}". Stock: ${ingrediente.stockActual}g -> ${nuevoStock}g. Lote: ${numeroLote}`
@@ -404,7 +426,7 @@ export async function adjustStock(
       await prisma.$transaction(async (tx: any) => {
         // Primero consumir FIFO
         await consumirStockFIFO(ingrediente.id, cantidad, tx)
-        
+
         // Luego registrar en SyncLog
         await tx.syncLog.create({
           data: {

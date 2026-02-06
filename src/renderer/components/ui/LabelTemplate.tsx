@@ -73,7 +73,7 @@ export const LabelTemplate: React.FC<Props> = ({ product, lote }) => {
 
         {lote ? (
           <span className="font-bold flex items-center" style={{ fontSize: "2.8mm", paddingRight: "3mm" }}>
-            🧪 Bote: {lote.numero}
+            Lte. {lote.numero}
           </span>
         ) : (
           <span style={{ fontSize: "2.5mm", paddingRight: "3mm" }}>SKU: {product.sku}</span>

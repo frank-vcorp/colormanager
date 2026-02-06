@@ -15,8 +15,63 @@ import { parse } from "csv-parse"
 import * as xlsx from "xlsx"
 import { getPrismaClient } from "../database/db"
 import { ImportacionResultado } from "../../shared/types"
-import { consumirStockFIFO } from "../database/inventoryService"
+import { consumirStockFIFO, getNextLotNumber } from "../database/inventoryService"
 // FIX REFERENCE: FIX-20260127-04
+
+// ... (existing code)
+
+if (diferencia > 0) {
+  // Ingreso: Crear Lote con el delta y número secuencial
+  const numeroLote = await getNextLotNumber(existente.id, tx)
+
+  await tx.lote.create({
+    data: {
+      id: randomUUID(),
+      ingredienteId: existente.id,
+      numeroLote,
+      cantidad: diferencia,
+      estado: "activo",
+    },
+  })
+  console.log(
+    `[ImportService] Ingreso detectado para ${row.Clave}: +${diferencia}ml, Lote creado: ${numeroLote}`
+  )
+} else if (diferencia < 0) {
+  // ...
+} else {
+  // CREACIÓN: Crear ingrediente con Lote Inicial 001
+  const nuevoIngredienteId = `ING-${row.Clave}-${Date.now()}`
+
+  await tx.ingrediente.create({
+    data: {
+      id: nuevoIngredienteId,
+      codigo: row.Clave,
+      // ... rest of fields
+      nombre: row.Descripcion,
+      descripcion: `Importado de SICAR: ${row.Descripcion}`,
+      densidad: 1.0,
+      costo: costo,
+      stockActual: nuevoStock,
+      stockMinimo: 100,
+    },
+  })
+
+  // Crear Lote Inicial 001
+  await tx.lote.create({
+    data: {
+      id: randomUUID(),
+      ingredienteId: nuevoIngredienteId,
+      numeroLote: "001",
+      cantidad: nuevoStock,
+      estado: nuevoStock > 0 ? "activo" : "agotado",
+    },
+  })
+
+  console.log(
+    `[ImportService] Producto creado: ${row.Clave} con Lote Inicial 001 (${nuevoStock}ml)`
+  )
+  resultado.creados++
+}
 
 /**
  * FIX-20260204-20: Mapeo de sufijos SICAR a capacidad en mililitros
@@ -52,21 +107,21 @@ function parseSicarPresentation(clave: string): {
 } | null {
   // Buscar el patrón: cualquier código terminando en .XX (dos dígitos)
   const match = clave.match(/^(.+)\.(\d{2})$/)
-  
+
   if (!match) {
     // No tiene sufijo de presentación
     return null
   }
-  
+
   const [, baseSku, suffix] = match
   const capacityMl = SICAR_PRESENTATION_ML[suffix]
-  
+
   if (!capacityMl) {
     // Sufijo desconocido, retornar null para tratarlo como valor directo
     console.warn(`[ImportService] Sufijo de presentación desconocido: .${suffix} en ${clave}`)
     return null
   }
-  
+
   return { baseSku, suffix, capacityMl }
 }
 
@@ -223,9 +278,9 @@ function readExcel(filePath: string): SicarRow[] {
   const sheet = workbook.Sheets[sheetName]
 
   // Convertir a array de arrays para detectar fila de encabezados
-  const allRows = xlsx.utils.sheet_to_json(sheet, { 
+  const allRows = xlsx.utils.sheet_to_json(sheet, {
     header: 1, // Array de arrays, no objetos
-    defval: "" 
+    defval: ""
   }) as any[][]
 
   if (allRows.length === 0) {
@@ -238,12 +293,12 @@ function readExcel(filePath: string): SicarRow[] {
   for (let i = 0; i < Math.min(allRows.length, 10); i++) {
     const row = allRows[i]
     if (!row) continue
-    
+
     // Verificar si esta fila tiene los headers esperados
     const rowLower = row.map((cell: any) => String(cell || "").toLowerCase().trim())
     const hasClaveColumn = rowLower.some(h => ["clave", "sku", "codigo"].includes(h))
     const hasDescColumn = rowLower.some(h => ["descripcion", "descripción", "nombre"].includes(h))
-    
+
     if (hasClaveColumn && hasDescColumn) {
       headerRowIndex = i
       console.log(`[ImportService] Encabezados encontrados en fila ${i + 1}`)
@@ -333,10 +388,10 @@ async function processRows(rows: SicarRow[]): Promise<ImportacionResultado> {
           // FIX-20260204-20: Convertir stock de botes a ml usando sufijo de presentación
           const stockBotes = parseFloat(String(row.Existencia || 0))
           const presentation = parseSicarPresentation(row.Clave)
-          
+
           let nuevoStock: number
           let unidadLog: string
-          
+
           if (presentation) {
             // Código con sufijo de presentación: multiplicar botes × capacidad
             nuevoStock = stockBotes * presentation.capacityMl
@@ -352,7 +407,7 @@ async function processRows(rows: SicarRow[]): Promise<ImportacionResultado> {
               `[ImportService] ${row.Clave}: Sin sufijo de presentación, usando valor directo → ${unidadLog}`
             )
           }
-          
+
           const costo = row.Costo ? parseFloat(String(row.Costo)) : 0
           const hoy = new Date().toISOString().split('T')[0] // YYYYMMDD format
 
@@ -404,7 +459,7 @@ async function processRows(rows: SicarRow[]): Promise<ImportacionResultado> {
           } else {
             // CREACIÓN: Crear ingrediente con Lote Inicial
             const nuevoIngredienteId = `ING-${row.Clave}-${Date.now()}`
-            
+
             await tx.ingrediente.create({
               data: {
                 id: nuevoIngredienteId,
@@ -445,8 +500,8 @@ async function processRows(rows: SicarRow[]): Promise<ImportacionResultado> {
 
     console.log(
       `[ImportService] Importación completada: ${resultado.procesados} procesados, ` +
-        `${resultado.actualizados} actualizados, ${resultado.creados} creados, ` +
-        `${resultado.errores.length} errores`
+      `${resultado.actualizados} actualizados, ${resultado.creados} creados, ` +
+      `${resultado.errores.length} errores`
     )
   } catch (txError) {
     resultado.errores.push(`Error en transacción: ${String(txError)}`)
