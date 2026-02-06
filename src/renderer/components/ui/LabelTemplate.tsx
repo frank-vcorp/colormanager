@@ -107,7 +107,12 @@ export const PrintPreview: React.FC<Props> = (props) => {
   const handlePrint = async () => {
     const success = await imprimir({
       printerName: selectedPrinter,
-      silent: true // Impresión silenciosa para etiquetas
+      silent: true, // Impresión silenciosa para etiquetas
+      data: {
+        sku: props.product.sku,
+        nombre: props.product.nombre,
+        lote: props.lote
+      }
     })
 
     if (success) {

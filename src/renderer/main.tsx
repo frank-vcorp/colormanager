@@ -10,7 +10,11 @@ import "./index.css"
 import { setupBrowserMock } from "./mock-ipc"
 
 // Activar mock si no estamos en Electron
-setupBrowserMock()
+// Activar mock si no estamos en Electron y NO estamos en modo impresión
+// ESTO EVITA QUE EL MOCK SE RENDERICE EN LA ETIQUETA
+if (!window.location.search.includes("mode=print")) {
+  setupBrowserMock()
+}
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
