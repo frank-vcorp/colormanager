@@ -20,58 +20,6 @@ import { consumirStockFIFO, getNextLotNumber } from "../database/inventoryServic
 
 // ... (existing code)
 
-if (diferencia > 0) {
-  // Ingreso: Crear Lote con el delta y número secuencial
-  const numeroLote = await getNextLotNumber(existente.id, tx)
-
-  await tx.lote.create({
-    data: {
-      id: randomUUID(),
-      ingredienteId: existente.id,
-      numeroLote,
-      cantidad: diferencia,
-      estado: "activo",
-    },
-  })
-  console.log(
-    `[ImportService] Ingreso detectado para ${row.Clave}: +${diferencia}ml, Lote creado: ${numeroLote}`
-  )
-} else if (diferencia < 0) {
-  // ...
-} else {
-  // CREACIÓN: Crear ingrediente con Lote Inicial 001
-  const nuevoIngredienteId = `ING-${row.Clave}-${Date.now()}`
-
-  await tx.ingrediente.create({
-    data: {
-      id: nuevoIngredienteId,
-      codigo: row.Clave,
-      // ... rest of fields
-      nombre: row.Descripcion,
-      descripcion: `Importado de SICAR: ${row.Descripcion}`,
-      densidad: 1.0,
-      costo: costo,
-      stockActual: nuevoStock,
-      stockMinimo: 100,
-    },
-  })
-
-  // Crear Lote Inicial 001
-  await tx.lote.create({
-    data: {
-      id: randomUUID(),
-      ingredienteId: nuevoIngredienteId,
-      numeroLote: "001",
-      cantidad: nuevoStock,
-      estado: nuevoStock > 0 ? "activo" : "agotado",
-    },
-  })
-
-  console.log(
-    `[ImportService] Producto creado: ${row.Clave} con Lote Inicial 001 (${nuevoStock}ml)`
-  )
-  resultado.creados++
-}
 
 /**
  * FIX-20260204-20: Mapeo de sufijos SICAR a capacidad en mililitros

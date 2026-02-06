@@ -1,0 +1,24 @@
+FORMULACIÓN
+
+Número      : 999
+HISTORIA    : F
+
+Primera capa
+
+   01 : KT-1400                112.0 (g)
+   02 : KT-1100                 34.0 (g)
+
+            Total               146.0 (g)
+            Peso actual         146.0 (g)
+
+Segunda capa
+
+            Total                 0.0 (g)
+            Peso actual         146.0 (g)
+
+Car Maker:     VW
+Color Code:    PRUEBA-INT
+Sayer Code:    TEST-999
+Coating Type:  Biclapa
+Primer:        Gris
+COMMENT:       Prueba Integral 112g y 34g
