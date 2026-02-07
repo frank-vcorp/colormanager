@@ -27,7 +27,7 @@ interface SessionControllerProps {
 
 export default function SessionController({ receta, onFinish, onCancel }: SessionControllerProps) {
   const { user } = useAuth() // Obtener usuario actual
-
+  const { peso } = useBascula()
   // ... (resto del código)
 
 
