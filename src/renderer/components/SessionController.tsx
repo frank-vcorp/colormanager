@@ -81,6 +81,19 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
   )
 
   const ingredienteActual = ingredientes[ingredienteActualIdx]
+  // Guard Clause: Validar que existan ingredientes
+  if (!ingredienteActual && fase === "mezcla") {
+    return (
+      <div className="min-h-screen bg-cm-bg flex flex-col">
+        <HeaderBar basculaConectada={basculaConectada} />
+        <main className="flex-1 flex flex-col items-center justify-center p-8 text-center text-gray-500">
+          <p className="text-xl font-bold mb-2">⚠️ No hay ingredientes en esta receta</p>
+          <button onClick={onCancel} className="text-blue-600 underline">Volver</button>
+        </main>
+      </div>
+    )
+  }
+
   const pesoTotal = ingredientes.reduce((sum, ing) => sum + ing.pesoTarget, 0)
   const pesoAcumulado = ingredientes
     .slice(0, ingredienteActualIdx)
