@@ -30,27 +30,7 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
 
   // ... (resto del código)
 
-  // En handleGuardarFinal
-  const registro: RegistroMezcla = {
-    id: `MZC-${Date.now()}`,
-    recetaId: `RECETA-${receta.numero}`,
-    recetaNombre: `Receta ${receta.numero}`,
-    fecha: new Date().toISOString(),
-    horaInicio,
-    horaFin: new Date().toISOString(),
-    pesoTotal: pesoTotal,
-    pesoFinal: pesoFinalReal,
-    ingredientes: ingredientesLog,
-    estado,
-    diferencia,
-    tolerancia,
-    cliente: data.cliente || null,
-    vehiculo: data.vehiculo || null,
-    tipoMezcla: "NUEVA",
-    operadorId: user?.id,         // Asignar ID de operador
-    operadorNombre: user?.nombre, // Asignar Nombre
-    // guardarReceta no se usa en backend aun
-  }
+
   const [ingredienteActualIdx, setIngredienteActualIdx] = useState(0)
   const [basculaConectada] = useState(true)
   const [pesosRegistrados, setPesosRegistrados] = useState<number[]>([]) // Pesos por ingrediente
