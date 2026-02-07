@@ -644,9 +644,10 @@ async function printMixLabelViaElectron(data: MixLabelData): Promise<PrintResult
     require('fs').writeFileSync(tempFile, labelHtml, 'utf-8')
 
     const printWindow = new BrowserWindow({
-      width: 400,
-      height: 300,
-      show: false, // Oculto
+      width: 600, // Un poco más grande para ver bien
+      height: 400,
+      show: true, // Mostrar ventana (Solicitud usuario)
+      title: `Previsualización Etiqueta Mezcla ${data.id}`,
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true
@@ -658,31 +659,14 @@ async function printMixLabelViaElectron(data: MixLabelData): Promise<PrintResult
     // Aumentar tiempo de espera para asegurar carga de imagen QR
     await new Promise(resolve => setTimeout(resolve, 1500))
 
-    // Buscar impresora Niimbot
-    const printers = await printWindow.webContents.getPrintersAsync()
-    console.log('[qrLabelService] Impresoras disponibles:', printers.map(p => p.name))
-
-    // Buscar impresora que contenga "Niimbot" o "B1" (case insensitive)
-    const niimbotPrinter = printers.find(p =>
-      p.name.toLowerCase().includes('niimbot') ||
-      p.name.toLowerCase().includes('b1')
-    )
-
-    const deviceName = niimbotPrinter ? niimbotPrinter.name : ''
-
-    if (deviceName) {
-      console.log(`[qrLabelService] ✅ Usando impresora detectada: ${deviceName}`)
-    } else {
-      console.warn('[qrLabelService] ⚠️ No se detectó impresora Niimbot. Usando default.')
-    }
+    console.log('[qrLabelService] Mostrando diálogo de impresión...')
 
     const printResult = await new Promise<boolean>((resolve) => {
       printWindow.webContents.print(
         {
-          silent: true,
-          printBackground: false,
-          deviceName: deviceName, // Usar impresora específica si se encontró
-          // Definir márgenes minimos si es posible
+          silent: false, // Permitir al usuario ver/seleccionar impresora
+          printBackground: true,
+          // deviceName: deviceName, // Dejar que el usuario elija o confirme
           margins: { marginType: 'none' }
         },
         (success, failureReason) => {
@@ -695,9 +679,13 @@ async function printMixLabelViaElectron(data: MixLabelData): Promise<PrintResult
     // Cleanup
     try { require('fs').unlinkSync(tempFile) } catch (e) { }
 
+    // Cerrar ventana solo después de un tiempo razonable o dejarla abierta si falla?
+    // Mejor cerrar despues de un tiempo
     setTimeout(() => {
       if (!printWindow.isDestroyed()) printWindow.close()
-    }, 2000) // Dar tiempo al spooler
+    }, 5000)
+
+    return { success: printResult, printed: printResult ? 1 : 0 }
 
     return { success: printResult, printed: printResult ? 1 : 0 }
 

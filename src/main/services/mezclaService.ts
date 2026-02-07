@@ -25,6 +25,8 @@ export async function guardarMezcla(
 
   try {
     // FIX-20260206-06: Uso de ORM nativo seguro (DEBY Debt Fix)
+    console.log("[MezclaService] Intentando guardar mezcla:", JSON.stringify(registro, null, 2))
+
     await prisma.mezcla.create({
       data: {
         id: id,
