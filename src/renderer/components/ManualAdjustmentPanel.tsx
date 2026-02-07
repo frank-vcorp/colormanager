@@ -61,14 +61,7 @@ export default function ManualAdjustmentPanel({
                             autoFocus
                         />
 
-                        <div className="flex gap-4 justify-center">
-                            <button
-                                onClick={onBypass}
-                                className="text-gray-400 text-xs hover:text-gray-600 underline"
-                            >
-                                Modo Pruebas (Sin Escáner)
-                            </button>
-                        </div>
+                        {/* Botón de Pruebas Eliminado */}
 
                         <div className="mt-8 border-t border-gray-100 pt-4">
                             <button

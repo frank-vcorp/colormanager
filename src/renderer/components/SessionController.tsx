@@ -373,12 +373,7 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
               >
                 Validar
               </button>
-              <button
-                onClick={handleBypass}
-                className="px-3 py-2 xl:px-5 xl:py-4 bg-gray-400 hover:bg-gray-500 text-gray-700 text-xs xl:text-sm rounded font-semibold transition-colors opacity-60 hover:opacity-100"
-              >
-                Bypass
-              </button>
+              {/* Botón Bypass Eliminado */}
             </div>
           </div>
         ) : (
