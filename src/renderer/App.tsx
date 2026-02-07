@@ -11,7 +11,7 @@
 
 // Nota: Los tipos de electron.d.ts son globales (declare global) y se cargan automáticamente via tsconfig
 import { useState, useEffect } from "react"
-import { PesoEvent, RecetaSayer } from "@shared/types"
+import { PesoEvent, RecetaSayer, RegistroMezcla } from "@shared/types"
 import { ToastProvider } from "./hooks/useToast" // FIX-20260127-03: extensión cambiada a .tsx
 import { ModalProvider } from "./components/ui/Modal"
 import { AuthProvider, useAuth } from "./context/AuthProvider"
@@ -23,7 +23,7 @@ import HistoryView from "./components/HistoryView"
 import InventoryView from "./components/InventoryView"
 import MisMezclasView from "./components/MisMezclasView"
 import { AdminLoginModal } from "./components/AdminLoginModal"
-import { RegistroMezcla } from "@shared/types"
+import { SettingsView } from "./components/SettingsView"
 
 /**
  * AppContent: Controlador principal de vistas
@@ -57,6 +57,7 @@ function AppMain() {
   const [sesionMezcla, setSesionMezcla] = useState(false)
   const [vista, setVista] = useState<"home" | "mezcla" | "historial" | "inventario" | "mis-mezclas">("home")
   const [showAdminLogin, setShowAdminLogin] = useState(false) // Modal login Admin
+  const [showSettings, setShowSettings] = useState(false) // Modal Configuración
 
   // Listeners para cambios de peso y recetas
   useEffect(() => {
@@ -215,6 +216,13 @@ function AppMain() {
         onClose={() => setShowAdminLogin(false)}
       />
 
+      {/* Vista Configuración (Overlay estilo Modal) */}
+      {showSettings && (
+        <div className="absolute inset-0 z-50 bg-[#1e1e1e] flex flex-col">
+          <SettingsView onClose={() => setShowSettings(false)} />
+        </div>
+      )}
+
       {/* Vista: Mis Mezclas (Entonador) */}
       {vista === "mis-mezclas" && (
         <MisMezclasView
@@ -252,6 +260,7 @@ function AppMain() {
             onInventarioClick={() => setVista("inventario")}
             onMisMezclasClick={() => setVista("mis-mezclas")}
             onAdminClick={handleAdminClick}
+            onSettingsClick={() => setShowSettings(true)}
           />
 
           {/* Main area con sidebar */}

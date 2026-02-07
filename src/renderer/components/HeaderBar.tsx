@@ -17,6 +17,7 @@ interface HeaderBarProps {
   onHistorialClick?: () => void
   onInventarioClick?: () => void
   onAdminClick?: () => void
+  onSettingsClick?: () => void
 }
 
 export default function HeaderBar({
@@ -24,7 +25,8 @@ export default function HeaderBar({
   onMisMezclasClick,
   onHistorialClick,
   onInventarioClick,
-  onAdminClick
+  onAdminClick,
+  onSettingsClick
 }: HeaderBarProps) {
   const { user, isAdmin, logout } = useAuth()
   const [mode, setMode] = useState<"DEMO" | "PRODUCTION">("DEMO")
@@ -115,17 +117,30 @@ export default function HeaderBar({
 
         {/* Selector de Modo (Solo Admin) - FIX-20260201-05 */}
         {isAdmin && (
-          <button
-            onClick={toggleMode}
-            className={`flex items-center gap-1.5 px-2 py-0.5 rounded cursor-pointer transition-colors ml-2 ${mode === "PRODUCTION"
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleMode}
+              className={`flex items-center gap-1.5 px-2 py-0.5 rounded cursor-pointer transition-colors ml-2 ${mode === "PRODUCTION"
                 ? "bg-red-900/30 border border-red-800 hover:bg-red-900/50"
                 : "bg-blue-900/30 border border-blue-800 hover:bg-blue-900/50"
-              }`}
-            title="Clic para cambiar modo"
-          >
-            <span className={`w-2 h-2 rounded-full ${mode === "PRODUCTION" ? "bg-red-500 animate-pulse" : "bg-blue-400"}`} />
-            <span className="font-bold tracking-wider">{mode === "PRODUCTION" ? "PROD" : "DEMO"}</span>
-          </button>
+                }`}
+              title="Clic para cambiar modo"
+            >
+              <span className={`w-2 h-2 rounded-full ${mode === "PRODUCTION" ? "bg-red-500 animate-pulse" : "bg-blue-400"}`} />
+              <span className="font-bold tracking-wider">{mode === "PRODUCTION" ? "PROD" : "DEMO"}</span>
+            </button>
+
+            {/* Botón Configuración */}
+            {onSettingsClick && (
+              <button
+                onClick={onSettingsClick}
+                className="p-1 text-[#6e6e6e] hover:text-white hover:bg-[#3c3c3c] rounded transition-colors"
+                title="Configuración"
+              >
+                ⚙️
+              </button>
+            )}
+          </div>
         )}
 
         {/* Separador */}
