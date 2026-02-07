@@ -325,17 +325,17 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
   return (
     <div className="min-h-screen bg-cm-bg flex flex-col">
       <HeaderBar basculaConectada={basculaConectada} />
-      <main className="flex-1 flex flex-col items-center justify-center gap-6 p-8">
+      <main className="flex-1 flex flex-col items-center p-2 gap-2 overflow-y-auto xl:justify-center xl:p-8 xl:gap-8 transition-all duration-300">
 
-        {/* Progreso */}
-        <div className="w-full max-w-2xl bg-blue-50 border-2 border-blue-300 rounded-lg p-4">
-          <div className="flex justify-between items-center mb-2">
-            <p className="text-sm font-semibold text-blue-700">PROGRESO DE MEZCLA</p>
-            <p className="text-sm font-bold text-blue-800">
-              Ingrediente {ingredienteActualIdx + 1} de {ingredientes.length}
+        {/* Progreso Responsivo */}
+        <div className="w-full max-w-2xl xl:max-w-4xl bg-blue-50 border border-blue-300 rounded p-2 xl:p-4 transition-all duration-300">
+          <div className="flex justify-between items-center mb-1">
+            <p className="text-xs xl:text-sm font-semibold text-blue-700">PROGRESO</p>
+            <p className="text-xs xl:text-sm font-bold text-blue-800">
+              {ingredienteActualIdx + 1} / {ingredientes.length}
             </p>
           </div>
-          <div className="w-full bg-blue-200 rounded-full h-3 overflow-hidden">
+          <div className="w-full bg-blue-200 rounded-full h-2 xl:h-4 overflow-hidden">
             <div
               className="bg-blue-600 h-full transition-all duration-300"
               style={{ width: `${((ingredienteActualIdx + 1) / ingredientes.length) * 100}%` }}
@@ -345,108 +345,112 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
 
         {/* Panel de Validación SKU */}
         {!skuVerificado ? (
-          <div className="w-full max-w-2xl bg-yellow-50 border-4 border-yellow-400 rounded-lg p-8 shadow-lg">
+          <div className="w-full max-w-2xl xl:max-w-4xl bg-yellow-50 border-2 border-yellow-400 rounded-lg p-6 xl:p-10 shadow-lg mt-4 transition-all duration-300">
             <div className="text-center mb-4">
-              <p className="text-6xl">🔒</p>
-              <p className="text-xl font-bold text-yellow-800 mt-2">VALIDACIÓN REQUERIDA</p>
+              <p className="text-4xl xl:text-6xl">🔒</p>
+              <p className="text-lg xl:text-2xl font-bold text-yellow-800 mt-1">VALIDACIÓN REQUERIDA</p>
             </div>
-            <div className="text-center mb-6">
-              <p className="text-sm text-gray-600 font-semibold uppercase mb-2">Escanea el código correcto:</p>
-              <h2 className="text-6xl font-black text-gray-900 mb-2">{ingredienteActual.codigo}</h2>
+            <div className="text-center mb-4">
+              <p className="text-xs xl:text-sm text-gray-600 font-semibold uppercase mb-1">Escanea:</p>
+              <h2 className="text-4xl xl:text-6xl font-black text-gray-900">{ingredienteActual.codigo}</h2>
             </div>
-            <div className="mb-6">
+            <div className="mb-4">
               <input
                 ref={inputRef}
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && handleValidarSKU()}
-                placeholder={`Escanea el código ${ingredienteActual.codigo}...`}
-                className="w-full px-6 py-4 text-center text-3xl font-bold border-2 border-yellow-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-600 bg-white"
+                placeholder={`Escanea ${ingredienteActual.codigo}...`}
+                className="w-full px-4 py-3 xl:py-5 text-center text-2xl xl:text-4xl font-bold border-2 border-yellow-400 rounded focus:outline-none focus:ring-2 focus:ring-yellow-600 bg-white"
                 autoFocus
               />
             </div>
-            <div className="flex gap-4 justify-center">
+            <div className="flex gap-2 justify-center">
               <button
                 onClick={() => handleValidarSKU()}
-                className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-lg transition-colors"
+                className="px-6 py-2 xl:px-10 xl:py-4 bg-green-600 hover:bg-green-700 text-white rounded font-bold text-lg xl:text-xl transition-colors"
               >
-                ✓ Validar
+                Validar
               </button>
               <button
                 onClick={handleBypass}
-                className="px-3 py-3 bg-gray-400 hover:bg-gray-500 text-gray-700 text-xs rounded font-semibold transition-colors opacity-60 hover:opacity-100"
+                className="px-3 py-2 xl:px-5 xl:py-4 bg-gray-400 hover:bg-gray-500 text-gray-700 text-xs xl:text-sm rounded font-semibold transition-colors opacity-60 hover:opacity-100"
               >
-                🔓 Bypass
+                Bypass
               </button>
             </div>
           </div>
         ) : (
-          <div className="w-full max-w-2xl bg-green-50 border-2 border-green-400 rounded-lg p-4">
-            <p className="text-center text-green-700 font-bold">✓ SKU {ingredienteActual.codigo} validado - Pesando...</p>
+          /* Header Pesaje Compacto (Responsivo) */
+          <div className="w-full max-w-2xl xl:max-w-4xl flex justify-between items-end px-2 xl:px-0 transition-all duration-300">
+            <div>
+              <p className="text-xs xl:text-base text-gray-500 font-semibold uppercase">Pesando:</p>
+              <h2 className="text-3xl xl:text-5xl font-black text-gray-900 leading-none">{ingredienteActual.codigo}</h2>
+            </div>
+            <div className="text-right">
+              <p className="text-xs xl:text-base text-gray-500 font-semibold uppercase">Meta</p>
+              <p className="text-2xl xl:text-4xl font-bold text-blue-600 leading-none">{ingredienteActual.pesoTarget.toFixed(1)}g</p>
+            </div>
           </div>
         )}
 
         {/* Panel de Pesaje (Solo si verificado) */}
         {skuVerificado && (
           <>
-            <div className="text-center">
-              <p className="text-sm text-gray-600 font-semibold uppercase mb-2">Pesando ahora:</p>
-              <h2 className="text-7xl font-black text-gray-900 mb-2">{ingredienteActual.codigo}</h2>
-              <p className="text-2xl text-gray-700">
-                Meta: <span className="font-bold text-blue-600">{ingredienteActual.pesoTarget.toFixed(1)}g</span>
-              </p>
+            <div className="w-full max-w-2xl xl:max-w-4xl transition-all duration-300">
+              <SmartScale
+                pesoActual={peso}
+                pesoTarget={ingredienteActual.pesoTarget}
+                tolerancia={0.5}
+              />
             </div>
 
-            <SmartScale
-              pesoActual={peso}
-              pesoTarget={ingredienteActual.pesoTarget}
-              tolerancia={0.5}
-            />
-
-            <div className="w-full max-w-2xl grid grid-cols-2 gap-4">
-              <div className="bg-white border border-gray-300 rounded-lg p-4">
-                <p className="text-xs text-gray-600 font-semibold uppercase">Peso Acumulado</p>
-                <p className="text-3xl font-black text-gray-900">{pesoAcumulado.toFixed(1)} <span className="text-xl">g</span></p>
+            {/* Grid Informativo - Responsivo */}
+            <div className="w-full max-w-2xl xl:max-w-4xl grid grid-cols-3 gap-2 xl:gap-6 transition-all duration-300">
+              <div className="bg-white border border-gray-300 rounded p-2 xl:p-6 text-center shadow-sm">
+                <p className="text-[10px] xl:text-xs text-gray-500 font-semibold uppercase">Acumulado</p>
+                <p className="text-xl xl:text-3xl font-black text-gray-800">{pesoAcumulado.toFixed(1)}g</p>
               </div>
-              <div className="bg-white border border-gray-300 rounded-lg p-4">
-                <p className="text-xs text-gray-600 font-semibold uppercase">Receta</p>
-                <p className="text-3xl font-black text-gray-900">#{receta.numero}</p>
-                <p className="text-xs text-gray-500 mt-1">{receta.meta.carMaker || "—"}</p>
+              <div className="bg-white border border-gray-300 rounded p-2 xl:p-6 text-center shadow-sm">
+                <p className="text-[10px] xl:text-xs text-gray-500 font-semibold uppercase">Receta</p>
+                <p className="text-xl xl:text-3xl font-black text-gray-800">#{receta.numero}</p>
+              </div>
+              {/* Estado del Peso Integrado */}
+              <div className={`border rounded p-2 xl:p-6 text-center shadow-sm ${enRango ? "bg-green-50 border-green-200" : "bg-yellow-50 border-yellow-200"}`}>
+                <p className="text-[10px] xl:text-xs text-gray-500 font-semibold uppercase">Estado</p>
+                <p className={`text-xl xl:text-3xl font-bold ${enRango ? "text-green-600" : "text-yellow-600"}`}>
+                  {enRango ? "OK" : "..."}
+                </p>
               </div>
             </div>
 
-            <button
-              onClick={handleSiguiente}
-              disabled={!enRango || guardando}
-              className={`
-                px-12 py-6 rounded-lg font-bold text-2xl transition-all
-                ${enRango && !guardando
-                  ? "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-lg hover:shadow-xl"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed opacity-50"
-                }
-              `}
-            >
-              {guardando ? "⏳ Guardando..." : ingredienteActualIdx === ingredientes.length - 1 ? "✓ FINALIZAR MEZCLA" : "SIGUIENTE INGREDIENTE →"}
-            </button>
+            {/* Area de Botones Unificada - Responsiva */}
+            <div className="w-full max-w-2xl xl:max-w-4xl flex gap-3 mt-1 xl:mt-4 transition-all duration-300">
+              <button
+                onClick={onCancel || onFinish}
+                className="flex-1 py-3 xl:py-5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded font-semibold text-sm xl:text-lg transition-colors"
+                title="Cancelar Mezcla"
+              >
+                ✕ Cancelar
+              </button>
 
-            <div className="w-full max-w-2xl bg-gray-100 border border-gray-400 rounded-lg p-4 text-center">
-              <p className="text-sm text-gray-600 font-semibold mb-1">ESTADO DEL PESO</p>
-              <p className={`text-xl font-bold ${enRango ? "text-green-600" : "text-yellow-600"}`}>
-                {enRango ? "✓ En Rango" : "⏳ Esperando..."}
-              </p>
+              <button
+                onClick={handleSiguiente}
+                disabled={!enRango || guardando}
+                className={`
+                  flex-[3] py-3 xl:py-5 rounded font-bold text-xl xl:text-2xl transition-all shadow-md
+                  ${enRango && !guardando
+                    ? "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed opacity-50 shadow-none"
+                  }
+                `}
+              >
+                {guardando ? "⏳..." : ingredienteActualIdx === ingredientes.length - 1 ? "✓ FINALIZAR" : "SIGUIENTE →"}
+              </button>
             </div>
           </>
         )}
-
-        <div className="mt-auto w-full max-w-2xl">
-          <button
-            onClick={onCancel || onFinish}
-            className="w-full py-4 bg-red-100 hover:bg-red-200 text-red-700 border-2 border-red-300 rounded-lg font-bold text-lg transition-colors flex items-center justify-center gap-2"
-          >
-            <span>✕</span> Cancelar Mezcla
-          </button>
-        </div>
       </main>
       <footer className="bg-cm-surface border-t border-cm-border p-4 text-center text-sm text-cm-text-secondary">
         <p>ColorManager v0.0.1 - Sesión de Mezcla (Refactored) | Build: FIX-20260206-DEBT</p>
