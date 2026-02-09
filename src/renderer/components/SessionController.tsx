@@ -214,8 +214,8 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
         cliente: data.cliente || null,
         vehiculo: data.vehiculo || null,
         tipoMezcla: "NUEVA",
-        operadorId: user?.id,
-        operadorNombre: user?.nombre,
+        operadorId: user?.id || null,
+        operadorNombre: user?.nombre || null,
         // guardarReceta no se usa en backend aun
       }
 
@@ -238,10 +238,10 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
         }
       }
       onFinish()
-    } catch (error) {
+    } catch (error: any) {
       console.error("[SessionController] Error guardando mezcla:", error)
-      showError(`Error al guardar mezcla`, 4000)
-      onFinish()
+      showError(`Error al guardar mezcla: ${error.message || error}`, 5000)
+      onFinish() // Aún si falla el guardado, salimos para no bloquear la pantalla
     } finally {
       setGuardando(false)
     }
