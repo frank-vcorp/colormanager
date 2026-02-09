@@ -35,7 +35,10 @@ export default function MisMezclasView({ onBack, onRepetirMezcla }: MisMezclasVi
       setCargando(true)
       setError(null)
       // Cargar mezclas sin filtrar por operador (todas las del período)
-      const data = await (window as any).colorManager.obtenerMisMezclas()
+      // Cargar mezclas sin filtrar por operador (todas las del período)
+      // FIX-DIAGNOSTIC: Ampliar a 30 días y loguear
+      const data = await (window as any).colorManager.obtenerMisMezclas(undefined, 30)
+      console.log("[MisMezclasView] Datos recibidos:", data)
       setMezclas(data || [])
     } catch (err) {
       console.error("[MisMezclasView] Error:", err)
