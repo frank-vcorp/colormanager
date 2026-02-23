@@ -427,3 +427,8 @@
 
 - 2026-01-30 · [/] En progreso Micro-Sprint 15 "Sistema de Roles y Acceso Abierto": Implementación del modo Entonador sin login y Admin bajo demanda. (ID: ARCH-20260130-01)
 - 2026-02-06 · [✓] Completado Micro-Sprint "Protocolo de Cierre y Etiquetado": Implementación de formulario de metadatos (Cliente/Vehículo), guardado en DB y generación de etiquetas de mezcla con código QR (MZC-xxxx) para impresora Niimbot B1. (ID: DOC-20260206-01)
+
+- 2026-02-09 · [✓] **Mantenimiento y Estabilización (Hotfixes Críticos):**
+  - Solución de crashes (`ReferenceErrors` en `useBascula` y `useToast`).
+  - Hardening de sistema de guardado (Null Safety) para prevenir pérdida de datos.
+  - Implementación de herramientas de diagnóstico en historial (Mis Mezclas). (ID: FIX-20260209-00)

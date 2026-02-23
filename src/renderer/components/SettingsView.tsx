@@ -23,7 +23,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
     loadConfig()
 
     // Escuchar cambios de configuración desde el main process
-    const unsubscribe = window.electron?.onConfigChanged(
+    const unsubscribe = window.colorManager?.onConfigChanged(
       (data) => {
         console.log("[SettingsView] Configuración cambió:", data)
         if (data.newConfig) {
@@ -39,7 +39,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
     try {
       setLoading(true)
       setError(null)
-      const result = await window.electron?.invoke("config:get")
+      const result = await window.colorManager?.invoke("config:get")
       if (result?.success) {
         setConfig(result.config)
       } else {
@@ -58,7 +58,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
     try {
       setSaving(true)
       setError(null)
-      const result = await window.electron?.invoke("config:setMode", newMode)
+      const result = await window.colorManager?.invoke("config:setMode", newMode)
       if (result?.success) {
         setConfig(result.config)
         setSuccess(true)
@@ -82,7 +82,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
     try {
       setSaving(true)
       setError(null)
-      const result = await window.electron?.invoke("config:set", {
+      const result = await window.colorManager?.invoke("config:set", {
         hardware: {
           ...config.hardware,
           [key]: value,
@@ -111,7 +111,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
     try {
       setSaving(true)
       setError(null)
-      const result = await window.electron?.invoke("config:set", {
+      const result = await window.colorManager?.invoke("config:set", {
         paths: {
           ...config.paths,
           [key]: value,
@@ -138,7 +138,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
     try {
       setSaving(true)
       setError(null)
-      const result = await window.electron?.invoke("config:reset")
+      const result = await window.colorManager?.invoke("config:reset")
       if (result?.success) {
         setConfig(result.config)
         setSuccess(true)
@@ -204,8 +204,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
             onClick={() => handleModeChange("DEMO")}
             disabled={saving}
             className={`flex-1 py-3 px-4 rounded font-semibold transition ${config.mode === "DEMO"
-                ? "bg-blue-500 text-white"
-                : "bg-gray-200 hover:bg-gray-300"
+              ? "bg-blue-500 text-white"
+              : "bg-gray-200 hover:bg-gray-300"
               } disabled:opacity-50`}
           >
             📊 Modo Demo (Simulación)
@@ -214,8 +214,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
             onClick={() => handleModeChange("PRODUCTION")}
             disabled={saving}
             className={`flex-1 py-3 px-4 rounded font-semibold transition ${config.mode === "PRODUCTION"
-                ? "bg-red-500 text-white"
-                : "bg-gray-200 hover:bg-gray-300"
+              ? "bg-red-500 text-white"
+              : "bg-gray-200 hover:bg-gray-300"
               } disabled:opacity-50`}
           >
             ⚙️ Modo Producción (Real)
@@ -248,8 +248,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
               <button
                 onClick={() => handleHardwareConfigChange("scaleType", "HID")}
                 className={`flex-1 py-3 px-4 rounded border font-medium text-sm transition ${config.hardware.scaleType === "HID"
-                    ? "bg-yellow-200 border-yellow-400 text-yellow-900"
-                    : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
+                  ? "bg-yellow-200 border-yellow-400 text-yellow-900"
+                  : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
                   }`}
               >
                 🔌 USB (Dymo / HID)
@@ -260,8 +260,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
               <button
                 onClick={() => handleHardwareConfigChange("scaleType", "SERIAL")}
                 className={`flex-1 py-3 px-4 rounded border font-medium text-sm transition ${config.hardware.scaleType === "SERIAL"
-                    ? "bg-yellow-200 border-yellow-400 text-yellow-900"
-                    : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
+                  ? "bg-yellow-200 border-yellow-400 text-yellow-900"
+                  : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
                   }`}
               >
                 📠 Serial (Mettler Toledo)
