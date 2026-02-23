@@ -219,7 +219,12 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
         // guardarReceta no se usa en backend aun
       }
 
-      await window.colorManager.guardarMezcla(registro)
+      const res = await window.colorManager.guardarMezcla(registro)
+
+      if (res && res.success === false) {
+        throw new Error(res.error || "Fallo desconocido en el servidor al guardar")
+      }
+
       success("✓ Mezcla guardada correctamente", 3000)
 
       if (window.colorManager?.printMixLabel) {
