@@ -60,21 +60,22 @@ export class MettlerToledoSerialService implements IScaleService {
     this.isConnecting = true
     this.connectionPromise = (async () => {
       try {
+        this.emitDiag(`PASO1:importando serialport...`)
         const { SerialPort } = await import("serialport")
-
-        console.log(`[MettlerSerial] Conectando a ${this.portPath}...`)
+        this.emitDiag(`PASO2:serialport importado OK`)
 
         const configService = require('../services/configService').configService
         const currentConfig = configService.getConfig()
+        const portPath = currentConfig.hardware.scalePort || this.portPath
+        const baudRate = currentConfig.hardware.baudRate || this.baudRate
+        this.emitDiag(`PASO3:config -> ${portPath}@${baudRate}`)
 
-        // Cerrar puerto anterior si existía para evitar fugas
+        // Cerrar puerto anterior si existía
         if (this.port && this.port.isOpen) {
           try { this.port.close() } catch (e) { }
         }
 
-        const portPath = currentConfig.hardware.scalePort || this.portPath
-        const baudRate = currentConfig.hardware.baudRate || this.baudRate
-
+        this.emitDiag(`PASO4:creando SerialPort...`)
         this.port = new SerialPort({
           path: portPath,
           baudRate,
@@ -83,8 +84,9 @@ export class MettlerToledoSerialService implements IScaleService {
           stopBits: 1,
           autoOpen: false,
         })
+        this.emitDiag(`PASO5:SerialPort creado OK`)
 
-        // FIX-20260224-07: Raw buffer acumulador - funciona con \r, \n, o \r\n
+        // Raw buffer acumulador
         let rxBuf = ""
         this.port.on("data", (chunk: Buffer) => {
           rxBuf += chunk.toString("ascii")
@@ -93,7 +95,6 @@ export class MettlerToledoSerialService implements IScaleService {
           for (const line of lines) {
             const trimmed = line.trim()
             if (trimmed) {
-              console.log(`[MettlerSerial] Dato: "${trimmed}"`)
               this.emitDiag(`DATO:${trimmed}`)
               this.parseScaleData(trimmed)
             }
@@ -101,20 +102,18 @@ export class MettlerToledoSerialService implements IScaleService {
         })
 
         this.port.on("error", (err: Error) => {
-          console.error("[MettlerSerial] Error:", err.message)
           this.connected = false
-          this.emitDiag(`ERR:${err.message}`)
+          this.emitDiag(`ERR_PORT:${err.message}`)
         })
 
+        this.emitDiag(`PASO6:abriendo puerto...`)
         return new Promise<boolean>((resolve) => {
           this.port.open((err: Error | null) => {
             this.isConnecting = false
             if (err) {
-              console.error(`[MettlerSerial] ❌ Error al abrir ${portPath}:`, err.message)
-              this.emitDiag(`FALLO:${err.message}`)
+              this.emitDiag(`FALLO_OPEN:${err.message}`)
               resolve(false)
             } else {
-              console.log(`[MettlerSerial] ✅ Conectado exitosamente a ${portPath}`)
               this.connected = true
               this.emitDiag(`OK_COM:${portPath}@${baudRate}`)
               if (this.mode === "SICS") this.startPolling()
@@ -122,8 +121,10 @@ export class MettlerToledoSerialService implements IScaleService {
             }
           })
         })
-      } catch (error) {
-        console.error("[MettlerSerial] ❌ Error catch externo:", error)
+      } catch (error: any) {
+        const msg = error?.message || String(error)
+        console.error("[MettlerSerial] ❌ Error catch:", msg)
+        this.emitDiag(`CRASH:${msg}`)
         this.isConnecting = false
         return false
       }
