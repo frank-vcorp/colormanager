@@ -400,70 +400,72 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
           </div>
         )}
 
-        {/* Panel de Pesaje (Solo si verificado) */}
+        {/* Panel de Pesaje (Solo si verificado) - Layout 2 columnas */}
         {skuVerificado && (
-          <>
-            <div className="w-full max-w-2xl xl:max-w-4xl transition-all duration-300">
+          <div className="w-full flex gap-4 px-2 xl:px-0" style={{ maxWidth: '900px' }}>
+
+            {/* Columna Izquierda: Báscula + Info */}
+            <div className="flex-1 flex flex-col gap-2 min-w-0">
               <SmartScale
                 pesoActual={peso}
                 pesoTarget={ingredienteActual.pesoTarget}
                 tolerancia={0.5}
               />
+
+              {/* FIX-20260224-04: Panel de Diagnóstico Visual */}
+              <div className="bg-gray-900 rounded border border-gray-700 p-2 font-mono text-xs">
+                <p className="text-yellow-400 font-bold mb-1">🔌 Diagnóstico Báscula [{peso.toFixed(1)}g en vivo]</p>
+                {diagLog.map((line, i) => (
+                  <p key={i} className={`${i === 0 ? 'text-green-400' : 'text-gray-400'} leading-tight`}>{line}</p>
+                ))}
+              </div>
+
+              {/* Grid Informativo */}
+              <div className="grid grid-cols-3 gap-2">
+                <div className="bg-white border border-gray-300 rounded p-2 text-center shadow-sm">
+                  <p className="text-[10px] text-gray-500 font-semibold uppercase">Acumulado</p>
+                  <p className="text-xl font-black text-gray-800">{pesoAcumulado.toFixed(1)}g</p>
+                </div>
+                <div className="bg-white border border-gray-300 rounded p-2 text-center shadow-sm">
+                  <p className="text-[10px] text-gray-500 font-semibold uppercase">Receta</p>
+                  <p className="text-xl font-black text-gray-800">#{receta.numero}</p>
+                </div>
+                <div className={`border rounded p-2 text-center shadow-sm ${enRango ? "bg-green-50 border-green-200" : "bg-yellow-50 border-yellow-200"}`}>
+                  <p className="text-[10px] text-gray-500 font-semibold uppercase">Estado</p>
+                  <p className={`text-xl font-bold ${enRango ? "text-green-600" : "text-yellow-600"}`}>
+                    {enRango ? "OK" : "..."}
+                  </p>
+                </div>
+              </div>
             </div>
 
-            {/* FIX-20260224-04: Panel de Diagnóstico Visual (visible sin DevTools) */}
-            <div className="w-full max-w-2xl xl:max-w-4xl bg-gray-900 rounded border border-gray-700 p-2 font-mono text-xs">
-              <p className="text-yellow-400 font-bold mb-1">🔌 Diagnóstico Báscula [{peso.toFixed(1)}g en vivo]</p>
-              {diagLog.map((line, i) => (
-                <p key={i} className={`${i === 0 ? 'text-green-400' : 'text-gray-400'} leading-tight`}>{line}</p>
-              ))}
-            </div>
-
-            {/* Grid Informativo - Responsivo */}
-            <div className="w-full max-w-2xl xl:max-w-4xl grid grid-cols-3 gap-2 xl:gap-6 transition-all duration-300">
-              <div className="bg-white border border-gray-300 rounded p-2 xl:p-6 text-center shadow-sm">
-                <p className="text-[10px] xl:text-xs text-gray-500 font-semibold uppercase">Acumulado</p>
-                <p className="text-xl xl:text-3xl font-black text-gray-800">{pesoAcumulado.toFixed(1)}g</p>
-              </div>
-              <div className="bg-white border border-gray-300 rounded p-2 xl:p-6 text-center shadow-sm">
-                <p className="text-[10px] xl:text-xs text-gray-500 font-semibold uppercase">Receta</p>
-                <p className="text-xl xl:text-3xl font-black text-gray-800">#{receta.numero}</p>
-              </div>
-              {/* Estado del Peso Integrado */}
-              <div className={`border rounded p-2 xl:p-6 text-center shadow-sm ${enRango ? "bg-green-50 border-green-200" : "bg-yellow-50 border-yellow-200"}`}>
-                <p className="text-[10px] xl:text-xs text-gray-500 font-semibold uppercase">Estado</p>
-                <p className={`text-xl xl:text-3xl font-bold ${enRango ? "text-green-600" : "text-yellow-600"}`}>
-                  {enRango ? "OK" : "..."}
-                </p>
-              </div>
-            </div>
-
-            {/* Area de Botones Unificada - Responsiva */}
-            <div className="w-full max-w-2xl xl:max-w-4xl flex gap-3 mt-1 xl:mt-4 transition-all duration-300">
+            {/* Columna Derecha: Botones siempre visibles */}
+            <div className="flex flex-col gap-3 justify-center shrink-0 w-36 xl:w-48">
               <button
                 onClick={onCancel || onFinish}
-                className="flex-1 py-3 xl:py-5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded font-semibold text-sm xl:text-lg transition-colors min-h-[50px] z-10"
+                className="w-full py-4 xl:py-6 bg-red-50 hover:bg-red-100 text-red-600 border-2 border-red-300 rounded-lg font-bold text-sm xl:text-base transition-colors"
                 title="Cancelar Mezcla"
               >
-                ✕ Cancelar
+                ✕<br />Cancelar
               </button>
 
               <button
                 onClick={handleSiguiente}
                 disabled={!enRango || guardando}
                 className={`
-                  flex-[3] py-3 xl:py-5 rounded font-bold text-xl xl:text-2xl transition-all shadow-md min-h-[50px] z-10
+                  w-full py-4 xl:py-6 rounded-lg font-black text-lg xl:text-2xl transition-all shadow-md
                   ${enRango && !guardando
                     ? "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed opacity-50 shadow-none"
                   }
                 `}
               >
-                {guardando ? "⏳..." : ingredienteActualIdx === ingredientes.length - 1 ? "✓ FINALIZAR" : "SIGUIENTE →"}
+                {guardando ? "⏳" : ingredienteActualIdx === ingredientes.length - 1 ? "✓\nFIN" : "→\nSig."}
               </button>
             </div>
-          </>
+          </div>
         )}
+
       </main>
       <footer className="bg-cm-surface border-t border-cm-border p-4 text-center text-sm text-cm-text-secondary shrink-0">
         <p>ColorManager - Sesión de Mezcla | Build: FIX-20260224-04</p>
