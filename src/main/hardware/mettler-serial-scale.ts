@@ -197,15 +197,34 @@ export class MettlerToledoSerialService implements IScaleService {
   start(targetWeight: number): void {
     this._targetWeight = targetWeight
     console.log(`[MettlerSerial] Target: ${targetWeight}g`)
-    // FIX-20260224-01: Validar estado real del puerto antes de reconectar
-    if (!this.connected || (this.port && !this.port.isOpen)) {
-      console.log(`[MettlerSerial] Intentando reconectar a ${this.portPath}...`)
-      this.connect().then((success) => {
-        if (!success) this.emitError(`No se pudo conectar a ${this.portPath}`)
+    // FIX-20260224-03: Si ya hay una conexión en progreso, esperarla antes de actuar
+    const pending = this.isConnecting && this.connectionPromise
+      ? this.connectionPromise
+      : null
+
+    if (pending) {
+      console.log(`[MettlerSerial] Conexión en progreso, esperando resultado antes de actuar...`)
+      pending.then((success) => {
+        if (success) {
+          console.log(`[MettlerSerial] ✅ Conexión establecida - báscula lista para pesar`)
+          if (this.mode === "SICS") this.startPolling()
+        } else {
+          this.emitError(`No se pudo conectar a ${this.portPath}`)
+        }
       })
-    } else {
-      console.log(`[MettlerSerial] Puerto ${this.portPath} ya abierto, activando lectura (Polling).`)
+    } else if (this.connected && this.port?.isOpen) {
+      console.log(`[MettlerSerial] Puerto ${this.portPath} ya abierto - activando lectura`)
       if (this.mode === "SICS") this.startPolling()
+    } else {
+      console.log(`[MettlerSerial] Puerto no conectado - iniciando conexión fresh...`)
+      this.connect().then((success) => {
+        if (success) {
+          console.log(`[MettlerSerial] ✅ Conexión fresh exitosa`)
+          if (this.mode === "SICS") this.startPolling()
+        } else {
+          this.emitError(`No se pudo conectar a ${this.portPath}`)
+        }
+      })
     }
   }
 
