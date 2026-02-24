@@ -423,7 +423,7 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
             <div className="w-full max-w-2xl xl:max-w-4xl flex gap-3 mt-1 xl:mt-4 transition-all duration-300">
               <button
                 onClick={onCancel || onFinish}
-                className="flex-1 py-3 xl:py-5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded font-semibold text-sm xl:text-lg transition-colors"
+                className="flex-1 py-3 xl:py-5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded font-semibold text-sm xl:text-lg transition-colors min-h-[50px] z-10"
                 title="Cancelar Mezcla"
               >
                 ✕ Cancelar
@@ -433,7 +433,7 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
                 onClick={handleSiguiente}
                 disabled={!enRango || guardando}
                 className={`
-                  flex-[3] py-3 xl:py-5 rounded font-bold text-xl xl:text-2xl transition-all shadow-md
+                  flex-[3] py-3 xl:py-5 rounded font-bold text-xl xl:text-2xl transition-all shadow-md min-h-[50px] z-10
                   ${enRango && !guardando
                     ? "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed opacity-50 shadow-none"
@@ -447,7 +447,7 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
         )}
       </main>
       <footer className="bg-cm-surface border-t border-cm-border p-4 text-center text-sm text-cm-text-secondary">
-        <p>ColorManager v0.0.1 - Sesión de Mezcla (Refactored) | Build: FIX-20260206-DEBT</p>
+        <p>ColorManager - Sesión de Mezcla | Build: FIX-20260224-01</p>
       </footer>
     </div>
   )

@@ -7,6 +7,7 @@
  * - Mettler Toledo PS60, ICS series
  * 
  * Protocolo MT-SICS y Toledo Continuous soportados.
+ * @updated FIX-20260224-01: Prevenir bloqueo de puerto COM (Access Denied) al iniciar mezcla.
  */
 
 import { BrowserWindow } from "electron"
@@ -36,7 +37,7 @@ export class MettlerToledoSerialService implements IScaleService {
     this.portPath = portPath
     this.baudRate = baudRate
     console.log(`[MettlerSerial] Puerto: ${portPath}, BaudRate: ${baudRate}`)
-    // Intentar conexión automática al instanciar
+    // Intentar conexión automática al instanciar (FIX-20260224-01: Evitar si ya está conectado)
     this.connect().then((success) => {
       if (success) {
         console.log("[MettlerSerial] ✅ Conexión automática exitosa")
@@ -53,9 +54,12 @@ export class MettlerToledoSerialService implements IScaleService {
 
       console.log(`[MettlerSerial] Conectando a ${this.portPath}...`)
 
+      const configService = require('../services/configService').configService
+      const currentConfig = configService.getConfig()
+
       this.port = new SerialPort({
-        path: this.portPath,
-        baudRate: this.baudRate,
+        path: currentConfig.hardware.scalePort || this.portPath,
+        baudRate: currentConfig.hardware.baudRate || this.baudRate,
         dataBits: 8,
         parity: "none",
         stopBits: 1,
@@ -171,10 +175,15 @@ export class MettlerToledoSerialService implements IScaleService {
   start(targetWeight: number): void {
     this._targetWeight = targetWeight
     console.log(`[MettlerSerial] Target: ${targetWeight}g`)
-    if (!this.connected) {
+    // FIX-20260224-01: Validar estado real del puerto antes de reconectar
+    if (!this.connected || (this.port && !this.port.isOpen)) {
+      console.log(`[MettlerSerial] Intentando reconectar a ${this.portPath}...`)
       this.connect().then((success) => {
         if (!success) this.emitError(`No se pudo conectar a ${this.portPath}`)
       })
+    } else {
+      console.log(`[MettlerSerial] Puerto ${this.portPath} ya abierto, activando lectura (Polling).`)
+      if (this.mode === "SICS") this.startPolling()
     }
   }
 
@@ -185,7 +194,7 @@ export class MettlerToledoSerialService implements IScaleService {
       this.pollInterval = null
     }
     if (this.port?.isOpen) {
-      try { this.port.close() } catch (e) {}
+      try { this.port.close() } catch (e) { }
     }
     this.port = null
     this.connected = false
