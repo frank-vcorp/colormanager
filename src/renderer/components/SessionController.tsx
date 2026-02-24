@@ -43,6 +43,9 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
   const [skuVerificado, setSkuVerificado] = useState(false)
   const [inputValue, setInputValue] = useState("")
   const inputRef = useRef<HTMLInputElement>(null)
+  // FIX-20260224-04: Visual Diagnostic Log (visible sin DevTools)
+  const [diagLog, setDiagLog] = useState<string[]>([`[INIT] Build FIX-20260224-04 cargado`])
+  const addLog = (msg: string) => setDiagLog(prev => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev].slice(0, 8))
 
   // Estado de Ajustes Manuales
   const [ajustes, setAjustes] = useState<{ codigo: string; peso: number; timestamp: string }[]>([])
@@ -81,12 +84,18 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
     .reduce((sum, ing) => sum + ing.pesoTarget, 0)
   const pesoFinalCalculado = pesosRegistrados.reduce((a, b) => a + b, 0) + ajustes.reduce((sum, aj) => sum + aj.peso, 0)
 
-  // Iniciar Mezcla
+  // FIX-20260224-04: Escuchar eventos de error de la báscula visualmente
   useEffect(() => {
-    if (window.colorManager) {
-      console.log("[SessionController] Iniciando mezcla...")
-      window.colorManager.iniciarMezcla("RECETA-" + receta.numero)
+    if (!window.colorManager) {
+      addLog('[ERR] colorManager API no disponible')
+      return
     }
+    addLog(`[IPC] Iniciando INICIAR_MEZCLA receta #${receta.numero}`)
+    window.colorManager.iniciarMezcla("RECETA-" + receta.numero).then(() => {
+      addLog('[IPC] INICIAR_MEZCLA respondido OK')
+    }).catch((e: any) => {
+      addLog(`[IPC] Error: ${e?.message || e}`)
+    })
   }, [receta.numero])
 
   // Reset al cambiar ingrediente
@@ -219,7 +228,7 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
         // guardarReceta no se usa en backend aun
       }
 
-      const res = await window.colorManager.guardarMezcla(registro)
+      const res = await window.colorManager.guardarMezcla(registro) as any
 
       if (res && res.success === false) {
         throw new Error(res.error || "Fallo desconocido en el servidor al guardar")
@@ -402,6 +411,14 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
               />
             </div>
 
+            {/* FIX-20260224-04: Panel de Diagnóstico Visual (visible sin DevTools) */}
+            <div className="w-full max-w-2xl xl:max-w-4xl bg-gray-900 rounded border border-gray-700 p-2 font-mono text-xs">
+              <p className="text-yellow-400 font-bold mb-1">🔌 Diagnóstico Báscula [{peso.toFixed(1)}g en vivo]</p>
+              {diagLog.map((line, i) => (
+                <p key={i} className={`${i === 0 ? 'text-green-400' : 'text-gray-400'} leading-tight`}>{line}</p>
+              ))}
+            </div>
+
             {/* Grid Informativo - Responsivo */}
             <div className="w-full max-w-2xl xl:max-w-4xl grid grid-cols-3 gap-2 xl:gap-6 transition-all duration-300">
               <div className="bg-white border border-gray-300 rounded p-2 xl:p-6 text-center shadow-sm">
@@ -449,7 +466,7 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
         )}
       </main>
       <footer className="bg-cm-surface border-t border-cm-border p-4 text-center text-sm text-cm-text-secondary shrink-0">
-        <p>ColorManager - Sesión de Mezcla | Build: FIX-20260224-02</p>
+        <p>ColorManager - Sesión de Mezcla | Build: FIX-20260224-04</p>
       </footer>
     </div>
   )
