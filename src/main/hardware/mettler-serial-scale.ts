@@ -83,10 +83,16 @@ export class MettlerToledoSerialService implements IScaleService {
           autoOpen: false,
         })
 
-        this.parser = this.port.pipe(new ReadlineParser({ delimiter: "\r\n" }))
+        // FIX-20260224-06: Mettler Toledo usa \r como delimitador, no \r\n
+        this.parser = this.port.pipe(new ReadlineParser({ delimiter: "\r" }))
 
         this.parser.on("data", (line: string) => {
-          this.parseScaleData(line)
+          const raw = line.trim()
+          if (raw) {
+            // Enviar dato crudo al panel de diagnóstico en renderer
+            this.emitDiag(`RAW: "${raw}"`)
+            this.parseScaleData(raw)
+          }
         })
 
         this.port.on("error", (err: Error) => {
@@ -104,6 +110,7 @@ export class MettlerToledoSerialService implements IScaleService {
             } else {
               console.log(`[MettlerSerial] ✅ Conectado exitosamente a ${this.portPath}`)
               this.connected = true
+              this.emitDiag(`✅ COM:${currentConfig.hardware.scalePort || this.portPath} abierto`)
               if (this.mode === "SICS") this.startPolling()
               resolve(true)
             }
@@ -190,6 +197,13 @@ export class MettlerToledoSerialService implements IScaleService {
   private emitError(message: string): void {
     if (!this.window || this.window.isDestroyed()) return
     this.window.webContents.send(IPCChannels.ERROR, message)
+  }
+
+  // FIX-20260224-06: Canal de diagnóstico visual al renderer
+  private emitDiag(message: string): void {
+    if (!this.window || this.window.isDestroyed()) return
+    // Reutilizamos el canal ERROR con prefijo especial que el renderer puede filtrar
+    this.window.webContents.send('scale:diag', message)
   }
 
   getCurrentWeight(): number { return this.currentWeight }

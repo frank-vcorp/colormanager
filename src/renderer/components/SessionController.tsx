@@ -96,6 +96,12 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
     }).catch((e: any) => {
       addLog(`[IPC] Error: ${e?.message || e}`)
     })
+    // FIX-20260224-06: Escuchar datos crudos del puerto serial
+    if ((window.colorManager as any).onScaleDiag) {
+      (window.colorManager as any).onScaleDiag((msg: string) => {
+        addLog(msg)
+      })
+    }
   }, [receta.numero])
 
   // Reset al cambiar ingrediente
@@ -468,7 +474,7 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
 
       </main>
       <footer className="bg-cm-surface border-t border-cm-border p-4 text-center text-sm text-cm-text-secondary shrink-0">
-        <p>ColorManager - Sesión de Mezcla | Build: FIX-20260224-04</p>
+        <p>ColorManager - Sesión de Mezcla | Build: FIX-20260224-06</p>
       </footer>
     </div>
   )

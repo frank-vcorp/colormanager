@@ -33,6 +33,11 @@ contextBridge.exposeInMainWorld("colorManager", {
     ipcRenderer.on(IPCChannels.ESTADO_BASCULA, (_, data) => callback(data))
   },
 
+  // FIX-20260224-06: Canal de diagnóstico visual de báscula serial
+  onScaleDiag: (callback: (msg: string) => void) => {
+    ipcRenderer.on('scale:diag', (_, data) => callback(data))
+  },
+
   // IMPL-20260129-01: Listener para cambios de configuración
   onConfigChanged: (
     callback: (data: { oldConfig?: AppConfig; newConfig?: AppConfig; mode?: string }) => void
