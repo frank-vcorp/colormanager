@@ -31,6 +31,8 @@ export class MettlerToledoSerialService implements IScaleService {
   // @ts-ignore
   private _targetWeight: number = 0
   private mode: "SICS" | "CONTINUOUS" = "CONTINUOUS"
+  private isConnecting: boolean = false
+  private connectionPromise: Promise<boolean> | null = null
 
   constructor(window: BrowserWindow, portPath: string = "COM3", baudRate: number = 9600) {
     this.window = window
@@ -48,53 +50,73 @@ export class MettlerToledoSerialService implements IScaleService {
   }
 
   async connect(): Promise<boolean> {
-    try {
-      const { SerialPort } = await import("serialport")
-      const { ReadlineParser } = await import("@serialport/parser-readline")
-
-      console.log(`[MettlerSerial] Conectando a ${this.portPath}...`)
-
-      const configService = require('../services/configService').configService
-      const currentConfig = configService.getConfig()
-
-      this.port = new SerialPort({
-        path: currentConfig.hardware.scalePort || this.portPath,
-        baudRate: currentConfig.hardware.baudRate || this.baudRate,
-        dataBits: 8,
-        parity: "none",
-        stopBits: 1,
-        autoOpen: false,
-      })
-
-      this.parser = this.port.pipe(new ReadlineParser({ delimiter: "\r\n" }))
-
-      this.parser.on("data", (line: string) => {
-        this.parseScaleData(line)
-      })
-
-      this.port.on("error", (err: Error) => {
-        console.error("[MettlerSerial] Error:", err.message)
-        this.connected = false
-        this.emitError(`Error Mettler Toledo: ${err.message}`)
-      })
-
-      return new Promise((resolve) => {
-        this.port.open((err: Error | null) => {
-          if (err) {
-            console.error(`[MettlerSerial] ❌ Error al abrir ${this.portPath}:`, err.message)
-            resolve(false)
-          } else {
-            console.log(`[MettlerSerial] ✅ Conectado a ${this.portPath}`)
-            this.connected = true
-            if (this.mode === "SICS") this.startPolling()
-            resolve(true)
-          }
-        })
-      })
-    } catch (error) {
-      console.error("[MettlerSerial] ❌ Error:", error)
-      return false
+    if (this.isConnecting && this.connectionPromise) {
+      console.log(`[MettlerSerial] Conexión ya en progreso para ${this.portPath}, esperando...`)
+      return this.connectionPromise
     }
+    if (this.connected && this.port && this.port.isOpen) {
+      return Promise.resolve(true)
+    }
+
+    this.isConnecting = true
+    this.connectionPromise = (async () => {
+      try {
+        const { SerialPort } = await import("serialport")
+        const { ReadlineParser } = await import("@serialport/parser-readline")
+
+        console.log(`[MettlerSerial] Conectando a ${this.portPath}...`)
+
+        const configService = require('../services/configService').configService
+        const currentConfig = configService.getConfig()
+
+        // Cerrar puerto anterior si existía para evitar fugas
+        if (this.port && this.port.isOpen) {
+          try { this.port.close() } catch (e) { }
+        }
+
+        this.port = new SerialPort({
+          path: currentConfig.hardware.scalePort || this.portPath,
+          baudRate: currentConfig.hardware.baudRate || this.baudRate,
+          dataBits: 8,
+          parity: "none",
+          stopBits: 1,
+          autoOpen: false,
+        })
+
+        this.parser = this.port.pipe(new ReadlineParser({ delimiter: "\r\n" }))
+
+        this.parser.on("data", (line: string) => {
+          this.parseScaleData(line)
+        })
+
+        this.port.on("error", (err: Error) => {
+          console.error("[MettlerSerial] Error:", err.message)
+          this.connected = false
+          this.emitError(`Error físico báscula: ${err.message}`)
+        })
+
+        return new Promise<boolean>((resolve) => {
+          this.port.open((err: Error | null) => {
+            this.isConnecting = false
+            if (err) {
+              console.error(`[MettlerSerial] ❌ Error al abrir ${this.portPath}:`, err.message)
+              resolve(false)
+            } else {
+              console.log(`[MettlerSerial] ✅ Conectado exitosamente a ${this.portPath}`)
+              this.connected = true
+              if (this.mode === "SICS") this.startPolling()
+              resolve(true)
+            }
+          })
+        })
+      } catch (error) {
+        console.error("[MettlerSerial] ❌ Error catch externo:", error)
+        this.isConnecting = false
+        return false
+      }
+    })()
+
+    return this.connectionPromise
   }
 
   private startPolling(): void {

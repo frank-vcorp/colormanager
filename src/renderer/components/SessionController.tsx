@@ -322,8 +322,10 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
   const enRango = peso >= minTarget && peso <= maxTarget
 
   return (
-    <div className="min-h-screen bg-cm-bg flex flex-col">
-      <HeaderBar basculaConectada={basculaConectada} />
+    <div className="h-screen w-screen bg-cm-bg flex flex-col overflow-hidden">
+      <div className="shrink-0">
+        <HeaderBar basculaConectada={basculaConectada} />
+      </div>
       <main className="flex-1 flex flex-col items-center p-2 gap-2 overflow-y-auto xl:justify-center xl:p-8 xl:gap-8 transition-all duration-300">
 
         {/* Progreso Responsivo */}
@@ -446,8 +448,8 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
           </>
         )}
       </main>
-      <footer className="bg-cm-surface border-t border-cm-border p-4 text-center text-sm text-cm-text-secondary">
-        <p>ColorManager - Sesión de Mezcla | Build: FIX-20260224-01</p>
+      <footer className="bg-cm-surface border-t border-cm-border p-4 text-center text-sm text-cm-text-secondary shrink-0">
+        <p>ColorManager - Sesión de Mezcla | Build: FIX-20260224-02</p>
       </footer>
     </div>
   )
