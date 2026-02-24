@@ -21,7 +21,6 @@ const SIMPLE_WEIGHT_REGEX = /([\d\.\-]+)\s*(g|kg|oz|lb)?/i
 export class MettlerToledoSerialService implements IScaleService {
   private window: BrowserWindow
   private port: any = null
-  private parser: any = null
   private currentWeight: number = 0
   private isStable: boolean = false
   private connected: boolean = false
@@ -62,7 +61,6 @@ export class MettlerToledoSerialService implements IScaleService {
     this.connectionPromise = (async () => {
       try {
         const { SerialPort } = await import("serialport")
-        const { ReadlineParser } = await import("@serialport/parser-readline")
 
         console.log(`[MettlerSerial] Conectando a ${this.portPath}...`)
 
@@ -74,43 +72,51 @@ export class MettlerToledoSerialService implements IScaleService {
           try { this.port.close() } catch (e) { }
         }
 
+        const portPath = currentConfig.hardware.scalePort || this.portPath
+        const baudRate = currentConfig.hardware.baudRate || this.baudRate
+
         this.port = new SerialPort({
-          path: currentConfig.hardware.scalePort || this.portPath,
-          baudRate: currentConfig.hardware.baudRate || this.baudRate,
+          path: portPath,
+          baudRate,
           dataBits: 8,
           parity: "none",
           stopBits: 1,
           autoOpen: false,
         })
 
-        // FIX-20260224-06: Mettler Toledo usa \r como delimitador, no \r\n
-        this.parser = this.port.pipe(new ReadlineParser({ delimiter: "\r" }))
-
-        this.parser.on("data", (line: string) => {
-          const raw = line.trim()
-          if (raw) {
-            // Enviar dato crudo al panel de diagnóstico en renderer
-            this.emitDiag(`RAW: "${raw}"`)
-            this.parseScaleData(raw)
+        // FIX-20260224-07: Raw buffer acumulador - funciona con \r, \n, o \r\n
+        let rxBuf = ""
+        this.port.on("data", (chunk: Buffer) => {
+          rxBuf += chunk.toString("ascii")
+          const lines = rxBuf.split(/[\r\n]+/)
+          rxBuf = lines.pop() ?? ""
+          for (const line of lines) {
+            const trimmed = line.trim()
+            if (trimmed) {
+              console.log(`[MettlerSerial] Dato: "${trimmed}"`)
+              this.emitDiag(`DATO:${trimmed}`)
+              this.parseScaleData(trimmed)
+            }
           }
         })
 
         this.port.on("error", (err: Error) => {
           console.error("[MettlerSerial] Error:", err.message)
           this.connected = false
-          this.emitError(`Error físico báscula: ${err.message}`)
+          this.emitDiag(`ERR:${err.message}`)
         })
 
         return new Promise<boolean>((resolve) => {
           this.port.open((err: Error | null) => {
             this.isConnecting = false
             if (err) {
-              console.error(`[MettlerSerial] ❌ Error al abrir ${this.portPath}:`, err.message)
+              console.error(`[MettlerSerial] ❌ Error al abrir ${portPath}:`, err.message)
+              this.emitDiag(`FALLO:${err.message}`)
               resolve(false)
             } else {
-              console.log(`[MettlerSerial] ✅ Conectado exitosamente a ${this.portPath}`)
+              console.log(`[MettlerSerial] ✅ Conectado exitosamente a ${portPath}`)
               this.connected = true
-              this.emitDiag(`✅ COM:${currentConfig.hardware.scalePort || this.portPath} abierto`)
+              this.emitDiag(`OK_COM:${portPath}@${baudRate}`)
               if (this.mode === "SICS") this.startPolling()
               resolve(true)
             }
@@ -199,11 +205,10 @@ export class MettlerToledoSerialService implements IScaleService {
     this.window.webContents.send(IPCChannels.ERROR, message)
   }
 
-  // FIX-20260224-06: Canal de diagnóstico visual al renderer
+  // FIX-20260224-07: Diagnóstico via canal ERROR proven con prefijo [DIAG]
   private emitDiag(message: string): void {
     if (!this.window || this.window.isDestroyed()) return
-    // Reutilizamos el canal ERROR con prefijo especial que el renderer puede filtrar
-    this.window.webContents.send('scale:diag', message)
+    this.window.webContents.send(IPCChannels.ERROR, `[DIAG] ${message}`)
   }
 
   getCurrentWeight(): number { return this.currentWeight }

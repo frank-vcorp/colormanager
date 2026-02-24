@@ -43,9 +43,9 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
   const [skuVerificado, setSkuVerificado] = useState(false)
   const [inputValue, setInputValue] = useState("")
   const inputRef = useRef<HTMLInputElement>(null)
-  // FIX-20260224-04: Visual Diagnostic Log (visible sin DevTools)
-  const [diagLog, setDiagLog] = useState<string[]>([`[INIT] Build FIX-20260224-04 cargado`])
-  const addLog = (msg: string) => setDiagLog(prev => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev].slice(0, 8))
+  // FIX-20260224-07: Visual Diagnostic Log (visible sin DevTools)
+  const [diagLog, setDiagLog] = useState<string[]>([`[INIT] Build FIX-20260224-07 cargado`])
+  const addLog = (msg: string) => setDiagLog(prev => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev].slice(0, 10))
 
   // Estado de Ajustes Manuales
   const [ajustes, setAjustes] = useState<{ codigo: string; peso: number; timestamp: string }[]>([])
@@ -84,7 +84,7 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
     .reduce((sum, ing) => sum + ing.pesoTarget, 0)
   const pesoFinalCalculado = pesosRegistrados.reduce((a, b) => a + b, 0) + ajustes.reduce((sum, aj) => sum + aj.peso, 0)
 
-  // FIX-20260224-04: Escuchar eventos de error de la báscula visualmente
+  // FIX-20260224-07: Intercept [DIAG] messages from ERROR channel into panel
   useEffect(() => {
     if (!window.colorManager) {
       addLog('[ERR] colorManager API no disponible')
@@ -96,12 +96,13 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
     }).catch((e: any) => {
       addLog(`[IPC] Error: ${e?.message || e}`)
     })
-    // FIX-20260224-06: Escuchar datos crudos del puerto serial
-    if ((window.colorManager as any).onScaleDiag) {
-      (window.colorManager as any).onScaleDiag((msg: string) => {
-        addLog(msg)
-      })
-    }
+    // Interceptar mensajes [DIAG] del canal ERROR para mostrarlos en el panel
+    window.colorManager.onError((error: string | Error) => {
+      const msg = typeof error === 'string' ? error : error.message
+      if (msg.startsWith('[DIAG]')) {
+        addLog(msg.replace('[DIAG] ', ''))
+      }
+    })
   }, [receta.numero])
 
   // Reset al cambiar ingrediente
