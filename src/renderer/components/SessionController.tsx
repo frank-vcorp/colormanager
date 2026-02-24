@@ -475,7 +475,7 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
 
       </main>
       <footer className="bg-cm-surface border-t border-cm-border p-4 text-center text-sm text-cm-text-secondary shrink-0">
-        <p>ColorManager - Sesión de Mezcla | Build: FIX-20260224-06</p>
+        <p>ColorManager - Sesión de Mezcla | Build: FIX-20260224-07</p>
       </footer>
     </div>
   )
