@@ -36,6 +36,7 @@
     "react-barcode": "^1.6.1",
     "react-dom": "^19.0.0",
     "recharts": "^2.12.5",
+    "serialport": "^13.0.0",
     "uuid": "^10.0.0",
     "xlsx": "^0.18.5",
     "zustand": "^4.5.5"
@@ -59,7 +60,6 @@
     "electron-is-dev": "^3.0.1",
     "postcss": "^8.4.39",
     "prisma": "^5.21.1",
-    "serialport": "^13.0.0",
     "tailwindcss": "^3.4.3",
     "typescript": "^5.4.5",
     "vite": "^5.2.11",
@@ -99,7 +99,11 @@
     ],
     "asarUnpack": [
       "**/libquery_engine*",
-      "**/query_engine*"
+      "**/query_engine*",
+      "**/serialport/**",
+      "**/@serialport/**",
+      "**/node-gyp-build/**",
+      "**/*.node"
     ],
     "extraMetadata": {
       "type": "commonjs",
@@ -132,6 +136,6 @@
       "category": "Office",
       "icon": "build/logo.png"
     },
-    "npmRebuild": false
+    "npmRebuild": true
   }
 }
