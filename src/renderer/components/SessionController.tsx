@@ -43,8 +43,9 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
   const [skuVerificado, setSkuVerificado] = useState(false)
   const [inputValue, setInputValue] = useState("")
   const inputRef = useRef<HTMLInputElement>(null)
-  // FIX-20260224-07: Visual Diagnostic Log (visible sin DevTools)
-  const [diagLog, setDiagLog] = useState<string[]>([`[INIT] Build FIX-20260224-08 cargado`])
+  // FIX-20260225-01: Diagnóstico flotante
+  const [showDiag, setShowDiag] = useState(false)
+  const [diagLog, setDiagLog] = useState<string[]>([`[INIT] Build FIX-20260225-01 cargado`])
   const addLog = (msg: string) => setDiagLog(prev => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev].slice(0, 10))
 
   // Estado de Ajustes Manuales
@@ -419,14 +420,6 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
                 tolerancia={0.5}
               />
 
-              {/* FIX-20260224-04: Panel de Diagnóstico Visual */}
-              <div className="bg-gray-900 rounded border border-gray-700 p-2 font-mono text-xs">
-                <p className="text-yellow-400 font-bold mb-1">🔌 Diagnóstico Báscula [{peso.toFixed(1)}g en vivo]</p>
-                {diagLog.map((line, i) => (
-                  <p key={i} className={`${i === 0 ? 'text-green-400' : 'text-gray-400'} leading-tight`}>{line}</p>
-                ))}
-              </div>
-
               {/* Grid Informativo */}
               <div className="grid grid-cols-3 gap-2">
                 <div className="bg-white border border-gray-300 rounded p-2 text-center shadow-sm">
@@ -475,8 +468,53 @@ export default function SessionController({ receta, onFinish, onCancel }: Sessio
 
       </main>
       <footer className="bg-cm-surface border-t border-cm-border p-4 text-center text-sm text-cm-text-secondary shrink-0">
-        <p>ColorManager - Sesión de Mezcla | Build: FIX-20260224-08</p>
+        <p
+          className="cursor-pointer hover:text-blue-500 transition-colors inline-block"
+          onClick={() => setShowDiag(true)}
+        >
+          ColorManager - Sesión de Mezcla | Build: FIX-20260225-01
+        </p>
       </footer>
+
+      {/* FIX-20260225-01: Modal de Diagnóstico Flotante */}
+      {showDiag && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="bg-gray-900 w-full max-w-2xl rounded-xl border border-gray-700 shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+            <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-800">
+              <h3 className="text-yellow-400 font-bold flex items-center gap-2">
+                <span>🔌 Diagnóstico de Hardware</span>
+                <span className="text-[10px] bg-yellow-900/50 px-2 py-0.5 rounded text-yellow-200 border border-yellow-700/50">
+                  REAL TIME
+                </span>
+              </h3>
+              <button
+                onClick={() => setShowDiag(false)}
+                className="text-gray-400 hover:text-white text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-4 font-mono text-sm overflow-y-auto bg-black/20 flex-1">
+              <p className="text-blue-400 mb-2 border-b border-blue-900/30 pb-1">Báscula: {peso.toFixed(1)}g | Estado: {basculaConectada ? 'OK' : 'DISC'}</p>
+              <div className="space-y-1">
+                {diagLog.map((line, i) => (
+                  <p key={i} className={`${i === 0 ? 'text-green-400' : 'text-gray-400'} leading-snug break-all`}>
+                    {line}
+                  </p>
+                ))}
+              </div>
+            </div>
+            <div className="p-3 border-t border-gray-700 bg-gray-800 text-right">
+              <button
+                onClick={() => setShowDiag(false)}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-bold text-sm transition-colors"
+              >
+                Cerrar Panel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
